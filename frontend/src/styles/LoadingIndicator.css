@@ -1,0 +1,35 @@
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 12px 0;
+  gap: 8px;
+}
+
+.loading-indicator span {
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(135deg, #00c851, #009e46);
+  border-radius: 50%;
+  display: inline-block;
+  animation: bounce 0.6s infinite alternate;
+}
+
+.loading-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  from {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}

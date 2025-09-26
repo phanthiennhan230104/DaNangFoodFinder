@@ -1,0 +1,225 @@
+/* frontend/src/styles/HomePage.css */
+
+/* --- Hero Section --- */
+.hero-container {
+    /* Set the background image directly */
+    background-image: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    height: 60vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+    position: relative; /* Required for the overlay */
+}
+
+/* This creates the dark, blurry overlay */
+.hero-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4); /* Dark overlay (adjust 0.4 for more/less darkness) */
+    backdrop-filter: blur(5px); /* The blur effect (adjust 5px for more/less blur) */
+    z-index: 1;
+}
+
+/* Ensure the text and search bar are on top of the overlay */
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-content h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    /* Add a subtle shadow to make text more readable */
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.hero-search-form {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 700px;
+}
+
+.hero-search-input {
+    width: 70%;
+    padding: 15px;
+    border: none;
+    border-radius: 8px 0 0 8px;
+    font-size: 1rem;
+}
+
+.hero-search-button {
+    padding: 15px 20px;
+    border: none;
+    background-color: #e85a4f; /* Màu đỏ cam đặc trưng */
+    color: white;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* --- Main Content & Grid --- */
+.main-content {
+    padding: 2rem 5%;
+}
+
+.restaurant-grid-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border-left: 5px solid #e85a4f;
+    padding-left: 10px;
+}
+
+.restaurants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* --- Restaurant Card --- */
+.restaurant-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.restaurant-card:hover {
+    transform: translateY(-5px);
+}
+
+.card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.card-content {
+    padding: 1rem;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-address {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.card-rating {
+    font-weight: bold;
+}
+
+.card-cuisine {
+    background-color: #f0f0f0;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.filter-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.filter-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.filter-button, .map-button {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.filter-button:hover, .map-button:hover {
+  background-color: #f7f7f7;
+}
+
+.filter-button .icon, .map-button .icon {
+  margin-right: 8px;
+}
+
+.filter-button .arrow {
+  margin-left: 15px;
+  font-size: 0.8rem;
+}
+
+.map-button {
+  background-color: white; /* Màu vàng nhạt */
+  border-color: #ffecb3;
+}
+
+.filter-label {
+  font-weight: bold;
+  margin-right: 1rem;
+  align-self: center; /* Căn giữa theo chiều dọc với các nút */
+}
+
+/* Style cho nút filter khi đang được kích hoạt */
+.filter-button.active {
+  background-color: #e85a4f; /* Màu đỏ cam giống nút search */
+  color: white;
+  border-color: #e85a4f;
+  font-weight: bold;
+}
+
+.filter-select {
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #333;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.filter-select:hover {
+  background-color: white; /* Vàng nhạt giống map-button */
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #e85a4f; /* Màu cam chủ đạo */
+  box-shadow: 0 0 0 2px rgba(232, 90, 79, 0.3);
+}
