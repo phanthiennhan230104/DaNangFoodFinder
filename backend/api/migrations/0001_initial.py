@@ -92,7 +92,6 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=255)),
                 ('address', models.TextField()),
-                ('contact_info', models.CharField(blank=True, max_length=255, null=True)),
                 ('opening_hours', models.CharField(blank=True, max_length=255, null=True)),
                 ('cuisine_type', models.CharField(blank=True, max_length=100, null=True)),
                 ('price_range', models.CharField(blank=True, max_length=100, null=True)),
