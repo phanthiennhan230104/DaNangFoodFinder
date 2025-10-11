@@ -75,3 +75,15 @@
   background-color: #c73d35;
   transform: translateY(0);
 }
+
+.navbar-button.journey {
+  background-color: #2e7d32; /* xanh lá */
+}
+
+.navbar-button.journey:hover {
+  background-color: #1b5e20;
+}
+
+.navbar-button.journey:active {
+  background-color: #104917;
+}

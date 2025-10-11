@@ -1,0 +1,252 @@
+/* Toàn màn hình căn giữa */
+.register-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* giống Login */
+  background: #f4f6f9;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Container chính giống Login */
+.register-container {
+  display: flex;
+  width: 800px;
+  max-width: 95%;
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  height: 450px; /* cố định như Login */
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeSlideIn 0.6s ease forwards;
+}
+
+/* Bên trái */
+.register-left {
+  flex: 1;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 50px;
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+  border-top-right-radius: 100px;
+  border-bottom-right-radius: 100px;
+}
+
+/* Title / Subtitle */
+.register-title {
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.register-subtitle {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* Form */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Input group full-width, chuẩn */
+.input-group {
+  display: flex;
+  align-items: center;
+  background: #c7c2c2;
+  border-radius: 12px;
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.input-group .icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+}
+
+.input-group input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  font-weight: 500;
+  background: transparent;
+  color: #0a0808;
+  padding: 8px 12px;
+  border-radius: 8px;
+  height: 36px; /* input không quá cao */
+  box-sizing: border-box;
+}
+
+/* Eye icon (nếu có) */
+.input-group .eye-icon,
+.input-group .password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+  color: #555;
+}
+
+/* Nút Register */
+.btn-register {
+  background: linear-gradient(
+    87.92deg,
+    rgba(254, 251, 68, 1) 0%,
+    rgba(255, 253, 142, 1) 41.83%,
+    rgba(250, 249, 193, 1) 99.04%
+  );
+  border: none;
+  border-radius: 12px;
+  padding: 14px 0;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 50%;
+  margin: 0 auto;
+  display: block;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.btn-register:hover {
+  filter: brightness(0.95);
+  transform: translateY(-3px) scale(1.03);
+}
+
+/* Bên phải */
+.register-right {
+  flex: 1;
+  background: #fffcdd;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 50px;
+  border-top-left-radius: 100px;
+  border-bottom-left-radius: 100px;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.register-right h1 {
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.register-right p {
+  font-size: 14px;
+  color: #555;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Button Login bên phải */
+.btn-login {
+  padding: 14px 0;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 1px solid #000;
+  background: #fffcdd;
+  cursor: pointer;
+  width: 60%;
+  margin: 10px 0;
+  display: block;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.btn-login:hover {
+  background: #f7f5bb;
+  transform: translateY(-3px) scale(1.03);
+}
+
+/* Forgot password */
+.forgot-password {
+  font-size: 14px;
+  color: #000;
+  margin: 10px 0;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .register-container {
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+  }
+
+  .register-left,
+  .register-right {
+    width: 100%;
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .input-group,
+  .btn-register,
+  .btn-login {
+    width: 100%;
+  }
+
+  .register-left h1,
+  .register-left p,
+  .register-right h2,
+  .register-right p,
+  .forgot-password {
+    text-align: center;
+  }
+}
+
+/* Keyframes fade + slide */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Input focus */
+.input-group input:focus {
+  box-shadow: 0 0 8px rgba(255, 221, 87, 0.7);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transform: scale(1.02);
+}
+.message {
+  font-size: 12px;       /* chữ nhỏ hơn */
+  color: red;            /* màu đỏ cho lỗi */
+  margin-top: 4px;       /* cách input một chút */
+  margin-left: 8px;      /* thụt vào */
+  line-height: 1.2;      /* cao dòng hợp lý */
+}
