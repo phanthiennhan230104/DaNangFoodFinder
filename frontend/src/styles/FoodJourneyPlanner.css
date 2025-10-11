@@ -1,140 +1,235 @@
-/* FoodJourneyPlanner.css */
 .food-journey-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: auto;
-}
-
-.filters {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-  align-items: center;
-}
-
-.filters input,
-.filters select,
-.filters button {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-}
-
-.restaurant-results {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.journey-timeline {
-  margin-top: 40px;
-  border-top: 2px solid #eee;
-  padding-top: 20px;
-}
-
-.restaurant-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.restaurant-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.restaurant-card img {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-}
-
-.restaurant-card-content {
-  padding: 16px;
-}
-
-.restaurant-card h3 {
-  font-size: 18px;
-  margin-bottom: 8px;
+  background-color: #f5f5dc; /* nền be nhẹ */
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: 'Courier New', monospace;
   color: #333;
 }
 
-.restaurant-card p {
-  font-size: 14px;
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1.1rem;
   color: #666;
-  margin: 4px 0;
+  margin-bottom: 2rem;
 }
 
-.journey-timeline {
-  margin-top: 40px;
-  padding: 20px;
-  border-left: 3px solid #396ce8;
-  position: relative;
-}
-
-.timeline-item {
-  margin-bottom: 30px;
-  position: relative;
-  padding-left: 20px;
-}
-
-.timeline-item::before {
-  content: "";
-  position: absolute;
-  left: -10px;
-  top: 5px;
-  width: 16px;
-  height: 16px;
-  background: #fff;
-  border: 3px solid #396ce8;
-  border-radius: 50%;
-}
-
-.timeline-item h4 {
-  margin: 0 0 5px;
-  color: #396ce8;
-}
-
-.timeline-item p {
-  margin: 0;
-  color: #444;
-  font-size: 14px;
-}
-
-.filters {
+.controls-section {
   display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
 }
 
-.filters input,
-.filters select,
-.filters button {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  transition: border 0.2s ease;
+.control-label {
+  font-weight: bold;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.filters input:focus,
-.filters select:focus {
-  border-color: #396ce8;
-  outline: none;
+/* input ngày */
+.date-input {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #333;
+  background: #fff;
+  font-family: inherit;
+  font-size: 1rem;
 }
 
-.filters button {
-  background: #396ce8;
-  color: #fff;
-  border: none;
+/* budget */
+.budget-options {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.budget-option {
+  padding: 0.5rem 1rem;
+  border: 2px solid #333;
+  background: white;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.filters button:hover {
-  background: #2e55c7;
+.budget-option:hover {
+  background-color: #e0e0e0;
+}
+
+.budget-option.selected {
+  background-color: #333;
+  color: #fff;
+}
+
+.budget-option.selected:hover {
+  background-color: #555;
+}
+
+/* cuisine */
+.cuisine-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cuisine-tag {
+  padding: 0.5rem 1rem;
+  border: 2px solid #333;
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cuisine-tag:hover {
+  background-color: #e0e0e0;
+}
+
+.cuisine-tag.selected {
+  background-color: #333;
+  color: #fff;
+}
+
+.cuisine-tag.selected:hover {
+  background-color: #555;
+}
+
+/* search */
+.search-section {
+  margin-bottom: 2rem;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.75rem;
+  border: 2px solid #333;
+  font-family: inherit;
+  font-size: 1rem;
+  background: white;
+}
+
+/* recommendations */
+.recommendations-section {
+  margin-bottom: 2rem;
+}
+
+.meal-section {
+  margin-bottom: 2rem;
+  border: 2px solid #333;
+  padding: 1.5rem;
+  background: white;
+}
+
+.meal-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+/* timeline */
+.journey-timeline {
+  border: 2px solid #333;
+  padding: 1.5rem;
+  background: white;
+}
+
+.timeline-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.budget-display {
+  margin-bottom: 1.5rem;
+}
+
+.budget-label {
+  font-weight: bold;
+}
+
+.budget-amount {
+  font-size: 1.2rem;
+}
+
+.time-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.time-slot {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  background: #f9f9f9;
+}
+
+.time-label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+/* card restaurant */
+.restaurant-card {
+  border: 2px solid #333;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.restaurant-card:hover {
+  background-color: #f0f0f0;
+}
+
+.restaurant-name {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.restaurant-details {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* responsive */
+@media (max-width: 768px) {
+  .food-journey-container {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .control-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .control-label {
+    min-width: auto;
+  }
+
+  .time-slots {
+    gap: 1rem;
+  }
 }
