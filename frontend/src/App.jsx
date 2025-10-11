@@ -13,9 +13,6 @@ import AdminCrawlDashboard from "./pages/admin/AdminCrawlDashboard";
 import ForgotPassword from "./pages/auth/ForgotPassword"
 import { ACCESS_TOKEN } from "./constants";
 
-
-
-
 function Logout() {
   React.useEffect(() => {
     localStorage.clear();
@@ -49,7 +46,6 @@ function App() {
       <BrowserRouter>
         <Layout>
           <Routes>
-            {/* ✅ Landing page cho khách: nếu đã đăng nhập thì tự chuyển */}
             <Route
               path="/"
               element={

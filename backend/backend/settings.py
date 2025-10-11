@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-SECRET_KEY = 'django-insecure-!g_u0^+alw3sqmo+9wbqxc75-nn2#ap&%$ors#r3rjp^q=%7z8'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
