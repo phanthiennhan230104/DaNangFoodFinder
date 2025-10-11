@@ -1,16 +1,27 @@
 import React from "react"
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom"
-import Navbar from "./components/layout/Navbar";
+import { AuthProvider } from "./components/contexts/AuthContext";
+import Navbar from "./components/layout/Navbar"
 import Login from "./pages/auth/Login"
 import Register from "./pages/auth/Register"
 import HomePage from "./pages/user/HomePage"
 import NotFound from "./pages/NotFound"
 import ProtectedRoute from "./components/ProtectedRoute"
 import FoodJourneyPlanner from "./pages/user/FoodJourneyPlanner"
+import LandingPage from "./pages/LandingPage"
+import AdminCrawlDashboard from "./pages/admin/AdminCrawlDashboard";
+import ForgotPassword from "./pages/auth/ForgotPassword"
+import { ACCESS_TOKEN } from "./constants";
+
+
+
 
 function Logout() {
-  localStorage.clear()
-  return <Navigate to="/login" />
+  React.useEffect(() => {
+    localStorage.clear();
+    window.location.replace("/login");
+  }, []);
+  return <div style={{ textAlign: "center", padding: "40px" }}>Logging out...</div>;
 }
 
 function RegisterAndLogout() {
@@ -20,7 +31,7 @@ function RegisterAndLogout() {
 
 function Layout({ children }) {
   const location = useLocation()
-  const hideNavbarPaths = ["/login", "/register"] // ẩn Navbar ở các trang này
+  const hideNavbarPaths = ["/login", "/register" ,"/admin/home","/forgot-password"]
 
   const shouldHideNavbar = hideNavbarPaths.includes(location.pathname)
 
@@ -34,34 +45,70 @@ function Layout({ children }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Layout>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            }
-          />
+    <AuthProvider>
+      <BrowserRouter>
+        <Layout>
+          <Routes>
+            {/* ✅ Landing page cho khách: nếu đã đăng nhập thì tự chuyển */}
+            <Route
+              path="/"
+              element={
+                localStorage.getItem(ACCESS_TOKEN) ? (
+                  localStorage.getItem("ROLE_ID") === "1" ? (
+                    <Navigate to="/admin/home" />
+                  ) : (
+                    <Navigate to="/home" />
+                  )
+                ) : (
+                  <LandingPage />
+                )
+              }
+            />
 
-          <Route
-            path="/journey"
-            element={
-              <ProtectedRoute>
-                <FoodJourneyPlanner />
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route path="/login" element={<Login />} />
-          <Route path="/logout" element={<Logout />} />
-          <Route path="/register" element={<RegisterAndLogout />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
+            {/* HomePage cho user đã đăng nhập */}
+            <Route
+              path="/home"
+              element={
+                <ProtectedRoute>
+                  <HomePage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* <Route
+              path="/admin/home"
+              element={
+                <ProtectedRoute>
+                  <AdminHome />
+                </ProtectedRoute>
+              }
+            /> */}
+
+            <Route
+              path="/journey"
+              element={
+                <ProtectedRoute>
+                  <FoodJourneyPlanner />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin dashboard (ẩn Navbar) */}
+            <Route path="/admin/crawl" element={<AdminCrawlDashboard />} />
+
+            {/* Auth */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/logout" element={<Logout />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/register" element={<RegisterAndLogout />} />
+
+
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
+      </BrowserRouter>
+    </AuthProvider> 
   )
 }
 

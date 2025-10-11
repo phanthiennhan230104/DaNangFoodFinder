@@ -19,4 +19,25 @@ api.interceptors.request.use(
   }
 );
 
+export const fetchJourneyRecommendations = async (params) => {
+  const res = await api.get("/journey/restaurants/", { params });
+  return res.data;
+};
+
+// lưu hành trình
+export const saveJourney = async (token, journeyData) => {
+  const res = await api.post("/journey/", journeyData, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+// lấy hành trình theo ngày
+export const getJourneyByDate = async (token, date) => {
+  const res = await api.get(`/journey/?date=${date}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
 export default api;

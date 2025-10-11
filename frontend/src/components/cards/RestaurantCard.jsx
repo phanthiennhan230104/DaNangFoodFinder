@@ -2,7 +2,7 @@ import '../../styles/HomePage.css';
 
 function RestaurantCard({ restaurant }) {
   // Giả sử restaurant.image là URL của ảnh
-  const imageUrl = restaurant.image || 'https://via.placeholder.com/300x200?text=Food+Image';
+  const imageUrl = restaurant.image;
 
   return (
     <div className="restaurant-card">

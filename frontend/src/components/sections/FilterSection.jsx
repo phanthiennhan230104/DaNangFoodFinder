@@ -4,46 +4,51 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import "../../styles/HomePage.css";
 
-function FilterSection({ onFilterChange, currentFilter, cuisines }) {
+function FilterSection({ onFilterChange, filters, areas, cuisines }) {
   const { t } = useTranslation();
 
   return (
     <div className="filter-container">
-      {/* Khu vực */}
-      <div className="filter-group">
-        <label htmlFor="area-select" className="filter-label">
-          {t("filter.area")}
-        </label>
-        <select
-          id="area-select"
-          className="filter-select"
-          onChange={(e) => onFilterChange("address", e.target.value)}
-        >
-          <option value="">{t("filter.allAreas")}</option>
-          <option value="Hải Châu">Hải Châu</option>
-          <option value="Sơn Trà">Sơn Trà</option>
-          <option value="Ngũ Hành Sơn">Ngũ Hành Sơn</option>
-        </select>
-      </div>
+      <div className="filter-groups">
+        {/* Area select */}
+        <div className="filter-group">
+          <label htmlFor="area-select" className="filter-label">
+            {t("filter.area")}
+          </label>
+          <select
+            id="area-select"
+            className="filter-select"
+            value={filters.address}
+            onChange={(e) => onFilterChange("address", e.target.value)}
+          >
+            <option value="">{t("filter.allAreas")}</option>
+            {areas.map((area) => (
+              <option key={area} value={area}>
+                {area}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {/* Loại ẩm thực */}
-      <div className="filter-group">
-        <label htmlFor="cuisine-select" className="filter-label">
-          {t("filter.cuisine")}
-        </label>
-        <select
-          id="cuisine-select"
-          className="filter-select"
-          value={currentFilter}
-          onChange={(e) => onFilterChange("cuisine_type", e.target.value)}
-        >
-          <option value="">{t("filter.allCuisines")}</option>
-          {cuisines.map((cuisine) => (
-            <option key={cuisine} value={cuisine}>
-              {cuisine}
-            </option>
-          ))}
-        </select>
+        {/* Cuisine select */}
+        <div className="filter-group">
+          <label htmlFor="cuisine-select" className="filter-label">
+            {t("filter.cuisine")}
+          </label>
+          <select
+            id="cuisine-select"
+            className="filter-select"
+            value={filters.cuisine_type}
+            onChange={(e) => onFilterChange("cuisine_type", e.target.value)}
+          >
+            <option value="">{t("filter.allCuisines")}</option>
+            {cuisines.map((cuisine) => (
+              <option key={cuisine} value={cuisine}>
+                {cuisine}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Map button */}
@@ -54,5 +59,6 @@ function FilterSection({ onFilterChange, currentFilter, cuisines }) {
     </div>
   );
 }
+
 
 export default FilterSection;

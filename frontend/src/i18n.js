@@ -13,6 +13,7 @@ i18n.use(initReactI18next).init({
         login: "Đăng nhập",
         register: "Đăng ký",
         logout: "Đăng xuất",
+        foodJourney: "Hành trình ẩm thực",
 
         // HomePage
         "homepage.restaurantList": "Danh sách nhà hàng",
@@ -45,6 +46,7 @@ i18n.use(initReactI18next).init({
         login: "Login",
         register: "Register",
         logout: "LOGOUT",
+        foodJourney: "Food Journey",
 
         // HomePage
         "homepage.restaurantList": "Restaurant List",

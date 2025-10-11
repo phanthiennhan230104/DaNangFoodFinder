@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Restaurant, Review, FoodJourney
+from .models import Restaurant, FoodJourney
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
@@ -82,35 +82,42 @@ class RestaurantSerializer(serializers.ModelSerializer):
         fields = [
             "id", "name", "address", "cuisine_type",
             "price_range", "average_rating",
-            "contact_info", "opening_hours",
-            "image",
+             "opening_hours", "image",
         ]
 
-class ReviewSerializer(serializers.ModelSerializer):
-    restaurant_name = serializers.CharField(source="restaurant.name", read_only=True)
-    user_email = serializers.CharField(source="user.email", read_only=True)
-
-    class Meta:
-        model = Review
-        fields = [
-            "id",
-            "restaurant",
-            "restaurant_name",
-            "user",
-            "user_email",
-            "rating",
-            "comment",
-            "is_internal",
-            "source_url",
-            "review_date",
-        ]
 
 class FoodJourneySerializer(serializers.ModelSerializer):
+    # Read
     breakfast = RestaurantSerializer(read_only=True)
     lunch = RestaurantSerializer(read_only=True)
     dinner = RestaurantSerializer(read_only=True)
+    # Write by id
+    breakfast_id = serializers.PrimaryKeyRelatedField(
+        source="breakfast", queryset=Restaurant.objects.all(),
+        write_only=True, required=False
+    )
+    lunch_id = serializers.PrimaryKeyRelatedField(
+        source="lunch", queryset=Restaurant.objects.all(),
+        write_only=True, required=False
+    )
+    dinner_id = serializers.PrimaryKeyRelatedField(
+        source="dinner", queryset=Restaurant.objects.all(),
+        write_only=True, required=False
+    )
 
     class Meta:
         model = FoodJourney
-        fields = ["id", "user", "date", "breakfast", "lunch", "dinner", "created_at"]
+        fields = [
+            "id", "user", "date",
+            "breakfast", "lunch", "dinner",
+            "breakfast_id", "lunch_id", "dinner_id",
+            "created_at",
+        ]
         read_only_fields = ["user", "created_at"]
+
+    def create(self, validated_data):
+        validated_data["user"] = self.context["request"].user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
