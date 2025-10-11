@@ -1,13 +1,14 @@
-// frontend/src/components/layout/Navbar.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import api from "../../api"; // gọi API backend
+import { useAuth } from "../contexts/AuthContext";
+import api from "../../api";
 import "../../styles/Navbar.css";
 
 function Navbar() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { logout } = useAuth(); // ✅ THÊM
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
@@ -22,7 +23,7 @@ function Navbar() {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      localStorage.clear();
+      logout(); // ✅ SỬA: dùng context logout
       navigate("/login");
     }
   };
@@ -41,12 +42,10 @@ function Navbar() {
         />
       </div>
 
-      {/* Center: Website name */}
       <div className="navbar-center">
         <h1 className="navbar-title">Da Nang Food Finder</h1>
       </div>
 
-      {/* Right: Auth + Language */}
       <div className="navbar-right">
         <button className="navbar-button logout" onClick={handleLogout}>
           {t("logout")}

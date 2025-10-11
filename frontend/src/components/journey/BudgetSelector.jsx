@@ -1,30 +1,23 @@
-import { DollarSign } from "lucide-react";
+import React from "react";
+import { Wallet } from "lucide-react";
 
 const BudgetSelector = ({ budget, setBudget }) => {
-  const budgetRanges = [
-    { label: "Budget (< 100k)", value: 100000, color: "bg-green-100 text-green-800" },
-    { label: "Medium (100k - 300k)", value: 300000, color: "bg-yellow-100 text-yellow-800" },
-    { label: "Premium (> 300k)", value: 999999, color: "bg-purple-100 text-purple-800" }
-  ];
+  const budgetOptions = [100000, 200000, 300000, 500000];
 
   return (
-    <div className="space-y-3">
-      <label className="block text-sm font-medium text-gray-700">
-        <DollarSign className="inline w-4 h-4 mr-1" />
-        Budget Range
-      </label>
-      <div className="flex flex-wrap gap-2">
-        {budgetRanges.map((range) => (
+    <div>
+      <div className="control-label">
+        <Wallet className="inline w-4 h-4 mr-1" />
+        Select Budget
+      </div>
+      <div className="budget-options">
+        {budgetOptions.map((amount) => (
           <button
-            key={range.value}
-            onClick={() => setBudget(range.value)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              budget === range.value
-                ? range.color
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            key={amount}
+            className={`budget-option ${budget === amount ? "selected" : ""}`}
+            onClick={() => setBudget(amount)}
           >
-            {range.label}
+            💰 {amount.toLocaleString()} VND
           </button>
         ))}
       </div>

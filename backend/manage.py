@@ -2,11 +2,17 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+import io
 
 
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+
+    if sys.platform == "win32":
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+        
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
