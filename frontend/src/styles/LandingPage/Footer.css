@@ -35,3 +35,9 @@
     text-align: center;
     color: #95a5a6;
 }
+
+.footer .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}

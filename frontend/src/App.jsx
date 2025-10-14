@@ -44,68 +44,68 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                localStorage.getItem(ACCESS_TOKEN) ? (
-                  localStorage.getItem("ROLE_ID") === "1" ? (
-                    <Navigate to="/admin/home" />
-                  ) : (
-                    <Navigate to="/home" />
-                  )
+        <Routes>
+          {/* ✅ Route LandingPage tách riêng, không bị Layout bọc */}
+          <Route
+            path="/"
+            element={
+              localStorage.getItem(ACCESS_TOKEN) ? (
+                localStorage.getItem("ROLE_ID") === "1" ? (
+                  <Navigate to="/admin/home" />
                 ) : (
-                  <LandingPage />
+                  <Navigate to="/home" />
                 )
-              }
-            />
+              ) : (
+                <LandingPage />
+              )
+            }
+          />
 
-            {/* HomePage cho user đã đăng nhập */}
-            <Route
-              path="/home"
-              element={
-                <ProtectedRoute>
-                  <HomePage />
-                </ProtectedRoute>
-              }
-            />
+          {/* ✅ Các route còn lại bọc trong Layout */}
+          <Route
+            path="/*"
+            element={
+              <Layout>
+                <Routes>
+                  {/* HomePage cho user đã đăng nhập */}
+                  <Route
+                    path="home"
+                    element={
+                      <ProtectedRoute>
+                        <HomePage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-            {/* <Route
-              path="/admin/home"
-              element={
-                <ProtectedRoute>
-                  <AdminHome />
-                </ProtectedRoute>
-              }
-            /> */}
+                  <Route
+                    path="journey"
+                    element={
+                      <ProtectedRoute>
+                        <FoodJourneyPlanner />
+                      </ProtectedRoute>
+                    }
+                  />
 
-            <Route
-              path="/journey"
-              element={
-                <ProtectedRoute>
-                  <FoodJourneyPlanner />
-                </ProtectedRoute>
-              }
-            />
+                  {/* Admin */}
+                  <Route path="admin/crawl" element={<AdminCrawlDashboard />} />
 
-            {/* Admin dashboard (ẩn Navbar) */}
-            <Route path="/admin/crawl" element={<AdminCrawlDashboard />} />
+                  {/* Auth */}
+                  <Route path="login" element={<Login />} />
+                  <Route path="logout" element={<Logout />} />
+                  <Route path="forgot-password" element={<ForgotPassword />} />
+                  <Route path="register" element={<RegisterAndLogout />} />
 
-            {/* Auth */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/logout" element={<Logout />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/register" element={<RegisterAndLogout />} />
-
-
-            {/* 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+                  {/* 404 */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Layout>
+            }
+          />
+        </Routes>
       </BrowserRouter>
-    </AuthProvider> 
+    </AuthProvider>
   )
 }
+
 
 export default App

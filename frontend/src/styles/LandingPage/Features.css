@@ -1,8 +1,8 @@
 .features {
-    padding: 1rem 0 6rem;
+    padding: 1rem 0;
     background: linear-gradient(135deg, #fff8dc, #ffecb3);
-    scroll-margin-top: 100px; 
-    padding-bottom: 8rem;
+    scroll-margin-top: 90px; 
+    padding-bottom: 1rem 0;
 }
 
 .features-title {
