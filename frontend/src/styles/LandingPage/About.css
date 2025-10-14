@@ -1,0 +1,129 @@
+.about {
+  padding: 3rem 0 6rem;
+  background: white;
+  position: relative;
+}
+
+/* ============ Scoped Container & Title ============ */
+.about .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.about .section-title {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 3rem;
+  color: #d4691a;
+  position: relative;
+  font-weight: 700;
+}
+
+.about .section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 3px;
+  background: linear-gradient(135deg, #ff6b35, #ffecb3);
+  border-radius: 2px;
+  transition: width 220ms ease;
+}
+
+.about .section-title:hover::after {
+  width: 120px;
+}
+
+/* ============ Layout Grid ============ */
+.about-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3rem;
+  align-items: center;
+}
+
+/* ============ Text Section ============ */
+.about-text h3 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  color: #c95a12;
+  letter-spacing: 0.2px;
+  font-weight: 700;
+}
+
+.about-text p {
+  margin-bottom: 1.5rem;
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  max-width: 60ch;
+}
+
+.about-text .btn {
+  margin-top: 0.5rem;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.about-text .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* ============ Image/Team Section ============ */
+.about-image {
+  text-align: center;
+  background: linear-gradient(135deg, #fff8dc, #ffefc6);
+  padding: 2.25rem;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(212, 105, 26, 0.15);
+}
+
+.about-image h4 {
+  font-size: 1.5rem;
+  color: #d4691a;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+/* ============ Responsive ============ */
+
+/* Tablet */
+@media (max-width: 992px) {
+  .about {
+    padding: 2.5rem 0 4rem;
+  }
+  .about-content {
+    gap: 2rem;
+  }
+  .about .section-title {
+    font-size: 2.2rem;
+    margin-bottom: 2.2rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .about-content {
+    grid-template-columns: 1fr;
+  }
+  .about-image {
+    padding: 1.5rem;
+    border-radius: 14px;
+  }
+  .about-text p {
+    font-size: 1rem;
+    line-height: 1.65;
+    max-width: 100%;
+  }
+}
+
+/* Very Large Screens */
+@media (min-width: 1440px) {
+  .about .container {
+    max-width: 1100px;
+  }
+}
