@@ -9,11 +9,10 @@ import LoadingIndicator from "../LoadingIndicator.jsx";
 function LoginForm() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // 👁️ thêm state con mắt
+  const [showPassword, setShowPassword] = useState(false); 
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  // ✅ Nếu đã đăng nhập thì tự động chuyển sang /home hoặc /admin/home
   useEffect(() => {
     const accessToken = localStorage.getItem(ACCESS_TOKEN);
     const roleId = localStorage.getItem("ROLE_ID");

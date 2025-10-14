@@ -19,7 +19,7 @@ export default function About() {
             <a href="#" className="btn btn-primary">Liên hệ ngay</a>
           </div>
           <div className="about-image">
-            <h4>🎯 DNFF Team</h4>
+            <h4>🎯 C1.90SE Team</h4>
             <p>Đội ngũ sinh viên Đại học Duy Tân cam kết mang đến trải nghiệm ẩm thực tốt nhất.</p>
           </div>
         </div>
