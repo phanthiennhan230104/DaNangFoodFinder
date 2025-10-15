@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import CrawlHeader from "./CrawlHeader";
-import CrawlInput from "./CrawlInput";
-import CrawlConsole from "./CrawlConsole";
-import CrawlStats from "./CrawlStats";
+import CrawlHeader from "../../components/admin/CrawlHeader";
+import CrawlInput from "../../components/admin/CrawlInput";
+import CrawlConsole from "../../components/admin/CrawlConsole";
+import CrawlStats from "../../components/admin/CrawlStats";
 import "../../styles/CrawlDashboard.css";
 
 export default function AdminCrawlDashboard() {

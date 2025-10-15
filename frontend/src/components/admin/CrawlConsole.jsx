@@ -23,7 +23,7 @@ export default function CrawlConsole({ logs, clearLogs }) {
       <div className="crawl-console__body">
         {logs.length === 0 ? (
           <p style={{ color: "#9aa0a6" }}>
-            Chưa có log nào. Nhập URL và nhấn "Cào dữ liệu" để bắt đầu.
+            No logs. Enter the URL and hit "Crawl Data" to start.
           </p>
         ) : (
           logs.map((log) => (

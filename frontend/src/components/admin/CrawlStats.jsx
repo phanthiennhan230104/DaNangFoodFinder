@@ -10,19 +10,19 @@ export default function CrawlStats({ logs }) {
     <div className="crawl-stats">
       <div className="crawl-stat crawl-stat--success">
         <div className="crawl-stat__number">{success}</div>
-        <div className="crawl-stat__label">Thành công</div>
+        <div className="crawl-stat__label">Success</div>
       </div>
       <div className="crawl-stat crawl-stat--warning">
         <div className="crawl-stat__number">{warn}</div>
-        <div className="crawl-stat__label">Cảnh báo</div>
+        <div className="crawl-stat__label">Warningo</div>
       </div>
       <div className="crawl-stat crawl-stat--error">
         <div className="crawl-stat__number">{error}</div>
-        <div className="crawl-stat__label">Lỗi</div>
+        <div className="crawl-stat__label">Fail</div>
       </div>
       <div className="crawl-stat crawl-stat--total">
         <div className="crawl-stat__number">{total}</div>
-        <div className="crawl-stat__label">Tổng log</div>
+        <div className="crawl-stat__label">Total log</div>
       </div>
     </div>
   );

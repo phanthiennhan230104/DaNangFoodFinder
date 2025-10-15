@@ -48,23 +48,23 @@ def crawl_pipeline(request):
         source = "CustomSource"
 
     def event_stream():
-        yield f"--- Bắt đầu crawl_data với URL {url} ---\n"
+        yield f"--- Start crawl_data với URL {url} ---\n"
         for line in run_command(["crawl_data", url, "--source", source]):
             yield line
 
-        yield "--- Đang process_data ---\n"
+        yield "--- In process_data ---\n"
         for line in run_command(["process_data", "--source", source]):
             yield line
 
-        yield "--- Đang crawl_detail (limit 12) ---\n"
+        yield "--- In crawl_detail (limit 12) ---\n"
         for line in run_command(["crawl_detail", "--limit", "12"]):
             yield line
 
-        yield "--- Đang process_detail ---\n"
+        yield "--- In process_detail ---\n"
         for line in run_command(["process_detail"]):
             yield line
 
-        yield "--- ✅ Hoàn tất pipeline! ---\n"
+        yield "--- ✅ Done pipeline! ---\n"
 
     return StreamingHttpResponse(event_stream(), content_type="text/plain")
 
