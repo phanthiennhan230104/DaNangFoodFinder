@@ -8,7 +8,7 @@ from api.models import Restaurant, CrawledSource, CrawledData
 async def fetch_detail(context, rest):
     try:
         page = await context.new_page()
-        await page.goto(rest.detail_url, timeout=40000)
+        await page.goto(rest.detail_url, timeout=60000)
         await asyncio.sleep(4)
         html = await page.content()
         await page.close()
@@ -19,7 +19,6 @@ async def fetch_detail(context, rest):
 
 
 class Command(BaseCommand):
-    help = "Async crawl restaurant detail pages fast with Playwright"
 
     def add_arguments(self, parser):
         parser.add_argument("--limit", type=int, default=10)
@@ -32,44 +31,64 @@ class Command(BaseCommand):
         limit = options["limit"]
         source_name = options["source"]
 
-        # ✅ ORM trong async → phải dùng sync_to_async
         source, _ = await sync_to_async(CrawledSource.objects.get_or_create)(
             name=source_name
         )
 
         restaurants = await sync_to_async(list)(
             Restaurant.objects.filter(
-                detail_url__isnull=False, price_range__isnull=True
+                detail_url__isnull=False,
+                price_range__isnull=True
             )[:limit]
         )
 
         if not restaurants:
-            print("No restaurants found for crawling details.")
+            print("⚠️ No restaurants found for crawling details.")
             return
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context()
+            context = await browser.new_context(
+                viewport={"width": 1280, "height": 800},
+                locale="en-US"
+            )
+
             tasks = [fetch_detail(context, r) for r in restaurants]
             results = await asyncio.gather(*tasks)
             await browser.close()
 
-        valid_results = [r for r in results if r]
+        valid_results = [r for r in results if r and r["html"]]
         if not valid_results:
-            print("No valid results to save.")
+            print("⚠️ No valid HTML results to save.")
             return
 
-        objs = [
-            CrawledData(
+        saved_count = 0
+        deleted_count = 0
+
+        for item in valid_results:
+            rest = item["rest"]
+            html = (item["html"] or "").strip()
+
+            if not html or "<html" not in html.lower() or "captcha-delivery.com" in html:
+                await sync_to_async(rest.delete)()
+                deleted_count += 1
+                continue
+
+            await sync_to_async(CrawledData.objects.filter(url=rest.detail_url).delete)()
+
+            await sync_to_async(CrawledData.objects.create)(
                 source=source,
-                url=item["rest"].detail_url,
-                raw_html=item["html"],
-                linked_restaurant=item["rest"],
+                url=rest.detail_url,
+                raw_html=html,
+                linked_restaurant=rest,
                 status="Pending",
             )
-            for item in valid_results
-        ]
 
-        # ✅ ORM gọi trong async → phải bọc bằng sync_to_async
-        await sync_to_async(CrawledData.objects.bulk_create)(objs)
-        print(f"[OK] Crawled details for {len(objs)} restaurants")
+            saved_count += 1
+
+        if saved_count:
+            print(f"[OK] Crawled {saved_count} valid detail pages")
+        if deleted_count:
+            print(f"[DELETED] Removed {deleted_count} invalid or incomplete entries")
+
+        print("--- ✅ Hoàn tất crawl_detail pipeline! ---")

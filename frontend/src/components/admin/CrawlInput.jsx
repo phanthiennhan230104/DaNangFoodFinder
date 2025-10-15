@@ -3,13 +3,11 @@ import { ACCESS_TOKEN } from "../../constants";
 
 export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLog }) {
 
-  // Phân loại log theo nội dung (Việt + Anh + emoji)
   const getLogType = (line) => {
     const successRules = [
       /^\s*\[OK\]/i,
       /\bSUCCESS\b/i,
-      /đã cào thành công/i,
-      /hoàn tất|completed|done/i,
+      /completed|done/i,
       /scraped and saved/i,
       /updated .* with detail/i,
       /saved html/i,
@@ -18,8 +16,7 @@ export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLo
     const warningRules = [
       /\bWARNING\b/i,
       /⚠/u,
-      /cảnh báo/i,
-      /không có .* cần crawl/i,
+      /\bno .* to crawl\b/i,
       /\bskip(ped)?\b/i,
     ];
     const errorRules = [
@@ -27,7 +24,6 @@ export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLo
       /❌/u,
       /traceback/i,
       /exception/i,
-      /unicodeencodeerror/i,
       /unauthorized/i,
       /modulenotfounderror/i,
       /timeout|timed out/i,
@@ -42,12 +38,12 @@ export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLo
 
   const simulateCrawl = async () => {
     if (!url.trim()) {
-      addLog("⚠️ Vui lòng nhập URL hợp lệ", "warning");
+      addLog("⚠️ Please enter a valid URL", "warning");
       return;
     }
 
     setIsLoading(true);
-    addLog(`🔗 Gửi request crawl với URL: ${url}`, "info");
+    addLog(`🔗 Sending crawl request for URL: ${url}`, "info");
 
     try {
       const token = localStorage.getItem(ACCESS_TOKEN);
@@ -62,7 +58,7 @@ export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLo
       });
 
       if (!response.ok && response.status === 401) {
-        addLog("❌ Unauthorized: vui lòng đăng nhập lại.", "error");
+        addLog("❌ Unauthorized: please log in again.", "error");
         setIsLoading(false);
         return;
       }
@@ -83,7 +79,7 @@ export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLo
         });
       }
     } catch (err) {
-      addLog(`❌ Lỗi khi gọi API: ${err.message}`, "error");
+      addLog(`❌ Error calling API: ${err.message}`, "error");
     }
 
     setIsLoading(false);
@@ -91,13 +87,13 @@ export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLo
 
   return (
     <div>
-      <div className="crawl-titlebar">Nhập URL cần cào dữ liệu</div>
+      <div className="crawl-titlebar">Enter a URL to crawl data</div>
       <div className="crawl-input">
         <input
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="Ví dụ: https://www.foody.vn/da-nang/dia-diem..."
+          placeholder="Example: https://www.foody.vn/da-nang/places..."
           className="crawl-input__control"
           disabled={isLoading}
         />
@@ -106,7 +102,7 @@ export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLo
           disabled={isLoading}
           className="crawl-btn crawl-btn--primary"
         >
-          {isLoading ? "Đang cào..." : "Cào dữ liệu"}
+          {isLoading ? "Crawling..." : "Start Crawl"}
         </button>
       </div>
     </div>
