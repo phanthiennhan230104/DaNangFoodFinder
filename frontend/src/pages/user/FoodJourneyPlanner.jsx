@@ -5,7 +5,7 @@ import CuisineSelector from "../../components/journey/CuisineSelector";
 import RestaurantCard from "../../components/journey/RestaurantCard";
 import JourneyTimeline from "../../components/journey/JourneyTimeline";
 import { Calendar, Search } from "lucide-react";
-import "../../styles/FoodJourneyPlanner.css";
+import "../../styles/user/FoodJourneyPlanner.css";
 
 const FoodJourneyPlanner = () => {
   const [selectedDate, setSelectedDate] = useState(

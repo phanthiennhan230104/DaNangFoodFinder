@@ -3,7 +3,7 @@ import CrawlHeader from "../../components/admin/CrawlHeader";
 import CrawlInput from "../../components/admin/CrawlInput";
 import CrawlConsole from "../../components/admin/CrawlConsole";
 import CrawlStats from "../../components/admin/CrawlStats";
-import "../../styles/CrawlDashboard.css";
+import "../../styles/admin/CrawlDashboard.css";
 
 export default function AdminCrawlDashboard() {
   const [url, setUrl] = useState("");

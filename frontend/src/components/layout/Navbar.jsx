@@ -8,7 +8,7 @@ import "../../styles/Navbar.css";
 function Navbar() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { logout } = useAuth(); // ✅ THÊM
+  const { logout } = useAuth();
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
@@ -23,7 +23,7 @@ function Navbar() {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      logout(); // ✅ SỬA: dùng context logout
+      logout();
       navigate("/login");
     }
   };

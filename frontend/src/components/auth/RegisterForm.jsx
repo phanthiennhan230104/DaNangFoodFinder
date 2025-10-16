@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Key, Lock, CheckIcon } from "lucide-react";
 import api from "../../api.js";
-import "../../styles/Register.css";
+import "../../styles/auth/Register.css";
 
 export default function RegisterForm() {
   const [step, setStep] = useState(1);

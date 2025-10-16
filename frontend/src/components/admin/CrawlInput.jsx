@@ -1,4 +1,4 @@
-import "../../styles/CrawlDashboard.css";
+import "../../styles/admin/CrawlDashboard.css";
 import { ACCESS_TOKEN } from "../../constants";
 
 export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLog }) {

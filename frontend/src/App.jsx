@@ -45,7 +45,6 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* ✅ Route LandingPage tách riêng, không bị Layout bọc */}
           <Route
             path="/"
             element={
@@ -61,13 +60,11 @@ function App() {
             }
           />
 
-          {/* ✅ Các route còn lại bọc trong Layout */}
           <Route
             path="/*"
             element={
               <Layout>
                 <Routes>
-                  {/* HomePage cho user đã đăng nhập */}
                   <Route
                     path="home"
                     element={
