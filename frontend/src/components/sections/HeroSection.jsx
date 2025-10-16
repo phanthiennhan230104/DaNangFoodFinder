@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";  
-import "../../styles/HomePage.css";
+import "../../styles/user/HomePage.css";
 
 function HeroSection({ onSearch }) {
   const { t } = useTranslation();         

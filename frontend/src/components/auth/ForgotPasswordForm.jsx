@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api.js";
-import "../../styles/Login&ForgotPasswordForm.css";
+import "../../styles/auth/Login&ForgotPasswordForm.css";
 import { CheckIcon } from "lucide-react";
 
 export default function ForgotPasswordForm() {

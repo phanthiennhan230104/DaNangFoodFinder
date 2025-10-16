@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useTranslation } from "react-i18next";
-import "../../styles/HomePage.css";
+import "../../styles/user/HomePage.css";
 
 function FilterSection({ onFilterChange, filters, areas, cuisines }) {
   const { t } = useTranslation();

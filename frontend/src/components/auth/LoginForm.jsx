@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../../api.js";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../../constants.js";
-import "../../styles/Login&ForgotPasswordForm.css";
+import "../../styles/auth/Login&ForgotPasswordForm.css";
 import LoadingIndicator from "../LoadingIndicator.jsx";
 
 function LoginForm() {

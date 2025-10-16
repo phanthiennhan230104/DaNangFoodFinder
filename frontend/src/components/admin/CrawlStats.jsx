@@ -1,4 +1,4 @@
-import "../../styles/CrawlDashboard.css";
+import "../../styles/admin/CrawlDashboard.css";
 
 export default function CrawlStats({ logs }) {
   const success = logs.filter((l) => l.type === "success").length;

@@ -1,4 +1,4 @@
-import "../../styles/CrawlDashboard.css";
+import "../../styles/admin/CrawlDashboard.css";
 
 export default function CrawlConsole({ logs, clearLogs }) {
   const typeClass = (t) =>

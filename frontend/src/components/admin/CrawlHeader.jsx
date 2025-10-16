@@ -1,3 +1,4 @@
+import "../../styles/admin/CrawlDashboard.css";
 export default function CrawlHeader() {
   return (
     <header style={{ marginBottom: 14 }}>
