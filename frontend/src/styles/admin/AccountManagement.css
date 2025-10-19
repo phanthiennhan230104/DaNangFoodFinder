@@ -1,0 +1,173 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+.account-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #ffefba, #ffffff);
+  padding: 30px;
+  font-family: "Poppins", sans-serif;
+}
+
+.account-page .account-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  padding: 54px;
+  width: 100%;
+  max-width: 1100px;
+  animation: fadeIn 0.5s ease;
+}
+
+.account-page .account-card .header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.account-card .header h1 {
+  color: #ff5722;
+  margin-bottom: 6px;
+}
+
+.account-card .header p {
+  color: #666;
+  font-size: 15px;
+}
+
+.search-bar {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.search-bar label {
+  font-weight: 500;
+}
+
+.search-bar input,
+.search-bar select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.search-bar .search-btn {
+  background: #ff9800;
+  color: #fff;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.search-bar .search-btn:hover {
+  background: #e68900;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 15px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+thead th {
+  background: #ffcc80;
+  text-align: left;
+  padding: 10px;
+  font-weight: 600;
+}
+
+tbody td {
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+tr:hover {
+  background: #f9f9f9;
+  cursor: pointer;
+}
+
+.selected-row {
+  background: #e3f2fd !important;
+}
+
+.status-verified {
+  background: #4caf50;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.status-pending {
+  background: #f44336;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 20px;
+  color: #777;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.btn-add {
+  background: #4caf50;
+  color: white;
+}
+
+.btn-edit {
+  background: #2196f3;
+  color: white;
+}
+
+.btn-delete {
+  background: #f44336;
+  color: white;
+}
+
+.btn-back {
+  background: #ff9800;
+  color: white;
+}
+
+.btn:hover {
+  opacity: 0.85;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

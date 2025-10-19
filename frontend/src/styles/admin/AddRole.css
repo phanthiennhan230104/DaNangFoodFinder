@@ -1,0 +1,101 @@
+.add-role {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffefba, #ffe259);
+  font-family: "Poppins", sans-serif;
+}
+
+.add-role-card {
+  background: #fff;
+  padding: 32px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 700px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.add-role-title {
+  text-align: center;
+  color: #e67e22;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.add-role-subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.add-role-group {
+  margin-bottom: 18px;
+}
+
+.add-role-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.add-role-group input,
+.add-role-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  outline: none;
+  transition: border 0.2s ease;
+}
+
+.add-role-group input:focus,
+.add-role-group textarea:focus {
+  border-color: #e67e22;
+  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.2);
+}
+
+.add-role-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 25px;
+}
+
+.add-role-btn {
+  border: none;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.add-role-btn-back {
+  background: #eee;
+  color: #333;
+}
+
+.add-role-btn-back:hover {
+  background: #ddd;
+}
+
+.add-role-btn-add {
+  background: #e74c3c;
+  color: white;
+}
+
+.add-role-btn-add:hover {
+  background: #c0392b;
+}
+
+.add-role-actions,
+.add-account-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
+}
