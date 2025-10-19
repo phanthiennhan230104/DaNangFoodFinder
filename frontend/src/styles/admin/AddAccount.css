@@ -1,0 +1,94 @@
+.add-account {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  min-height: 100vh;
+    background: linear-gradient(135deg, #ffefba, #ffe259);
+
+  font-family: "Poppins", sans-serif;
+}
+
+.add-account-card {
+  background: #fff;
+  padding: 32px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 700px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.add-account-title {
+  text-align: center;
+  color: #e67e22;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.add-account-subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.add-account-group {
+  margin-bottom: 18px;
+}
+
+.add-account-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.add-account-group input,
+.add-account-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  outline: none;
+  transition: border 0.2s ease;
+}
+
+.add-account-group input:focus,
+.add-account-group select:focus {
+  border-color: #e67e22;
+  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.2);
+}
+
+.add-account-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 25px;
+}
+
+.add-account-btn {
+  border: none;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.add-account-btn-back {
+  background: #eee;
+  color: #333;
+}
+
+.add-account-btn-back:hover {
+  background: #ddd;
+}
+
+.add-account-btn-add {
+  background: #e74c3c;
+  color: white;
+}
+
+.add-account-btn-add:hover {
+  background: #c0392b;
+}

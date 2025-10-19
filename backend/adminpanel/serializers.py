@@ -26,6 +26,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "role_id",
             "is_staff",
             "is_superuser",
+            "last_login"
         ]
 
     def create(self, validated_data):
@@ -57,17 +58,17 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         password = validated_data.pop("password", None)
-        role_id = validated_data.pop("role_id_write", None)
+        roles  = validated_data.pop("role", None) 
 
         if password:
             instance.set_password(password)
 
-        if role_id:
+        if roles.role_id:
             try:
-                role = Role.objects.get(pk=role_id)
+                role = Role.objects.get(pk=roles.role_id)
                 instance.role = role
 
-                if role_id == 1:
+                if roles.role_id == 1:
                     instance.is_staff = True
                     instance.is_superuser = True
                 else:

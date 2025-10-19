@@ -9,6 +9,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from django.utils import timezone
+from datetime import timedelta
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -17,7 +19,7 @@ from groq import Groq
 from django.conf import settings
 import re
 
-from .models import Restaurant, FoodJourney
+from .models import Restaurant, FoodJourney, CustomUser,CrawledData
 from .serializers import (
     UserSerializer,
     RestaurantSerializer,
@@ -329,3 +331,22 @@ class FoodJourneyUpsertView(APIView):
                 FoodJourneySerializer(obj).data, status=200 if instance else 201
             )
         return Response(serializer.errors, status=400)
+
+class OverviewView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, *args, **kwargs):
+        
+        cuisines = list(CustomUser.objects.values("last_login", "is_email_verified", "email","created_date","email"))
+        crawData = int(CrawledData.objects.count())
+        obj = {
+            "total":len(cuisines),
+            "active":0,
+            "crawled":crawData,
+            "data":cuisines
+        }
+        now = timezone.now()
+        eight_hours_ago = now - timedelta(hours=8)
+        for cui in cuisines:
+            if(cui.get("is_email_verified")):
+                obj["active"] += 1
+        return Response(obj)

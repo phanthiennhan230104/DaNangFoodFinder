@@ -13,6 +13,17 @@ import AdminCrawlDashboard from "./pages/admin/AdminCrawlDashboard";
 import ForgotPassword from "./pages/auth/ForgotPassword"
 import { ACCESS_TOKEN } from "./constants";
 
+
+import AdminHome from "./pages/admin/AdminHome"
+import CrawlerMonitor from "./pages/admin/CrawlDataMonitor"
+import EditAccount from "./pages/admin/EditAccount"
+import EditRole from "./pages/admin/EditRole"
+import ManageData from "./pages/admin/ManageData"
+import RoleManagement from "./pages/admin/RoleManagement"
+import AccountManagement from "./pages/admin/AccountManagement"
+import AddAccount from "./pages/admin/AddAccount"
+import AddRole from "./pages/admin/AddRole"
+
 function Logout() {
   React.useEffect(() => {
     localStorage.clear();
@@ -85,6 +96,16 @@ function App() {
 
                   {/* Admin */}
                   <Route path="admin/crawl" element={<AdminCrawlDashboard />} />
+                  <Route path="/admin/crawl" element={<AdminCrawlDashboard />} />
+                  <Route path="/admin/home" element={<AdminHome />} />
+                  <Route path="/admin/accounts" element={<AccountManagement />} />
+                  <Route path="/admin/roles" element={<RoleManagement />} />
+                  <Route path="/admin/roles/add" element={<AddRole />} />
+                  <Route path="/admin/accounts/add" element={<AddAccount />} />
+                  <Route path="/admin/accounts/edit/:userId" element={<EditAccount />} />
+                  <Route path="/admin/roles/edit/:roleId" element={<EditRole />} />
+                  <Route path="/admin/monitor" element={<CrawlerMonitor />} />
+                  <Route path="/admin/monitor/data" element={<ManageData />} /> 
 
                   {/* Auth */}
                   <Route path="login" element={<Login />} />

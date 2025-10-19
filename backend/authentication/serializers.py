@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils import timezone
+from datetime import timedelta
+
 
 User = get_user_model()
 
@@ -45,11 +48,16 @@ class MyTokenObtainPairSerializer(serializers.Serializer):
         refresh = RefreshToken()
         refresh['user_id'] = user.user_id  # ✅ Dùng user_id
         refresh['email'] = user.email
+        refresh.set_exp(lifetime=timedelta(days=1))
         
         # Tạo access token từ refresh
         access = refresh.access_token
         access['user_id'] = user.user_id
         access['email'] = user.email
+        access.set_exp(lifetime=timedelta(days=1)) 
+        user.last_login = timezone.now()
+        
+        user.save()
         
         return {
             'refresh': str(refresh),

@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     RestaurantListView, CuisineListView,
     JourneyRecommendationsView, FoodJourneyUpsertView,
+    OverviewView,
     get_filters
 )
 from rest_framework_simplejwt.views import TokenBlacklistView
@@ -13,4 +14,6 @@ urlpatterns = [
     path("filters/", get_filters, name="filters"),
     path("journey/restaurants/", JourneyRecommendationsView.as_view(), name="journey_recommendations"),
     path("journey/", FoodJourneyUpsertView.as_view(), name="journey_upsert"),
+    path("overview",OverviewView.as_view(),name="overview")
+
 ]
