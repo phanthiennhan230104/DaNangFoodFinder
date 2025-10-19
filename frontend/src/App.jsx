@@ -15,10 +15,8 @@ import { ACCESS_TOKEN } from "./constants";
 
 
 import AdminHome from "./pages/admin/AdminHome"
-import CrawlerMonitor from "./pages/admin/CrawlDataMonitor"
 import EditAccount from "./pages/admin/EditAccount"
 import EditRole from "./pages/admin/EditRole"
-import ManageData from "./pages/admin/ManageData"
 import RoleManagement from "./pages/admin/RoleManagement"
 import AccountManagement from "./pages/admin/AccountManagement"
 import AddAccount from "./pages/admin/AddAccount"
@@ -104,8 +102,6 @@ function App() {
                   <Route path="/admin/accounts/add" element={<AddAccount />} />
                   <Route path="/admin/accounts/edit/:userId" element={<EditAccount />} />
                   <Route path="/admin/roles/edit/:roleId" element={<EditRole />} />
-                  <Route path="/admin/monitor" element={<CrawlerMonitor />} />
-                  <Route path="/admin/monitor/data" element={<ManageData />} /> 
 
                   {/* Auth */}
                   <Route path="login" element={<Login />} />
