@@ -34,7 +34,6 @@ const FoodJourneyPlanner = () => {
       const data = res.data;
 
       if (data.top_candidates) {
-        // Gộp hết các candidate vào 1 array để map
         const combined = [
           ...(data.top_candidates.breakfast || []),
           ...(data.top_candidates.lunch || []),

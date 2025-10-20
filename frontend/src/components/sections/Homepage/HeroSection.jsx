@@ -1,16 +1,14 @@
 // frontend/src/components/sections/HeroSection.jsx
 
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import "../../../styles/user/HomePage.css";
 
 function HeroSection({ onSearch }) {
-  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [listening, setListening] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
 
-  // Danh sách các ảnh nền
+  // Background images
   const images = [
     "/images/bg1.jpg",
     "/images/bg2.jpg",
@@ -18,7 +16,7 @@ function HeroSection({ onSearch }) {
     "/images/bg4.jpg",
   ];
 
-  // Tự động đổi ảnh
+  // Auto slideshow
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % images.length);
@@ -26,17 +24,17 @@ function HeroSection({ onSearch }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Nhận diện giọng nói
+  // Voice recognition
   const startListening = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("❌ Trình duyệt không hỗ trợ Speech Recognition (khuyến nghị dùng Chrome).");
+      alert("❌ The browser does not support Speech Recognition (Chrome is recommended).");
       return;
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "vi-VN";
+    recognition.lang = "en-US";
     recognition.continuous = false;
     recognition.interimResults = false;
 
@@ -72,15 +70,15 @@ function HeroSection({ onSearch }) {
       ))}
 
       <div className="hero-content">
-        <h1>{t("hero.title")}</h1>
-        <p>{t("hero.subtitle")}</p>
+        <h1>Discover Da Nang Cuisine</h1>
+        <p>Find your favorite dishes and restaurants smartly.</p>
 
         <form onSubmit={handleSubmit} className="hero-search-form">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("hero.searchPlaceholder")}
+            placeholder="What do you want to eat today? (e.g., fish noodle soup near Dragon Bridge)"
             className="hero-search-input"
           />
           <button
@@ -95,7 +93,7 @@ function HeroSection({ onSearch }) {
             )}
           </button>
           <button type="submit" className="hero-search-button">
-            <i className="fas fa-search"></i> {t("hero.searchButton")}
+            <i className="fas fa-search"></i> Search
           </button>
         </form>
       </div>

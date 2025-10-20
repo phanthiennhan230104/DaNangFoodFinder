@@ -50,10 +50,14 @@
   padding: 0 20px;
 }
 .hero-content h1 {
+  font-family: "Poppins", "Montserrat", sans-serif;
   font-size: 3rem;
-  font-weight: bold;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #fffaf5;
   margin-bottom: 1rem;
-  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
 }
 .hero-content p {
   font-size: 1.2rem;
@@ -169,6 +173,7 @@ body {
   color: #fff;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
 }
 .quick-action:hover {
   transform: translateY(-2px);

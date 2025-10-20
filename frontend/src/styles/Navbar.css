@@ -15,14 +15,14 @@
 }
 
 .navbar-logo {
-  height: 90px;        /* tăng từ 70 → 90 cho dễ nhìn hơn */
+  height: 90px;
   width: auto;
-  margin-left: 10px;   /* tạo chút khoảng cách khỏi mép trái */
+  margin-left: 10px;
   transition: transform 0.25s ease;
 }
 
 .navbar-logo:hover {
-  transform: scale(1.05); /* hiệu ứng nhẹ khi hover */
+  transform: scale(1.05);
 }
 
 .navbar-center {
@@ -33,10 +33,14 @@
 }
 
 .navbar-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #e85a4f;
+  font-family: "Poppins", "Montserrat", sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #c70f01;
   margin: 0;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .navbar-right {
@@ -61,7 +65,7 @@
 }
 
 .navbar-button {
-  background-color: #e85a4f; /* đỏ cam chủ đạo */
+  background-color: #e85a4f;
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -73,7 +77,7 @@
 }
 
 .navbar-button:hover {
-  background-color: #d94a3f; /* đỏ đậm hơn */
+  background-color: #d94a3f;
   transform: translateY(-2px);
 }
 

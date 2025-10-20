@@ -26,9 +26,6 @@ function Sidebar() {
 
   return (
     <aside className="sidebar" style={{paddingTop:"100px"}}>
-      {/* <div className="logo">
-        <div className="logo-text">Logo</div>
-      </div> */}
       {menu.map((item) => (
         <Link
           key={item.path}
@@ -38,7 +35,6 @@ function Sidebar() {
           {item.icon} {item.label}
         </Link>
       ))}
-      {/* <div>Logout</div> */}
     </aside>
   );
 }

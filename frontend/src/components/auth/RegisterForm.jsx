@@ -191,7 +191,6 @@ export default function RegisterForm() {
           {step === 3 && (
             <div className="register-success">
               {message}
-              {/* Nút "Go to Login" đã bị xoá */}
             </div>
           )}
         </div>

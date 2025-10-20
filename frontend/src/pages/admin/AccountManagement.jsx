@@ -103,7 +103,6 @@ function AccountManagement() {
             <thead>
               <tr>
                 <th>ID</th>
-                {/* <th>Username</th> */}
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
@@ -121,7 +120,6 @@ function AccountManagement() {
                     onClick={() => setSelectedUserId(acc.user_id)}
                   >
                     <td>#{acc.user_id}</td>
-                    {/* <td>{acc.username}</td> */}
                     <td>{acc.email}</td>
                     <td>{acc.role_id == 1 ? "Admin" : "User"}</td>
                     <td>

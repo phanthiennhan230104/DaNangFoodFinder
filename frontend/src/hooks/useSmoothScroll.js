@@ -2,9 +2,6 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 /**
- * Smooth scroll for anchor links (#id) with header offset.
- * Automatically adjusts for fixed header height.
- *
  * @param {Object} options
  * @param {number} options.duration - Animation duration (ms)
  * @param {number} options.extraOffset - Additional offset (px)

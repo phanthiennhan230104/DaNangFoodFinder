@@ -1,15 +1,15 @@
 // frontend/src/pages/HomePage/HomePage.jsx
 
-import React, { useState, useEffect, useCallback,useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import api from '../../api';
-import HeroSection from '../../components/sections/Homepage/HeroSection';
-import FilterSection from '../../components/sections/Homepage/FilterSection';
-import RestaurantGrid from '../../components/sections/Homepage/RestaurantGrid';
-import QuickActions from '../../components/sections/Homepage/QuickActions';
-import LoadingIndicator from '../../components/LoadingIndicator';
-import '../../styles/user/HomePage.css';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import api from "../../api";
+import HeroSection from "../../components/sections/Homepage/HeroSection";
+import FilterSection from "../../components/sections/Homepage/FilterSection";
+import RestaurantGrid from "../../components/sections/Homepage/RestaurantGrid";
+import QuickActions from "../../components/sections/Homepage/QuickActions";
+import LoadingIndicator from "../../components/LoadingIndicator";
+import "../../styles/user/HomePage.css";
 
+// Hook: Debounce input value
 function useDebounce(value, delay = 400) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -20,7 +20,6 @@ function useDebounce(value, delay = 400) {
 }
 
 function HomePage() {
-  const { t } = useTranslation();
   const filterRef = useRef(null);
 
   const [restaurants, setRestaurants] = useState([]);
@@ -28,28 +27,32 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
-    cuisine_type: '',
-    address: '',
-    q: '',
+    cuisine_type: "",
+    address: "",
+    q: "",
   });
 
   const [coords, setCoords] = useState(null);
-
   const debouncedQ = useDebounce(filters.q, 450);
 
+  // Fetch available filters (areas, cuisines)
   useEffect(() => {
     let mounted = true;
-    api.get('filters/')
-      .then(res => {
+    api
+      .get("filters/")
+      .then((res) => {
         if (!mounted) return;
         setFiltersData(res.data || { areas: [], cuisines: [] });
       })
-      .catch(err => {
-        console.error(t("error.getFilters"), err);
+      .catch((err) => {
+        console.error("Error fetching filter data:", err);
       });
-    return () => { mounted = false; };
-  }, [t]);
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
+  // Get current location (coords)
   useEffect(() => {
     if (!navigator.geolocation) return;
     let mounted = true;
@@ -63,63 +66,66 @@ function HomePage() {
       },
       { enableHighAccuracy: false, maximumAge: 300000, timeout: 5000 }
     );
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
+  // Fetch restaurant list
   const getRestaurants = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
 
-    if (filters.cuisine_type) params.append('cuisine_type', filters.cuisine_type);
-    if (filters.address) params.append('address', filters.address);
-
-    if (debouncedQ) params.append('q', debouncedQ);
+    if (filters.cuisine_type) params.append("cuisine_type", filters.cuisine_type);
+    if (filters.address) params.append("address", filters.address);
+    if (debouncedQ) params.append("q", debouncedQ);
 
     if (coords && coords.lat != null && coords.lon != null) {
-      params.append('lat', coords.lat);
-      params.append('lon', coords.lon);
+      params.append("lat", coords.lat);
+      params.append("lon", coords.lon);
     }
 
-    api.get(`restaurants/?${params.toString()}`)
+    api
+      .get(`restaurants/?${params.toString()}`)
       .then((res) => {
         const data = res.data;
         if (Array.isArray(data)) {
-          
           setRestaurants(data);
         } else if (data && data.results) {
-          
           setRestaurants(data.results);
+        } else if (Array.isArray(data?.items)) {
+          setRestaurants(data.items);
+        } else if (Array.isArray(data?.data)) {
+          setRestaurants(data.data);
         } else {
-
-          if (Array.isArray(data?.items)) setRestaurants(data.items);
-          else if (Array.isArray(data?.data)) setRestaurants(data.data);
-          else setRestaurants([]);
+          setRestaurants([]);
         }
       })
       .catch((err) => {
-        console.error(t("error.getRestaurants"), err);
+        console.error("Error fetching restaurants:", err);
         setRestaurants([]);
       })
       .finally(() => setLoading(false));
-  }, [filters.cuisine_type, filters.address, debouncedQ, coords, t]);
+  }, [filters.cuisine_type, filters.address, debouncedQ, coords]);
 
   useEffect(() => {
     getRestaurants();
   }, [getRestaurants]);
 
+  // Handle filter & search actions
   const handleFilterChange = (filterName, value) => {
-    setFilters(prevFilters => ({
+    setFilters((prevFilters) => ({
       ...prevFilters,
       [filterName]: value,
     }));
   };
 
   const handleSearch = (query) => {
-    setFilters(prev => ({ ...prev, q: query || '' }));
+    setFilters((prev) => ({ ...prev, q: query || "" }));
   };
 
   const handleClearSearch = () => {
-    setFilters(prev => ({ ...prev, q: '' }));
+    setFilters((prev) => ({ ...prev, q: "" }));
   };
 
   const scrollToFilters = () => {
@@ -127,7 +133,6 @@ function HomePage() {
       filterRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
-  
 
   return (
     <div className="homepage-container">
@@ -135,23 +140,20 @@ function HomePage() {
 
       <main className="main-content">
         <QuickActions coords={coords} onScrollToFilters={scrollToFilters} />
-        
+
         <div ref={filterRef}>
-        <FilterSection
-          onFilterChange={handleFilterChange}
-          filters={filters}
-          areas={filtersData.areas || []}
-          cuisines={filtersData.cuisines || []}
-        />
+          <FilterSection
+            onFilterChange={handleFilterChange}
+            filters={filters}
+            areas={filtersData.areas || []}
+            cuisines={filtersData.cuisines || []}
+          />
         </div>
 
         {loading ? (
           <LoadingIndicator />
         ) : (
-          <RestaurantGrid
-            title={t("homepage.restaurantList")}
-            restaurants={restaurants}
-          />
+          <RestaurantGrid title="Restaurant List" restaurants={restaurants} />
         )}
       </main>
     </div>
