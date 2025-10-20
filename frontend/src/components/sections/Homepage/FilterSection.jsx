@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useTranslation } from "react-i18next";
-import "../../styles/user/HomePage.css";
+import "../../../styles/user/HomePage.css";
 
 function FilterSection({ onFilterChange, filters, areas, cuisines }) {
   const { t } = useTranslation();
@@ -50,12 +50,6 @@ function FilterSection({ onFilterChange, filters, areas, cuisines }) {
           </select>
         </div>
       </div>
-
-      {/* Map button */}
-      <button className="map-button">
-        <i className="fas fa-map-marker-alt icon"></i>
-        {t("filter.map")}
-      </button>
     </div>
   );
 }

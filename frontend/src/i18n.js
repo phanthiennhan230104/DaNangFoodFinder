@@ -33,7 +33,7 @@ i18n.use(initReactI18next).init({
         "filter.allAreas": "-- Tất cả khu vực --",
         "filter.cuisine": "Loại ẩm thực:",
         "filter.allCuisines": "-- Tất cả ẩm thực --",
-        "filter.map": "Xem bản đồ"
+        "filter.map": "Nhà hàng gần đây"
       },
     },
     en: {
@@ -66,7 +66,7 @@ i18n.use(initReactI18next).init({
         "filter.allAreas": "-- All areas --",
         "filter.cuisine": "Cuisine:",
         "filter.allCuisines": "-- All cuisines --",
-        "filter.map": "View map"
+        "filter.map": "Nearby restaurants"
       },
     },
   },
