@@ -1,6 +1,8 @@
 from typing import List
 import json
 
+import requests
+
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 
@@ -8,7 +10,7 @@ from rest_framework import generics, status, permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from django.utils import timezone
 from datetime import timedelta
 
@@ -350,3 +352,36 @@ class OverviewView(APIView):
             if(cui.get("is_email_verified")):
                 obj["active"] += 1
         return Response(obj)
+    
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def translate_view(request):
+    """
+    Translate text using Groq API (LLaMA 3)
+    """
+    text = request.data.get("text", "")
+    source = request.data.get("from", "en")
+    target = request.data.get("to", "vi")
+
+    if not text.strip():
+        return Response({"result": text})
+
+    try:
+        client = Groq(api_key=settings.GROQ_API_KEY)
+
+        completion = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {
+                    "role": "system",
+                    "content": f"You are a precise translator. Translate all text from {source} to {target}. Only output the translation, no extra explanation.",
+                },
+                {"role": "user", "content": text},
+            ],
+            temperature=0.2,
+        )
+
+        translated = completion.choices[0].message.content.strip()
+        return Response({"result": translated})
+    except Exception as e:
+        return Response({"result": text, "error": str(e)})

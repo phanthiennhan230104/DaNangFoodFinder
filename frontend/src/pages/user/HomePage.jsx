@@ -1,5 +1,3 @@
-// frontend/src/pages/HomePage/HomePage.jsx
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import api from "../../api";
 import HeroSection from "../../components/sections/Homepage/HeroSection";
@@ -32,10 +30,47 @@ function HomePage() {
     q: "",
   });
 
-  const [coords, setCoords] = useState(null);
+  const [coords, setCoords] = useState({ lat: 16.0678, lon: 108.2208 }); // 🟢 fallback mặc định: Đà Nẵng
   const debouncedQ = useDebounce(filters.q, 450);
 
-  // Fetch available filters (areas, cuisines)
+  // ✅ Hàm lấy vị trí người dùng có fallback
+  const getUserLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      console.warn("Trình duyệt không hỗ trợ định vị.");
+      return;
+    }
+
+    const success = (pos) => {
+      setCoords({
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+      });
+      console.log("📍 Định vị thành công:", pos.coords);
+    };
+
+    const error = (err) => {
+      console.warn("⚠️ Geolocation error:", err);
+      if (err.code === 1) {
+        alert("Bạn đã chặn truy cập vị trí. Hệ thống sẽ dùng vị trí mặc định Đà Nẵng.");
+      } else if (err.code === 3) {
+        console.warn("Timeout: dùng vị trí mặc định Đà Nẵng.");
+      }
+      setCoords({ lat: 16.0678, lon: 108.2208 }); // fallback
+    };
+
+    navigator.geolocation.getCurrentPosition(success, error, {
+      enableHighAccuracy: true,
+      timeout: 10000, // 10s thay vì 5s
+      maximumAge: 0,
+    });
+  }, []);
+
+  // 🧭 Gọi lấy vị trí khi load
+  useEffect(() => {
+    getUserLocation();
+  }, [getUserLocation]);
+
+  // Fetch filters (areas, cuisines)
   useEffect(() => {
     let mounted = true;
     api
@@ -47,25 +82,6 @@ function HomePage() {
       .catch((err) => {
         console.error("Error fetching filter data:", err);
       });
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Get current location (coords)
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    let mounted = true;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        if (!mounted) return;
-        setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-      },
-      (err) => {
-        console.warn("Geolocation error or denied:", err);
-      },
-      { enableHighAccuracy: false, maximumAge: 300000, timeout: 5000 }
-    );
     return () => {
       mounted = false;
     };
@@ -91,7 +107,7 @@ function HomePage() {
         const data = res.data;
         if (Array.isArray(data)) {
           setRestaurants(data);
-        } else if (data && data.results) {
+        } else if (data?.results) {
           setRestaurants(data.results);
         } else if (Array.isArray(data?.items)) {
           setRestaurants(data.items);
@@ -112,7 +128,6 @@ function HomePage() {
     getRestaurants();
   }, [getRestaurants]);
 
-  // Handle filter & search actions
   const handleFilterChange = (filterName, value) => {
     setFilters((prevFilters) => ({
       ...prevFilters,

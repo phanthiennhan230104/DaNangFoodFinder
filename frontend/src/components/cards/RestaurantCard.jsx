@@ -7,7 +7,7 @@ function RestaurantCard({ restaurant }) {
     <div className="restaurant-card">
       <img src={imageUrl} alt={restaurant.name} className="card-image" />
       <div className="card-content">
-        <h3 className="card-title">{restaurant.name}</h3>
+        <h3 className="card-title" data-no-translate>{restaurant.name}</h3>
         <p className="card-address">{restaurant.address}</p>
         <div className="card-footer">
           <span className="card-rating">⭐ {restaurant.average_rating}</span>
