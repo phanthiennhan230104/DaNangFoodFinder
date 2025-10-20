@@ -1,6 +1,8 @@
 import React from "react"
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { AuthProvider } from "./components/contexts/AuthContext";
+import AutoTranslateProvider from "./components/AutoTranslateProvider.jsx";
+import "./styles/auto-translate.css";
 import Navbar from "./components/layout/Navbar"
 import Login from "./pages/auth/Login"
 import Register from "./pages/auth/Register"
@@ -51,73 +53,75 @@ function Layout({ children }) {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              localStorage.getItem(ACCESS_TOKEN) ? (
-                localStorage.getItem("ROLE_ID") === "1" ? (
-                  <Navigate to="/admin/home" />
+    <AutoTranslateProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                localStorage.getItem(ACCESS_TOKEN) ? (
+                  localStorage.getItem("ROLE_ID") === "1" ? (
+                    <Navigate to="/admin/home" />
+                  ) : (
+                    <Navigate to="/home" />
+                  )
                 ) : (
-                  <Navigate to="/home" />
+                  <LandingPage />
                 )
-              ) : (
-                <LandingPage />
-              )
-            }
-          />
+              }
+            />
 
-          <Route
-            path="/*"
-            element={
-              <Layout>
-                <Routes>
-                  <Route
-                    path="home"
-                    element={
-                      <ProtectedRoute>
-                        <HomePage />
-                      </ProtectedRoute>
-                    }
-                  />
+            <Route
+              path="/*"
+              element={
+                <Layout>
+                  <Routes>
+                    <Route
+                      path="home"
+                      element={
+                        <ProtectedRoute>
+                          <HomePage />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                  <Route
-                    path="journey"
-                    element={
-                      <ProtectedRoute>
-                        <FoodJourneyPlanner />
-                      </ProtectedRoute>
-                    }
-                  />
+                    <Route
+                      path="journey"
+                      element={
+                        <ProtectedRoute>
+                          <FoodJourneyPlanner />
+                        </ProtectedRoute>
+                      }
+                    />
 
-                  {/* Admin */}
-                  <Route path="admin/crawl" element={<AdminCrawlDashboard />} />
-                  <Route path="/admin/crawl" element={<AdminCrawlDashboard />} />
-                  <Route path="/admin/home" element={<AdminHome />} />
-                  <Route path="/admin/accounts" element={<AccountManagement />} />
-                  <Route path="/admin/roles" element={<RoleManagement />} />
-                  <Route path="/admin/roles/add" element={<AddRole />} />
-                  <Route path="/admin/accounts/add" element={<AddAccount />} />
-                  <Route path="/admin/accounts/edit/:userId" element={<EditAccount />} />
-                  <Route path="/admin/roles/edit/:roleId" element={<EditRole />} />
+                    {/* Admin */}
+                    <Route path="admin/crawl" element={<AdminCrawlDashboard />} />
+                    <Route path="/admin/crawl" element={<AdminCrawlDashboard />} />
+                    <Route path="/admin/home" element={<AdminHome />} />
+                    <Route path="/admin/accounts" element={<AccountManagement />} />
+                    <Route path="/admin/roles" element={<RoleManagement />} />
+                    <Route path="/admin/roles/add" element={<AddRole />} />
+                    <Route path="/admin/accounts/add" element={<AddAccount />} />
+                    <Route path="/admin/accounts/edit/:userId" element={<EditAccount />} />
+                    <Route path="/admin/roles/edit/:roleId" element={<EditRole />} />
 
-                  {/* Auth */}
-                  <Route path="login" element={<Login />} />
-                  <Route path="logout" element={<Logout />} />
-                  <Route path="forgot-password" element={<ForgotPassword />} />
-                  <Route path="register" element={<RegisterAndLogout />} />
+                    {/* Auth */}
+                    <Route path="login" element={<Login />} />
+                    <Route path="logout" element={<Logout />} />
+                    <Route path="forgot-password" element={<ForgotPassword />} />
+                    <Route path="register" element={<RegisterAndLogout />} />
 
-                  {/* 404 */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+                    {/* 404 */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </AutoTranslateProvider>
   )
 }
 

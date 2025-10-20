@@ -39,7 +39,7 @@ function Navbar() {
       </div>
 
       <div className="navbar-center">
-        <h1 className="navbar-title">Da Nang Food Finder</h1>
+        <h1 className="navbar-title" data-no-translate>Da Nang Food Finder</h1>
       </div>
 
       <div className="navbar-right">
