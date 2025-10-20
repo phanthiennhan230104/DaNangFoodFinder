@@ -1,18 +1,14 @@
+// frontend/src/components/layout/Navbar.jsx
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../../api";
 import "../../styles/Navbar.css";
 
 function Navbar() {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
   const { logout } = useAuth();
-
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-  };
 
   const handleLogout = async () => {
     try {
@@ -48,15 +44,8 @@ function Navbar() {
 
       <div className="navbar-right">
         <button className="navbar-button logout" onClick={handleLogout}>
-          {t("logout")}
+          LOG OUT
         </button>
-        <select
-          className="navbar-select"
-          onChange={(e) => changeLanguage(e.target.value)}
-        >
-          <option value="vn">VN</option>
-          <option value="en">EN</option>
-        </select>
       </div>
     </div>
   );

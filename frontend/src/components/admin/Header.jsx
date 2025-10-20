@@ -27,7 +27,6 @@ function Header() {
         zIndex: "1000",
       }}
     >
-      {/* ✅ Không cần import logo */}
       <img src="/images/logo_dnff.png" alt="logo" width={60} />
 
       <div className="header-title">ADMIN MODE</div>
@@ -37,7 +36,7 @@ function Header() {
         className="logout-btn"
         onClick={handleLogout}
       >
-        <LogOut size={18} /> <span>Đăng xuất</span>
+        <LogOut size={18} /> <span>LOG OUT</span>
       </button>
     </header>
   );

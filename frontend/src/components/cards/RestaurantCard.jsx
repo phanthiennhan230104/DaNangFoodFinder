@@ -1,7 +1,6 @@
 import '../../styles/user/HomePage.css';
 
 function RestaurantCard({ restaurant }) {
-  // Giả sử restaurant.image là URL của ảnh
   const imageUrl = restaurant.image;
 
   return (

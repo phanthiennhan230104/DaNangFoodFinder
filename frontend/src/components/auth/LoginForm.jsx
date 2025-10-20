@@ -100,7 +100,6 @@ function LoginForm() {
               />
             </div>
 
-            {/* Password có con mắt 👁️ */}
             <div className="input-group password-group">
               <img className="icon" src="/images/lock.svg" alt="password" />
               <input

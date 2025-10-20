@@ -42,7 +42,6 @@ function AdminHome() {
       <div className="admin-dashboard">
         <WelcomeSection />
         <StatsGrid data={data} />
-        {/* <QuickActions /> */}
         <RecentActivity activities={activities} />
       </div>
     </AdminLayout>
