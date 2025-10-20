@@ -21,7 +21,6 @@ const FoodJourneyPlanner = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [restaurants, setRestaurants] = useState([]);
 
-  // 👉 gọi API backend
   useEffect(() => {
   const fetchRestaurants = async () => {
     try {
@@ -52,12 +51,10 @@ const FoodJourneyPlanner = () => {
   }, [budget, preferences, searchQuery]);
 
 
-  // 👉 Tính tổng chi phí
   const totalBudget = Object.values(journey)
     .filter(Boolean)
     .reduce((sum, r) => sum + (r.price || 0), 0);
 
-  // 👉 Hàm xử lý journey
   const addToJourney = (restaurant) => {
     setJourney((prev) => ({
       ...prev,
@@ -72,7 +69,6 @@ const FoodJourneyPlanner = () => {
   const isRestaurantInJourney = (restaurant) =>
     Object.values(journey).some((j) => j && j.id === restaurant.id);
 
-  // 👉 Nhóm nhà hàng theo meal_type
   const groupedRestaurants = {
     breakfast: restaurants.filter((r) => r.meal_type === "breakfast"),
     lunch: restaurants.filter((r) => r.meal_type === "lunch"),
@@ -81,9 +77,7 @@ const FoodJourneyPlanner = () => {
 
   return (
     <div className="food-journey-container">
-      {/* Controls */}
       <div className="controls-section">
-        {/* Chọn ngày */}
         <div className="control-group">
           <label className="control-label">
             <Calendar className="inline w-4 h-4 mr-1" />
@@ -97,13 +91,11 @@ const FoodJourneyPlanner = () => {
           />
         </div>
 
-        {/* Budget */}
         <div className="control-group">
           <span className="control-label">💰 Budget Range</span>
           <BudgetSelector budget={budget} setBudget={setBudget} />
         </div>
 
-        {/* Cuisine */}
         <div className="control-group">
           <span className="control-label">🍲 Cuisine Preferences</span>
           <CuisineSelector
@@ -112,7 +104,6 @@ const FoodJourneyPlanner = () => {
           />
         </div>
 
-        {/* Search */}
         <div className="search-section">
           <label className="control-label">
             <Search className="inline w-4 h-4 mr-1" />
@@ -128,7 +119,6 @@ const FoodJourneyPlanner = () => {
         </div>
       </div>
 
-      {/* Recommendations */}
       <div className="recommendations-section">
         {["breakfast", "lunch", "dinner"].map((mealType) => (
           <div className="meal-section" key={mealType}>
@@ -157,7 +147,6 @@ const FoodJourneyPlanner = () => {
         ))}
       </div>
 
-      {/* Timeline */}
       <div className="journey-timeline">
         <JourneyTimeline
           journey={journey}
