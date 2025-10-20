@@ -1,11 +1,12 @@
 // frontend/src/pages/HomePage/HomePage.jsx
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback,useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import HeroSection from '../../components/sections/HeroSection';
-import FilterSection from '../../components/sections/FilterSection';
-import RestaurantGrid from '../../components/sections/RestaurantGrid';
+import HeroSection from '../../components/sections/Homepage/HeroSection';
+import FilterSection from '../../components/sections/Homepage/FilterSection';
+import RestaurantGrid from '../../components/sections/Homepage/RestaurantGrid';
+import QuickActions from '../../components/sections/Homepage/QuickActions';
 import LoadingIndicator from '../../components/LoadingIndicator';
 import '../../styles/user/HomePage.css';
 
@@ -20,6 +21,7 @@ function useDebounce(value, delay = 400) {
 
 function HomePage() {
   const { t } = useTranslation();
+  const filterRef = useRef(null);
 
   const [restaurants, setRestaurants] = useState([]);
   const [filtersData, setFiltersData] = useState({ areas: [], cuisines: [] });
@@ -120,17 +122,28 @@ function HomePage() {
     setFilters(prev => ({ ...prev, q: '' }));
   };
 
+  const scrollToFilters = () => {
+    if (filterRef.current) {
+      filterRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+  
+
   return (
     <div className="homepage-container">
       <HeroSection onSearch={handleSearch} onClearSearch={handleClearSearch} />
 
       <main className="main-content">
+        <QuickActions coords={coords} onScrollToFilters={scrollToFilters} />
+        
+        <div ref={filterRef}>
         <FilterSection
           onFilterChange={handleFilterChange}
           filters={filters}
           areas={filtersData.areas || []}
           cuisines={filtersData.cuisines || []}
         />
+        </div>
 
         {loading ? (
           <LoadingIndicator />

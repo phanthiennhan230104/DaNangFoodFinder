@@ -1,6 +1,6 @@
 
-import RestaurantCard from '../cards/RestaurantCard';
-import '../../styles/user/HomePage.css';
+import RestaurantCard from '../../cards/RestaurantCard';
+import "../../../styles/user/HomePage.css";
 
 function RestaurantGrid({ title, restaurants }) {
   return (
