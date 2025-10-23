@@ -4,13 +4,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import "../../../styles/user/HomePage.css";
 
-export default function QuickActions({ coords, onScrollToFilters }) {
+export default function QuickActions({ onScrollToFilters }) {
   const navigate = useNavigate();
 
-  const goNearby = () => {
-    const q = coords?.lat && coords?.lon ? `?lat=${coords.lat}&lon=${coords.lon}` : "";
-    navigate(`/nearby${q}`);
-  };
+  const goNearby = () => navigate("/nearby");
 
   const goFavorites = () => navigate("/favorites");
   const goPlanner = () => navigate("/journey");

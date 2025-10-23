@@ -7,6 +7,7 @@ import Navbar from "./components/layout/Navbar"
 import Login from "./pages/auth/Login"
 import Register from "./pages/auth/Register"
 import HomePage from "./pages/user/HomePage"
+import RestaurantMap from "./pages/user/RestaurantMap"
 import NotFound from "./pages/NotFound"
 import ProtectedRoute from "./components/ProtectedRoute"
 import FoodJourneyPlanner from "./pages/user/FoodJourneyPlanner"
@@ -39,7 +40,7 @@ function RegisterAndLogout() {
 
 function Layout({ children }) {
   const location = useLocation()
-  const hideNavbarPaths = ["/login", "/register" ,"/admin/home","/forgot-password"]
+  const hideNavbarPaths = ["/login", "/register", "/admin/home", "/forgot-password"]
 
   const shouldHideNavbar = hideNavbarPaths.includes(location.pathname)
 
@@ -83,6 +84,15 @@ function App() {
                         <ProtectedRoute>
                           <HomePage />
                         </ProtectedRoute>
+                      }
+
+                    />
+                    <Route
+                      path="/nearby"
+                      element={
+                        <ProtectedRoute>
+                          <RestaurantMap />
+</ProtectedRoute>
                       }
                     />
 
