@@ -385,3 +385,64 @@ def translate_view(request):
         return Response({"result": translated})
     except Exception as e:
         return Response({"result": text, "error": str(e)})
+
+
+class CalculateRouteView(APIView):
+    """
+    POST /api/calculate_route/
+    Body: { "coordinates": [[lng1, lat1], [lng2, lat2]], "api_key": "optional_key" }
+    Returns GeoJSON route from OpenRouteService or OSRM fallback
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        coordinates = request.data.get("coordinates")
+        api_key = request.data.get("api_key", "")
+
+        if not coordinates or len(coordinates) != 2:
+            return Response({"error": "Invalid coordinates. Need exactly 2 points."}, status=400)
+
+        try:
+            # Try OpenRouteService first if API key provided
+            if api_key and api_key != 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQ3NzE3OGM2MzgyZDY4MDNkOWZkMjBkOTYxZTFhZjZjZWZiYTk1MzkzNjNlOGEzZDQ0ODYzMWMwIiwiaCI6Im11cm11cjY0In0':
+                ors_url = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson'
+                ors_response = requests.post(ors_url, json={"coordinates": coordinates}, headers={
+                    'Authorization': api_key,
+                    'Content-Type': 'application/json'
+                }, timeout=10)
+
+                if ors_response.status_code == 200:
+                    return Response(ors_response.json())
+
+            # Fallback to OSRM public server
+            osrm_url = f"https://router.project-osrm.org/route/v1/driving/{coordinates[0][0]},{coordinates[0][1]};{coordinates[1][0]},{coordinates[1][1]}?overview=full&geometries=geojson"
+            osrm_response = requests.get(osrm_url, timeout=10)
+
+            if osrm_response.status_code == 200:
+                osrm_data = osrm_response.json()
+                if osrm_data.get('routes') and len(osrm_data['routes']) > 0:
+                    route = osrm_data['routes'][0]
+                    # Convert OSRM format to GeoJSON similar to ORS
+                    geojson = {
+                        "type": "FeatureCollection",
+                        "features": [{
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "LineString",
+                                "coordinates": route['geometry']['coordinates']
+                            },
+                            "properties": {
+                                "summary": {
+                                    "distance": route['distance']
+                                }
+                            }
+                        }]
+                    }
+                    return Response(geojson)
+
+            return Response({"error": "Unable to calculate route from any service"}, status=500)
+
+        except requests.RequestException as e:
+            return Response({"error": f"Request failed: {str(e)}"}, status=500)
+        except Exception as e:
+            return Response({"error": f"Unexpected error: {str(e)}"}, status=500)
