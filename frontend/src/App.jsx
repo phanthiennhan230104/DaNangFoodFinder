@@ -24,6 +24,7 @@ import RoleManagement from "./pages/admin/RoleManagement"
 import AccountManagement from "./pages/admin/AccountManagement"
 import AddAccount from "./pages/admin/AddAccount"
 import AddRole from "./pages/admin/AddRole"
+import ChatbotWidget from "./components/ChatbotWidget";
 
 function Logout() {
   React.useEffect(() => {
@@ -105,6 +106,16 @@ function App() {
                       }
                     />
 
+                    <Route
+                      path="chat"
+                      element={
+                        <ProtectedRoute>
+                          <ChatbotWidget />
+                        </ProtectedRoute>
+                      }
+                    />
+  
+
                     {/* Admin */}
                     <Route path="admin/crawl" element={<AdminCrawlDashboard />} />
                     <Route path="/admin/crawl" element={<AdminCrawlDashboard />} />
@@ -129,11 +140,13 @@ function App() {
               }
             />
           </Routes>
+        {/* 🟢 Chatbot floating and visible on all pages */}
+          <ChatbotWidget />
+
         </BrowserRouter>
       </AuthProvider>
     </AutoTranslateProvider>
-  )
+  );
 }
 
-
-export default App
+export default App;

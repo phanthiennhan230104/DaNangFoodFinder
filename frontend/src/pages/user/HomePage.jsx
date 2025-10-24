@@ -163,7 +163,7 @@ function HomePage() {
             areas={filtersData.areas || []}
             cuisines={filtersData.cuisines || []}
           />
-        </div>
+        </div> 
 
         {loading ? (
           <LoadingIndicator />
