@@ -1,10 +1,4 @@
-.why-choose {
-  padding: 4.5rem 0 6rem;
-  scroll-margin-top: 85px;
-  background: white;
-}
 
-/* ============ Layout Grid ============ */
 .benefits-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -13,13 +7,12 @@
   align-items: stretch;
 }
 
-/* ============ Card Style ============ */
 .benefit-item {
   text-align: center;
   padding: 2rem;
   background: linear-gradient(135deg, #ffecb3, #fff8dc);
-  border-radius: 15px;
-  transition: all 0.3s ease;
+  border-radius: var(--border-radius-md);
+  transition: var(--transition-medium);
   border: 1px solid rgba(0, 0, 0, 0.05);
 
   display: flex;
@@ -33,29 +26,27 @@
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
 }
 
-/* ============ Content Style ============ */
 .benefit-icon {
   font-size: 2.5rem;
   margin-bottom: 1rem;
-  color: #d4691a;
+  color: var(--color-primary);
 }
 
 .benefit-item h5 {
   font-size: 1.3rem;
   margin-bottom: 1rem;
-  color: #d4691a;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
 .benefit-item p {
-  color: #666;
+  color: var(--color-text-light);
   line-height: 1.6;
   font-size: 1rem;
   max-width: 45ch;
   margin: auto auto 0 auto;
 }
 
-/* ============ Responsive ============ */
 @media (max-width: 1200px) {
   .benefits-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -63,10 +54,6 @@
 }
 
 @media (max-width: 992px) {
-  .why-choose {
-    padding: 4rem 0 5rem;
-    scroll-margin-top: 80px;
-  }
   .benefits-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 2rem;

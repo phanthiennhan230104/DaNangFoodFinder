@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import "../../styles/admin/AdminHome.css";
 
 function QuickActions() {
   const navigate = useNavigate();

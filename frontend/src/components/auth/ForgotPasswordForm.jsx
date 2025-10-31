@@ -41,7 +41,6 @@ export default function ForgotPasswordForm() {
     }
   };
 
-  // STEP 1: gửi email OTP
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     if (!validateEmail(email)) {
@@ -61,7 +60,6 @@ export default function ForgotPasswordForm() {
     }
   };
 
-  // STEP 2: verify OTP và nhận reset_token
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     if (!otp) {
@@ -82,7 +80,6 @@ export default function ForgotPasswordForm() {
     }
   };
 
-  // STEP 3: reset password
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (!password || password.length < 6) {
@@ -123,15 +120,17 @@ export default function ForgotPasswordForm() {
         {/* Left Side */}
         <div className="left-side">
           <div className="welcome-text">
-            <h1>Hello, Welcome!</h1>
+            <h1>Reset Access!</h1>
             <p>Let's help you reset your password</p>
           </div>
-          <button className="btn-register1" onClick={() => navigate("/login")}>
+          <button
+            className="btn btn-secondary-custom"
+            onClick={() => navigate("/login")}
+          >
             Login
           </button>
         </div>
 
-        {/* Right Side */}
         <div className="right-side">
           {step === 1 && (
             <>
@@ -149,7 +148,11 @@ export default function ForgotPasswordForm() {
                   />
                 </div>
                 {message && <p className="message">{message}</p>}
-                <button type="submit" className="btn-login1" disabled={loading}>
+                <button
+                  type="submit"
+                  className="btn btn-primary login-btn"
+                  disabled={loading}
+                >
                   {loading ? "Sending..." : "Get OTP"}
                 </button>
               </form>
@@ -172,7 +175,11 @@ export default function ForgotPasswordForm() {
                   />
                 </div>
                 {message && <p className="message">{message}</p>}
-                <button type="submit" className="btn-login1" disabled={loading}>
+                <button
+                  type="submit"
+                  className="btn btn-primary login-btn"
+                  disabled={loading}
+                >
                   {loading ? "Verifying..." : "Verify OTP"}
                 </button>
               </form>
@@ -183,8 +190,7 @@ export default function ForgotPasswordForm() {
             <>
               <h2>Set New Password</h2>
               <form onSubmit={handlePasswordSubmit}>
-                {/* New Password */}
-                <div className="input-group">
+                <div className="input-group password-group">
                   <img className="icon" src="/images/lock.svg" alt="password" />
                   <input
                     type={showPassword ? "text" : "password"}
@@ -194,16 +200,23 @@ export default function ForgotPasswordForm() {
                     required
                   />
                   <img
-                    src={showPassword ? "/images/eye.png" : "/images/eye-crossed.png"}
+                    src={
+                      showPassword
+                        ? "/images/eye.png"
+                        : "/images/eye-crossed.png"
+                    }
                     alt="toggle password visibility"
-                    className="toggle-eye"
+                    className="icon-eye"
                     onClick={() => setShowPassword(!showPassword)}
                   />
                 </div>
 
-                {/* Confirm Password */}
-                <div className="input-group">
-                  <img className="icon" src="/images/lock.svg" alt="confirm password" />
+                <div className="input-group password-group">
+                  <img
+                    className="icon"
+                    src="/images/lock.svg"
+                    alt="confirm password"
+                  />
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm Password"
@@ -212,15 +225,25 @@ export default function ForgotPasswordForm() {
                     required
                   />
                   <img
-                    src={showConfirmPassword ? "/images/eye.png" : "/images/eye-crossed.png"}
+                    src={
+                      showConfirmPassword
+                        ? "/images/eye.png"
+                        : "/images/eye-crossed.png"
+                    }
                     alt="toggle confirm password visibility"
-                    className="toggle-eye"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="icon-eye"
+                    onClick={() =>
+                      setShowConfirmPassword(!showConfirmPassword)
+                    }
                   />
                 </div>
 
                 {message && <p className="message">{message}</p>}
-                <button type="submit" className="btn-login1" disabled={loading}>
+                <button
+                  type="submit"
+                  className="btn btn-primary login-btn"
+                  disabled={loading}
+                >
                   {loading ? "Resetting..." : "Reset Password"}
                 </button>
               </form>
@@ -229,7 +252,7 @@ export default function ForgotPasswordForm() {
 
           {step === 4 && (
             <div className="success-container">
-              <p>{message}</p>
+              {message}
             </div>
           )}
         </div>

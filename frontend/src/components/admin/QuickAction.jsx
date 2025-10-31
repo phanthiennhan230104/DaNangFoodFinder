@@ -1,4 +1,3 @@
-import "../../styles/admin/AdminHome.css";
 
 function QuickActions() {
   return (
