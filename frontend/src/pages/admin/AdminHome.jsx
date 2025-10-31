@@ -4,7 +4,6 @@ import QuickActions from "../../components/admin/QuickActions";
 import RecentActivity from "../../components/admin/RecentActivity";
 import StatsGrid from "../../components/admin/StatsGrid";
 import WelcomeSection from "../../components/admin/WelcomeSection";
-import "../../styles/admin/AdminHome.css";
 import api from "../../api";
 import { FaCheckCircle, FaCogs, FaUsers } from "react-icons/fa";
 

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Key, Lock, CheckIcon } from "lucide-react";
 import api from "../../api.js";
-import "../../styles/auth/Register.css";
+import "../../styles/auth/Login&ForgotPasswordForm.css";
+import LoadingIndicator from "../LoadingIndicator.jsx";
 
 export default function RegisterForm() {
   const [step, setStep] = useState(1);
@@ -26,6 +27,10 @@ export default function RegisterForm() {
     e.preventDefault();
     const { email, password, confirmPassword } = formData;
 
+    if (password.length < 6) {
+      setMessage("Password must be at least 6 characters");
+      return;
+    }
     if (password !== confirmPassword) {
       setMessage("Passwords do not match!");
       return;
@@ -61,12 +66,13 @@ export default function RegisterForm() {
     try {
       await api.post("auth/verify-otp/", { email: formData.email, otp });
       setMessage(
-        <div className="input-group success-message">
+        <div className="success-message">
           <CheckIcon className="check-icon" />
-          <p>Registration verified successfully!</p>
+          <span>Registration verified successfully!</span>
         </div>
       );
       setStep(3);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       console.error(err);
       setMessage(err.response?.data?.error || "Invalid or expired OTP");
@@ -76,15 +82,26 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="register-page">
-      <div className="register-container">
-        {/* Left Side */}
-        <div className="register-left">
+    /* === THAY ĐỔI 3: Dùng class CSS chung === */
+    <div className="login">
+      <div className="login-container">
+        <div className="left-side">
+          <div className="welcome-text">
+            <h1>Join Us Today!</h1>
+            <p>Already have an account?</p>
+          </div>
+          <button
+            className="btn btn-secondary-custom"
+            onClick={() => navigate("/login")}
+          >
+            Login
+          </button>
+        </div>
+        <div className="right-side">
           {step === 1 && (
             <>
-              <h1 className="register-title">Registration</h1>
-              <form onSubmit={handleRegisterSubmit} className="register-form">
-                {/* Email */}
+              <h2>Registration</h2>
+              <form onSubmit={handleRegisterSubmit}>
                 <div className="input-group">
                   <Mail className="icon" />
                   <input
@@ -97,8 +114,7 @@ export default function RegisterForm() {
                   />
                 </div>
 
-                {/* Password */}
-                <div className="input-group" style={{ position: "relative" }}>
+                <div className="input-group password-group">
                   <Lock className="icon" />
                   <input
                     type={showPassword ? "text" : "password"}
@@ -115,13 +131,12 @@ export default function RegisterForm() {
                         : "/images/eye-crossed.png"
                     }
                     alt="toggle password visibility"
-                    className="toggle-eye"
+                    className="icon-eye"
                     onClick={() => setShowPassword(!showPassword)}
                   />
                 </div>
 
-                {/* Confirm Password */}
-                <div className="input-group" style={{ position: "relative" }}>
+                <div className="input-group password-group">
                   <Lock className="icon" />
                   <input
                     type={showConfirmPassword ? "text" : "password"}
@@ -138,7 +153,7 @@ export default function RegisterForm() {
                         : "/images/eye-crossed.png"
                     }
                     alt="toggle confirm password visibility"
-                    className="toggle-eye"
+                    className="icon-eye"
                     onClick={() =>
                       setShowConfirmPassword(!showConfirmPassword)
                     }
@@ -146,9 +161,10 @@ export default function RegisterForm() {
                 </div>
 
                 {message && <p className="message">{message}</p>}
+                {loading && <LoadingIndicator />}
                 <button
                   type="submit"
-                  className="btn-register"
+                  className="btn btn-primary login-btn"
                   disabled={loading}
                 >
                   {loading ? "Processing..." : "Register"}
@@ -157,12 +173,13 @@ export default function RegisterForm() {
             </>
           )}
 
-          {/* STEP 2: OTP */}
           {step === 2 && (
             <>
-              <h1 className="register-title">Verify OTP</h1>
-              <p>Enter the OTP sent to {formData.email}</p>
-              <form onSubmit={handleOtpSubmit} className="register-form">
+              <h2>Verify OTP</h2>
+              <p style={{ textAlign: "center", marginBottom: "1rem" }}>
+                Enter the OTP sent to {formData.email}
+              </p>
+              <form onSubmit={handleOtpSubmit}>
                 <div className="input-group">
                   <Key className="icon" />
                   <input
@@ -176,9 +193,10 @@ export default function RegisterForm() {
                 </div>
 
                 {message && <p className="message">{message}</p>}
+                {loading && <LoadingIndicator />}
                 <button
                   type="submit"
-                  className="btn-register"
+                  className="btn btn-primary login-btn"
                   disabled={loading}
                 >
                   {loading ? "Verifying..." : "Verify OTP"}
@@ -187,23 +205,11 @@ export default function RegisterForm() {
             </>
           )}
 
-          {/* STEP 3: Success */}
           {step === 3 && (
-            <div className="register-success">
+            <div className="success-container">
               {message}
             </div>
           )}
-        </div>
-
-        {/* Right Side */}
-        <div className="register-right">
-          <div className="welcome-text">
-            <h2>Welcome Back!</h2>
-            <p>Already have an account?</p>
-          </div>
-          <button className="btn-login" onClick={() => navigate("/login")}>
-            Login
-          </button>
         </div>
       </div>
     </div>

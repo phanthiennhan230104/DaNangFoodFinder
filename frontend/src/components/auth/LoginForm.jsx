@@ -76,10 +76,10 @@ function LoginForm() {
       <div className="login-container">
         <div className="left-side">
           <div className="welcome-text">
-            <h1>Hello, Welcome!</h1>
+            <h1>Welcome Back!</h1>
             <p>Don't have an account?</p>
           </div>
-          <button className="btn-register1" onClick={handleRegister}>
+          <button className="btn btn-secondary-custom" onClick={handleRegister}>
             Register
           </button>
         </div>
@@ -128,7 +128,7 @@ function LoginForm() {
             </div>
 
             {loading && <LoadingIndicator />}
-            <button type="submit" className="btn-login1" disabled={loading}>
+            <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
               {loading ? "Logging in..." : "Login"}
             </button>
           </form>
