@@ -3,10 +3,6 @@ from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 
-# =================================================================================
-# CUSTOM USER & ROLE
-# =================================================================================
-
 class Role(models.Model):
     role_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
@@ -17,7 +13,6 @@ class Role(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -43,7 +38,6 @@ class CustomUserManager(BaseUserManager):
         )
         extra_fields["role"] = role
         return self.create_user(email, password, **extra_fields)
-
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     user_id = models.AutoField(primary_key=True)
@@ -90,10 +84,6 @@ class Account(models.Model):
         return self.user.email
 
 
-# =================================================================================
-# MODELS DỮ LIỆU THÔ TỪ CRAWLER
-# =================================================================================
-
 class CrawledSource(models.Model):
     name = models.CharField(max_length=255, unique=True, help_text="Tên của nguồn dữ liệu, ví dụ: Foody")
     base_url = models.URLField(max_length=255, blank=True, null=True, help_text="URL gốc của trang web")
@@ -123,10 +113,6 @@ class CrawledData(models.Model):
         return f"Dữ liệu từ {self.source.name} - {self.status}"
 
 
-
-# =================================================================================
-# MODELS DỮ LIỆU SẠCH CHO ỨNG DỤNG VÀ RAG
-# =================================================================================
 
 class Restaurant(models.Model):
     name = models.CharField(max_length=255)
@@ -177,11 +163,6 @@ class Feedback(models.Model):
         sender = self.user.email if self.user else "Anonymous"
         return f"[{self.feedback_type}] {sender} - {self.subject or 'No subject'}"
 
-
-
-# =================================================================================
-# MODELS CHO TÍNH NĂNG NGƯỜI DÙNG
-# =================================================================================
 
 class Favorite(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='favorites')

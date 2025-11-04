@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Restaurant, FoodJourney
+from .models import Restaurant, FoodJourney, Profile
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
@@ -43,6 +43,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
     
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = [
+            'user_id', 'fullname', 'dob', 'gender', 'phone', 'address'
+        ]
+        read_only_fields = ['user_id']
+        
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = "email"
 

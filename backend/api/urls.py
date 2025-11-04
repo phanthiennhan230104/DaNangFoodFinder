@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     RestaurantListView, CuisineListView,
     JourneyRecommendationsView, FoodJourneyUpsertView,
-    OverviewView, get_filters, translate_view, CalculateRouteView
+    OverviewView, get_filters, translate_view, CalculateRouteView, get_my_profile
 )
 from rest_framework_simplejwt.views import TokenBlacklistView
 
@@ -17,5 +17,5 @@ urlpatterns = [
     path("translate/", translate_view, name="translate"),
     path("calculate_route/", CalculateRouteView.as_view(), name="calculate_route"),
     path("route/", CalculateRouteView.as_view(), name="route"),
-
-]
+    path("profiles/me/", get_my_profile, name="profile_me")
+]   
