@@ -76,7 +76,7 @@ function LoginForm() {
       <div className="login-container">
         <div className="left-side">
           <div className="welcome-text">
-            <h1>Welcome Back!</h1>
+            <h1>Welcome back!</h1>
             <p>Don't have an account?</p>
           </div>
           <button className="btn btn-secondary-custom" onClick={handleRegister}>

@@ -1,7 +1,7 @@
 import React from "react";
 import useSmoothScroll from "../hooks/useSmoothScroll";
 
-import Header from "../components/sections/LandingPage/Header";
+import Header from "../components/layout/Header";
 import HeroMain from "../components/sections/LandingPage/HeroMain";
 import About from "../components/sections/LandingPage/About";
 import Features from "../components/sections/LandingPage/Features";

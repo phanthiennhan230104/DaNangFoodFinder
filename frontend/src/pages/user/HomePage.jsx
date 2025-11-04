@@ -5,9 +5,9 @@ import FilterSection from "../../components/sections/Homepage/FilterSection";
 import RestaurantGrid from "../../components/sections/Homepage/RestaurantGrid";
 import QuickActions from "../../components/sections/Homepage/QuickActions";
 import LoadingIndicator from "../../components/LoadingIndicator";
+import Footer from "../../components/layout/Footer";
 import "../../styles/user/HomePage.css";
 
-// Hook: Debounce input value
 function useDebounce(value, delay = 400) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -30,10 +30,9 @@ function HomePage() {
     q: "",
   });
 
-  const [coords, setCoords] = useState({ lat: 16.0678, lon: 108.2208 }); // 🟢 fallback mặc định: Đà Nẵng
+  const [coords, setCoords] = useState({ lat: 16.0678, lon: 108.2208 });
   const debouncedQ = useDebounce(filters.q, 450);
 
-  // ✅ Hàm lấy vị trí người dùng có fallback
   const getUserLocation = useCallback(() => {
     if (!navigator.geolocation) {
       console.warn("Trình duyệt không hỗ trợ định vị.");
@@ -55,22 +54,20 @@ function HomePage() {
       } else if (err.code === 3) {
         console.warn("Timeout: dùng vị trí mặc định Đà Nẵng.");
       }
-      setCoords({ lat: 16.0678, lon: 108.2208 }); // fallback
+      setCoords({ lat: 16.0678, lon: 108.2208 });
     };
 
     navigator.geolocation.getCurrentPosition(success, error, {
       enableHighAccuracy: true,
-      timeout: 10000, // 10s thay vì 5s
+      timeout: 10000,
       maximumAge: 0,
     });
   }, []);
 
-  // 🧭 Gọi lấy vị trí khi load
   useEffect(() => {
     getUserLocation();
   }, [getUserLocation]);
 
-  // Fetch filters (areas, cuisines)
   useEffect(() => {
     let mounted = true;
     api
@@ -87,7 +84,6 @@ function HomePage() {
     };
   }, []);
 
-  // Fetch restaurant list
   const getRestaurants = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -171,6 +167,7 @@ function HomePage() {
           <RestaurantGrid title="Restaurant List" restaurants={restaurants} />
         )}
       </main>
+      <Footer />
     </div>
   );
 }

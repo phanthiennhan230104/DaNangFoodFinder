@@ -87,7 +87,7 @@ export default function RegisterForm() {
       <div className="login-container">
         <div className="left-side">
           <div className="welcome-text">
-            <h1>Join Us Today!</h1>
+            <h1>Join us today!</h1>
             <p>Already have an account?</p>
           </div>
           <button

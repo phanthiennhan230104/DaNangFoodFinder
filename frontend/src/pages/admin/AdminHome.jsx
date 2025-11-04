@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
-import QuickActions from "../../components/admin/QuickActions";
 import RecentActivity from "../../components/admin/RecentActivity";
 import StatsGrid from "../../components/admin/StatsGrid";
 import WelcomeSection from "../../components/admin/WelcomeSection";
 import api from "../../api";
 import { FaCheckCircle, FaCogs, FaUsers } from "react-icons/fa";
+import "../../styles/admin/AdminHome.css";
+
 
 function AdminHome() {
 
