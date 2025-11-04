@@ -120,7 +120,7 @@ export default function ForgotPasswordForm() {
         {/* Left Side */}
         <div className="left-side">
           <div className="welcome-text">
-            <h1>Reset Access!</h1>
+            <h1>Reset access!</h1>
             <p>Let's help you reset your password</p>
           </div>
           <button

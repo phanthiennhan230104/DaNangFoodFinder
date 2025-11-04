@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider } from "./components/contexts/AuthContext";
 import AutoTranslateProvider from "./components/AutoTranslateProvider.jsx";
 import "./styles/auto-translate.css";
-import Navbar from "./components/layout/Navbar"
+import Header from "./components/layout/Header"
 import Login from "./pages/auth/Login"
 import Register from "./pages/auth/Register"
 import HomePage from "./pages/user/HomePage"
@@ -41,13 +41,13 @@ function RegisterAndLogout() {
 
 function Layout({ children }) {
   const location = useLocation()
-  const hideNavbarPaths = ["/login", "/register", "/admin/home", "/forgot-password"]
+  const hideHeaderPaths = ["/login", "/register", "/forgot-password"]
 
-  const shouldHideNavbar = hideNavbarPaths.includes(location.pathname)
+  const shouldHideHeader = hideHeaderPaths.includes(location.pathname)
 
   return (
     <>
-      {!shouldHideNavbar && <Navbar />}
+      {!shouldHideHeader && <Header />}
       {children}
     </>
   )
