@@ -16,18 +16,20 @@ from datetime import timedelta
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.permissions import IsAuthenticated
 
 from groq import Groq
 from django.conf import settings
 import re
 
-from .models import Restaurant, FoodJourney, CustomUser,CrawledData
+from .models import Restaurant, FoodJourney, CustomUser,CrawledData, Profile
 from .serializers import (
     UserSerializer,
     RestaurantSerializer,
     FoodJourneySerializer,
     RegisterSerializer,
     CustomTokenObtainPairSerializer,
+    ProfileSerializer
 )
 from .services.journey_recommender import (
     Candidate,
@@ -39,10 +41,6 @@ from .services.journey_recommender import (
 
 User = get_user_model()
 
-
-# -----------------------------
-# AUTH
-# -----------------------------
 class RegisterView(generics.CreateAPIView):
     """API cho Đăng ký user mới."""
     queryset = User.objects.all()
@@ -53,10 +51,6 @@ class RegisterView(generics.CreateAPIView):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
-
-# -----------------------------
-# RESTAURANTS
-# -----------------------------
 class RestaurantListView(generics.ListAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
@@ -94,11 +88,21 @@ def get_filters(request):
         "areas": sorted(list(areas)),
         "cuisines": [c for c in cuisines if c],
     })
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_my_profile(request):
+    user = request.user
 
+    try:
+        profile = Profile.objects.get(user_id=user.user_id)
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Profile.DoesNotExist:
+        return Response({"detail": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class CuisineListView(APIView):
-    """API để lấy danh sách các loại ẩm thực duy nhất."""
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
@@ -106,10 +110,6 @@ class CuisineListView(APIView):
         filtered_cuisines = [c for c in cuisines if c]
         return Response(sorted(filtered_cuisines))
 
-
-# -----------------------------
-# FOOD JOURNEY
-# -----------------------------
 class JourneyRecommendationsView(APIView):
     """
     GET /api/journey/restaurants/
@@ -136,14 +136,12 @@ class JourneyRecommendationsView(APIView):
         ]
         search = request.GET.get("search", "")
 
-        # Query restaurants
         qs = Restaurant.objects.all()
         if preferences:
             qs = qs.filter(cuisine_type__in=preferences)
         if search:
             qs = qs.filter(Q(name__icontains=search) | Q(address__icontains=search))
 
-        # Build candidates
         candidates: List[Candidate] = []
         for r in qs:
             price_val = parse_price_range(r.price_range, default_price=0)
@@ -162,7 +160,6 @@ class JourneyRecommendationsView(APIView):
                 )
             )
 
-        # -------- AI strategy --------
         if strategy == "ai":
             client = Groq(api_key=settings.GROQ_API_KEY)
 
@@ -171,20 +168,20 @@ class JourneyRecommendationsView(APIView):
                 for c in candidates
             )
             prompt = f"""
-User budget: {budget} VND
-Preferences: {", ".join(preferences) if preferences else "None"}
-Candidate restaurants:
-{candidates_text}
+                    User budget: {budget} VND
+                    Preferences: {", ".join(preferences) if preferences else "None"}
+                    Candidate restaurants:
+                    {candidates_text}
 
-Please suggest exactly 3 restaurants: breakfast, lunch, dinner.
-Make sure total price <= budget.
-Return JSON only, like:
-{{
-  "breakfast": {{"id": <id>, "name": "<name>"}},
-  "lunch": {{"id": <id>, "name": "<name>"}},
-  "dinner": {{"id": <id>, "name": "<name>"}}
-}}
-"""
+                    Please suggest exactly 3 restaurants: breakfast, lunch, dinner.
+                    Make sure total price <= budget.
+                    Return JSON only, like:
+                    {{
+                    "breakfast": {{"id": <id>, "name": "<name>"}},
+                    "lunch": {{"id": <id>, "name": "<name>"}},
+                    "dinner": {{"id": <id>, "name": "<name>"}}
+                    }}
+                    """
 
             resp = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
@@ -208,7 +205,6 @@ Return JSON only, like:
                 status=200,
             )
 
-        # -------- Simple strategy --------
         top_k = int(request.GET.get("top_k", 6))
         breakfast_cut = int(request.GET.get("breakfast_cut", 100000))
         dinner_cut = int(request.GET.get("dinner_cut", 200000))
@@ -403,7 +399,6 @@ class CalculateRouteView(APIView):
             return Response({"error": "Invalid coordinates. Need exactly 2 points."}, status=400)
 
         try:
-            # Try OpenRouteService first if API key provided
             if api_key and api_key != 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQ3NzE3OGM2MzgyZDY4MDNkOWZkMjBkOTYxZTFhZjZjZWZiYTk1MzkzNjNlOGEzZDQ0ODYzMWMwIiwiaCI6Im11cm11cjY0In0':
                 ors_url = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson'
                 ors_response = requests.post(ors_url, json={"coordinates": coordinates}, headers={
@@ -414,7 +409,6 @@ class CalculateRouteView(APIView):
                 if ors_response.status_code == 200:
                     return Response(ors_response.json())
 
-            # Fallback to OSRM public server
             osrm_url = f"https://router.project-osrm.org/route/v1/driving/{coordinates[0][0]},{coordinates[0][1]};{coordinates[1][0]},{coordinates[1][1]}?overview=full&geometries=geojson"
             osrm_response = requests.get(osrm_url, timeout=10)
 
@@ -422,7 +416,6 @@ class CalculateRouteView(APIView):
                 osrm_data = osrm_response.json()
                 if osrm_data.get('routes') and len(osrm_data['routes']) > 0:
                     route = osrm_data['routes'][0]
-                    # Convert OSRM format to GeoJSON similar to ORS
                     geojson = {
                         "type": "FeatureCollection",
                         "features": [{
