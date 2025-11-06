@@ -1,0 +1,143 @@
+/* ============================
+   Profile Form Custom Styles
+   ============================ */
+
+.profile-container {
+  background-color: #f5f5dc; /* nền be nhẹ giống food-journey */
+  min-height: 100vh;
+  padding: 2rem;
+  font-family: 'Courier New', monospace;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-card {
+  background-color: #ffffff;
+  border: 2px solid #333;
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 640px;
+  transition: all 0.2s ease;
+}
+
+.profile-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.profile-header h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ef4444;
+  margin-bottom: 0.5rem;
+}
+
+.profile-header p {
+  font-size: 1rem;
+  color: #666;
+}
+
+.profile-field {
+  margin-bottom: 1.5rem;
+}
+
+.profile-label {
+  display: block;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.profile-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #333;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 1rem;
+  background: #fff;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.profile-input:focus {
+  outline: none;
+  border-color: #ef4444;
+  background-color: #fff;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+}
+
+.profile-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 2px solid #333;
+  background-color: #fff;
+  color: #333;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+  background-color: #e0e0e0;
+}
+
+.btn-save {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-save:hover {
+  background-color: #555;
+}
+
+/* responsive */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 1rem;
+  }
+
+  .profile-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .profile-field {
+    margin-bottom: 1rem;
+  }
+}
+.profile-card {
+  background-color: #fff;
+  border: 2px solid #333;
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 640px;
+  margin-top: 100px; /* đẩy card xuống */
+  transition: all 0.2s ease;
+}

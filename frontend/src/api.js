@@ -39,5 +39,15 @@ export const getJourneyByDate = async (token, date) => {
   });
   return res.data;
 };
+// Lưu/update thông tin người dùng
+export const saveUserProfile = async (profileData) => {
+    try {
+        const res = await api.put("/profile/", profileData);
+        return res.data;
+    } catch (error) {
+        console.error("API error:", error.response?.data || error.message);
+        throw error;
+    }
+};
 
 export default api;

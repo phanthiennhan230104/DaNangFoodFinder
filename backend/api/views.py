@@ -10,6 +10,7 @@ Gồm các nhóm:
 
 from typing import List
 import json
+import logging
 import re
 import requests
 from datetime import timedelta
@@ -44,6 +45,8 @@ from .services.journey_recommender import (
     score_candidate,
     pick_best_triplet,
 )
+from .models import Profile
+from .serializers import ProfileSerializer
 
 User = get_user_model()
 
@@ -439,3 +442,71 @@ class CalculateRouteView(APIView):
             return Response({"error": f"Request failed: {e}"}, status=500)
         except Exception as e:
             return Response({"error": f"Unexpected error: {e}"}, status=500)
+
+logger = logging.getLogger(__name__)
+
+
+class ProfileView(generics.GenericAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_object(self):
+        """Get or create profile for current user"""
+        try:
+            profile, created = Profile.objects.get_or_create(
+                user=self.request.user,
+                defaults={
+                    'fullname': '',
+                    'dob': '2000-01-01',
+                    'gender': ''
+                }
+            )
+            logger.info(f"Profile {'created' if created else 'retrieved'} for user {self.request.user.email}")
+            return profile
+        except Exception as e:
+            logger.error(f"Error getting profile for user {self.request.user.email}: {str(e)}")
+            raise
+    
+    def get(self, request):
+        """Retrieve user profile"""
+        try:
+            logger.info(f"GET /profile/ - User: {request.user.email}")
+            profile = self.get_object()
+            serializer = self.get_serializer(profile)
+            logger.info(f"Profile data: {serializer.data}")
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"GET /profile/ error: {str(e)}")
+            return Response(
+                {"detail": f"Error retrieving profile: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def post(self, request):
+        """Create or update user profile"""
+        try:
+            logger.info(f"POST /profile/ - User: {request.user.email}")
+            logger.info(f"Request data: {request.data}")
+            
+            profile = self.get_object()
+            serializer = self.get_serializer(profile, data=request.data, partial=True)
+            
+            if serializer.is_valid():
+                serializer.save()
+                logger.info(f"✅ Profile saved successfully for {request.user.email}")
+                logger.info(f"Saved data: {serializer.data}")
+                
+                return Response({
+                    "message": "Profile saved successfully",
+                    "data": serializer.data
+                }, status=status.HTTP_200_OK)
+            else:
+                logger.warning(f"❌ Validation errors: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            logger.error(f"❌ POST /profile/ error: {str(e)}", exc_info=True)
+            return Response(
+                {"detail": f"Error saving profile: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
