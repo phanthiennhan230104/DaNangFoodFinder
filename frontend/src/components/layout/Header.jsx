@@ -49,8 +49,8 @@ export default function Header() {
       api
         .get("/profiles/me/")
         .then((res) => {
-          if (res.status === 200 && res.data?.fullname) {
-            setFullName(res.data.fullname);
+          if (res.status === 200 && res.data?.fullName) {
+            setFullName(res.data.fullName);
           }
         })
         .catch(() => {
