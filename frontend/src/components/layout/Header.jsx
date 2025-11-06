@@ -28,6 +28,7 @@ export default function Header() {
   const isLoggedIn = !!localStorage.getItem(ACCESS_TOKEN);
   const roleId = localStorage.getItem("ROLE_ID");
   const username = localStorage.getItem("USERNAME") || "User";
+  const [fullName, setFullName] = useState("");
 
   const handleLogout = async () => {
     try {
@@ -42,6 +43,21 @@ export default function Header() {
       navigate("/login");
     }
   };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      api
+        .get("/profiles/me/")
+        .then((res) => {
+          if (res.status === 200 && res.data?.fullname) {
+            setFullName(res.data.fullname);
+          }
+        })
+        .catch(() => {
+          setFullName("");
+        });
+    }
+  }, [isLoggedIn]);
 
   // 🌐 Layout 1 - Landing (Chưa login)
   if (!isLoggedIn && location.pathname === "/") {
@@ -81,12 +97,14 @@ export default function Header() {
           </ul>
 
           <div className="auth-buttons">
-            <span className="welcome-text">Welcome, Admin</span>
+            <span className="welcome-text">
+              {fullName ? `Welcome, ${fullName}` : "Welcome, Admin"}
+            </span>
             <button className="btn btn-secondary" onClick={handleLogout}>Log out</button>
           </div>
         </nav>
       </header>
-    );x
+    );
   }
 
   // 👤 Layout 3 - User
