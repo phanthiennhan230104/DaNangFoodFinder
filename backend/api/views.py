@@ -1,35 +1,41 @@
+"""
+views.py — DNFF Backend (Refactored)
+------------------------------------
+Gồm các nhóm:
+1️⃣ Authentication & User Profile
+2️⃣ Restaurant APIs
+3️⃣ Journey / Planner APIs
+4️⃣ Utility APIs (Translation, Overview, Routing)
+"""
+
 from typing import List
 import json
-
+import re
 import requests
+from datetime import timedelta
 
 from django.db.models import Q
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+from django.conf import settings
 
 from rest_framework import generics, status, permissions
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from django.utils import timezone
-from datetime import timedelta
-
 from rest_framework_simplejwt.views import TokenObtainPairView
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import IsAuthenticated
 
 from groq import Groq
-from django.conf import settings
-import re
 
-from .models import Restaurant, FoodJourney, CustomUser,CrawledData, Profile
+from .models import Restaurant, FoodJourney, CustomUser, CrawledData, Profile
 from .serializers import (
     UserSerializer,
     RestaurantSerializer,
     FoodJourneySerializer,
     RegisterSerializer,
     CustomTokenObtainPairSerializer,
-    ProfileSerializer
+    ProfileSerializer,
 )
 from .services.journey_recommender import (
     Candidate,
@@ -41,38 +47,71 @@ from .services.journey_recommender import (
 
 User = get_user_model()
 
+
+# ==============================================================
+# 1️⃣ AUTHENTICATION & USER PROFILE
+# ==============================================================
+
 class RegisterView(generics.CreateAPIView):
-    """API cho Đăng ký user mới."""
+    """Đăng ký người dùng mới."""
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+    """Đăng nhập và lấy JWT token."""
     serializer_class = CustomTokenObtainPairSerializer
 
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_my_profile(request):
+    """Lấy thông tin hồ sơ người dùng hiện tại."""
+    try:
+        profile = Profile.objects.get(user_id=request.user.user_id)
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Profile.DoesNotExist:
+        return Response(
+            {"detail": "Profile not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
+
+# ==============================================================
+# 2️⃣ RESTAURANT APIS
+# ==============================================================
+
 class RestaurantListView(generics.ListAPIView):
+    """
+    Danh sách nhà hàng (có lọc theo address & cuisine_type)
+    Hỗ trợ query param:
+      - address=Hải Châu
+      - cuisine_type=Việt Nam
+      - limit=8
+    """
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
         qs = super().get_queryset()
-        address_param = self.request.query_params.get("address")
-        cuisine_param = self.request.query_params.get("cuisine_type")
+        address = self.request.query_params.get("address")
+        cuisine = self.request.query_params.get("cuisine_type")
+        limit = int(self.request.query_params.get("limit", 8))
 
-        if address_param:
-            qs = qs.filter(address__icontains=f"Quận {address_param}")
-        if cuisine_param:
-            qs = qs.filter(cuisine_type=cuisine_param)
+        if address:
+            qs = qs.filter(address__icontains=f"Quận {address}")
+        if cuisine:
+            qs = qs.filter(cuisine_type=cuisine)
 
-        return qs
+        return qs[:limit]
 
 
 @api_view(["GET"])
 def get_filters(request):
     """
-    API để lấy danh sách khu vực (theo Quận) và loại ẩm thực (cuisine_type) duy nhất.
+    Lấy danh sách khu vực (Quận) & loại ẩm thực (cuisine_type) duy nhất.
     """
     addresses = Restaurant.objects.values_list("address", flat=True).distinct()
     areas = set()
@@ -88,46 +127,37 @@ def get_filters(request):
         "areas": sorted(list(areas)),
         "cuisines": [c for c in cuisines if c],
     })
-    
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_my_profile(request):
-    user = request.user
-
-    try:
-        profile = Profile.objects.get(user_id=user.user_id)
-        serializer = ProfileSerializer(profile)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    except Profile.DoesNotExist:
-        return Response({"detail": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class CuisineListView(APIView):
+    """Trả danh sách loại ẩm thực duy nhất."""
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         cuisines = Restaurant.objects.values_list("cuisine_type", flat=True).distinct()
-        filtered_cuisines = [c for c in cuisines if c]
-        return Response(sorted(filtered_cuisines))
+        filtered = [c for c in cuisines if c]
+        return Response(sorted(filtered))
+
+
+# ==============================================================
+# 3️⃣ JOURNEY / FOOD PLANNER
+# ==============================================================
 
 class JourneyRecommendationsView(APIView):
     """
+    Gợi ý hành trình ăn uống (simple hoặc AI).
     GET /api/journey/restaurants/
     Query params:
       - budget=300000
       - preferences=Ẩm thực
       - search=keyword
-      - top_k=6
-      - breakfast_cut=100000
-      - dinner_cut=200000
-      - over_allow_ratio=0.1
-      - split_ratio=0.3,0.4,0.3
-      - weights=0.5,0.3,0.2
-      - strategy=simple | ai
+      - strategy=simple|ai
+      - top_k, weights, split_ratio ...
     """
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
+        # --- Lấy tham số ---
         strategy = request.GET.get("strategy", "simple")
         budget = int(request.GET.get("budget", 300000))
         preferences_raw = request.GET.get("preferences", "")
@@ -136,12 +166,14 @@ class JourneyRecommendationsView(APIView):
         ]
         search = request.GET.get("search", "")
 
+        # --- Lọc danh sách ---
         qs = Restaurant.objects.all()
         if preferences:
             qs = qs.filter(cuisine_type__in=preferences)
         if search:
             qs = qs.filter(Q(name__icontains=search) | Q(address__icontains=search))
 
+        # --- Tạo danh sách ứng viên ---
         candidates: List[Candidate] = []
         for r in qs:
             price_val = parse_price_range(r.price_range, default_price=0)
@@ -160,28 +192,23 @@ class JourneyRecommendationsView(APIView):
                 )
             )
 
+        # --- Chiến lược AI ---
         if strategy == "ai":
             client = Groq(api_key=settings.GROQ_API_KEY)
-
             candidates_text = "\n".join(
                 f"- id={c.id}, {c.name} ({c.cuisine_type}, {c.price} VND, rating {c.rating}, meal={c.meal_type})"
                 for c in candidates
             )
             prompt = f"""
-                    User budget: {budget} VND
-                    Preferences: {", ".join(preferences) if preferences else "None"}
-                    Candidate restaurants:
-                    {candidates_text}
+                User budget: {budget} VND
+                Preferences: {", ".join(preferences) or "None"}
+                Candidate restaurants:
+                {candidates_text}
 
-                    Please suggest exactly 3 restaurants: breakfast, lunch, dinner.
-                    Make sure total price <= budget.
-                    Return JSON only, like:
-                    {{
-                    "breakfast": {{"id": <id>, "name": "<name>"}},
-                    "lunch": {{"id": <id>, "name": "<name>"}},
-                    "dinner": {{"id": <id>, "name": "<name>"}}
-                    }}
-                    """
+                Suggest exactly 3 restaurants (breakfast, lunch, dinner)
+                Ensure total price <= budget.
+                Return JSON only.
+            """
 
             resp = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
@@ -195,27 +222,25 @@ class JourneyRecommendationsView(APIView):
             except Exception:
                 plan = {"raw": content}
 
-            return Response(
-                {
-                    "strategy": "ai",
-                    "budget": budget,
-                    "preferences": preferences,
-                    "best_plan": plan,
-                },
-                status=200,
-            )
+            return Response({
+                "strategy": "ai",
+                "budget": budget,
+                "preferences": preferences,
+                "best_plan": plan,
+            })
 
+        # --- Chiến lược simple ---
         top_k = int(request.GET.get("top_k", 6))
         breakfast_cut = int(request.GET.get("breakfast_cut", 100000))
         dinner_cut = int(request.GET.get("dinner_cut", 200000))
         over_allow_ratio = float(request.GET.get("over_allow_ratio", 0.1))
 
-        split_ratio_raw = request.GET.get("split_ratio", "0.3,0.4,0.3")
+        # --- Chia ngân sách ---
         try:
-            r1, r2, r3 = [float(x) for x in split_ratio_raw.split(",")]
+            r1, r2, r3 = [float(x) for x in request.GET.get("split_ratio", "0.3,0.4,0.3").split(",")]
         except Exception:
             r1, r2, r3 = 0.3, 0.4, 0.3
-        total_r = (r1 + r2 + r3) or 1.0
+        total_r = r1 + r2 + r3 or 1.0
         r1, r2, r3 = r1 / total_r, r2 / total_r, r3 / total_r
         meal_budget = {
             "breakfast": int(budget * r1),
@@ -223,12 +248,13 @@ class JourneyRecommendationsView(APIView):
             "dinner": int(budget * r3),
         }
 
-        weights_raw = request.GET.get("weights", "0.5,0.3,0.2")
+        # --- Trọng số ---
         try:
-            w_cuisine, w_price, w_rating = [float(x) for x in weights_raw.split(",")]
+            w_cuisine, w_price, w_rating = [float(x) for x in request.GET.get("weights", "0.5,0.3,0.2").split(",")]
         except Exception:
             w_cuisine, w_price, w_rating = 0.5, 0.3, 0.2
 
+        # --- Nhóm ứng viên ---
         grouped = {"breakfast": [], "lunch": [], "dinner": []}
         for c in candidates:
             if c.meal_type not in grouped:
@@ -265,35 +291,25 @@ class JourneyRecommendationsView(APIView):
                 "meal_type": c.meal_type,
             }
 
-        response = {
+        return Response({
             "strategy": "simple",
             "budget": budget,
             "meal_budget": meal_budget,
             "preferences": preferences,
-            "top_candidates": {
-                "breakfast": [
-                    serialize_candidate(c) for c, _ in grouped.get("breakfast", [])
-                ],
-                "lunch": [serialize_candidate(c) for c, _ in grouped.get("lunch", [])],
-                "dinner": [
-                    serialize_candidate(c) for c, _ in grouped.get("dinner", [])
-                ],
-            },
             "best_plan": {
                 "breakfast": serialize_candidate(b),
                 "lunch": serialize_candidate(l),
                 "dinner": serialize_candidate(d),
             },
-        }
-        return Response(response, status=status.HTTP_200_OK)
+            "top_candidates": {
+                m: [serialize_candidate(c) for c, _ in grouped[m]]
+                for m in grouped
+            },
+        })
 
 
 class FoodJourneyUpsertView(APIView):
-    """
-    POST /api/journey/
-      body: { "date": "YYYY-MM-DD", "breakfast_id":?, "lunch_id":?, "dinner_id":? }
-    GET /api/journey/?date=YYYY-MM-DD
-    """
+    """Tạo hoặc cập nhật lịch trình ăn uống."""
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -303,7 +319,7 @@ class FoodJourneyUpsertView(APIView):
         obj = FoodJourney.objects.filter(user=request.user, date=date).first()
         if not obj:
             return Response(None, status=200)
-        return Response(FoodJourneySerializer(obj).data, status=200)
+        return Response(FoodJourneySerializer(obj).data)
 
     def post(self, request):
         date = request.data.get("date")
@@ -311,50 +327,43 @@ class FoodJourneyUpsertView(APIView):
             return Response({"detail": "Missing 'date'."}, status=400)
 
         instance = FoodJourney.objects.filter(user=request.user, date=date).first()
-        if instance:
-            serializer = FoodJourneySerializer(
-                instance,
-                data=request.data,
-                partial=True,
-                context={"request": request},
-            )
-        else:
-            serializer = FoodJourneySerializer(
-                data=request.data, context={"request": request}
-            )
+        serializer = FoodJourneySerializer(
+            instance or None, data=request.data, partial=bool(instance),
+            context={"request": request},
+        )
 
         if serializer.is_valid():
             obj = serializer.save()
-            return Response(
-                FoodJourneySerializer(obj).data, status=200 if instance else 201
-            )
+            return Response(FoodJourneySerializer(obj).data, status=200 if instance else 201)
         return Response(serializer.errors, status=400)
 
+
+# ==============================================================
+# 4️⃣ UTILITY / ADMIN / TRANSLATION / ROUTING
+# ==============================================================
+
 class OverviewView(APIView):
+    """Thống kê hệ thống (user, crawl data)."""
     permission_classes = [AllowAny]
-    def get(self, request, *args, **kwargs):
-        
-        cuisines = list(CustomUser.objects.values("last_login", "is_email_verified", "email","created_date","email"))
-        crawData = int(CrawledData.objects.count())
-        obj = {
-            "total":len(cuisines),
-            "active":0,
-            "crawled":crawData,
-            "data":cuisines
-        }
-        now = timezone.now()
-        eight_hours_ago = now - timedelta(hours=8)
-        for cui in cuisines:
-            if(cui.get("is_email_verified")):
-                obj["active"] += 1
-        return Response(obj)
-    
+
+    def get(self, request):
+        users = list(CustomUser.objects.values(
+            "last_login", "is_email_verified", "email", "created_date"
+        ))
+        crawled = CrawledData.objects.count()
+        active = sum(1 for u in users if u.get("is_email_verified"))
+        return Response({
+            "total": len(users),
+            "active": active,
+            "crawled": crawled,
+            "data": users,
+        })
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def translate_view(request):
-    """
-    Translate text using Groq API (LLaMA 3)
-    """
+    """Dịch văn bản bằng Groq API."""
     text = request.data.get("text", "")
     source = request.data.get("from", "en")
     target = request.data.get("to", "vi")
@@ -364,19 +373,15 @@ def translate_view(request):
 
     try:
         client = Groq(api_key=settings.GROQ_API_KEY)
-
         completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
-                {
-                    "role": "system",
-                    "content": f"You are a precise translator. Translate all text from {source} to {target}. Only output the translation, no extra explanation.",
-                },
+                {"role": "system",
+                 "content": f"Translate {source}→{target}, output only translation."},
                 {"role": "user", "content": text},
             ],
             temperature=0.2,
         )
-
         translated = completion.choices[0].message.content.strip()
         return Response({"result": translated})
     except Exception as e:
@@ -384,11 +389,7 @@ def translate_view(request):
 
 
 class CalculateRouteView(APIView):
-    """
-    POST /api/calculate_route/
-    Body: { "coordinates": [[lng1, lat1], [lng2, lat2]], "api_key": "optional_key" }
-    Returns GeoJSON route from OpenRouteService or OSRM fallback
-    """
+    """Tính đường đi giữa hai tọa độ (OpenRouteService/OSRM)."""
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -396,46 +397,45 @@ class CalculateRouteView(APIView):
         api_key = request.data.get("api_key", "")
 
         if not coordinates or len(coordinates) != 2:
-            return Response({"error": "Invalid coordinates. Need exactly 2 points."}, status=400)
+            return Response({"error": "Invalid coordinates. Need 2 points."}, status=400)
 
         try:
-            if api_key and api_key != 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQ3NzE3OGM2MzgyZDY4MDNkOWZkMjBkOTYxZTFhZjZjZWZiYTk1MzkzNjNlOGEzZDQ0ODYzMWMwIiwiaCI6Im11cm11cjY0In0':
+            # --- OpenRouteService ---
+            if api_key and api_key != 'eyJvcmciOiI1Yj...':
                 ors_url = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson'
-                ors_response = requests.post(ors_url, json={"coordinates": coordinates}, headers={
-                    'Authorization': api_key,
-                    'Content-Type': 'application/json'
-                }, timeout=10)
-
+                ors_response = requests.post(
+                    ors_url,
+                    json={"coordinates": coordinates},
+                    headers={'Authorization': api_key, 'Content-Type': 'application/json'},
+                    timeout=10
+                )
                 if ors_response.status_code == 200:
                     return Response(ors_response.json())
 
-            osrm_url = f"https://router.project-osrm.org/route/v1/driving/{coordinates[0][0]},{coordinates[0][1]};{coordinates[1][0]},{coordinates[1][1]}?overview=full&geometries=geojson"
-            osrm_response = requests.get(osrm_url, timeout=10)
-
-            if osrm_response.status_code == 200:
-                osrm_data = osrm_response.json()
-                if osrm_data.get('routes') and len(osrm_data['routes']) > 0:
-                    route = osrm_data['routes'][0]
-                    geojson = {
+            # --- OSRM fallback ---
+            osrm_url = (
+                f"https://router.project-osrm.org/route/v1/driving/"
+                f"{coordinates[0][0]},{coordinates[0][1]};"
+                f"{coordinates[1][0]},{coordinates[1][1]}"
+                "?overview=full&geometries=geojson"
+            )
+            res = requests.get(osrm_url, timeout=10)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('routes'):
+                    route = data['routes'][0]
+                    return Response({
                         "type": "FeatureCollection",
                         "features": [{
                             "type": "Feature",
-                            "geometry": {
-                                "type": "LineString",
-                                "coordinates": route['geometry']['coordinates']
-                            },
-                            "properties": {
-                                "summary": {
-                                    "distance": route['distance']
-                                }
-                            }
+                            "geometry": route["geometry"],
+                            "properties": {"summary": {"distance": route["distance"]}}
                         }]
-                    }
-                    return Response(geojson)
+                    })
 
-            return Response({"error": "Unable to calculate route from any service"}, status=500)
+            return Response({"error": "Unable to calculate route."}, status=500)
 
         except requests.RequestException as e:
-            return Response({"error": f"Request failed: {str(e)}"}, status=500)
+            return Response({"error": f"Request failed: {e}"}, status=500)
         except Exception as e:
-            return Response({"error": f"Unexpected error: {str(e)}"}, status=500)
+            return Response({"error": f"Unexpected error: {e}"}, status=500)

@@ -30,18 +30,6 @@
   transform: scale(1);
 }
 
-/* Lớp phủ tối */
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(3px);
-  z-index: 1;
-}
-
 /* Hero content */
 .hero-content {
   position: relative;
@@ -64,61 +52,6 @@
   margin-bottom: 2rem;
 }
 
-/* ===========================
-   🎙️ SEARCH FORM
-=========================== */
-.hero-search-form {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  max-width: 700px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 50px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.hero-search-input {
-  flex: 1;
-  padding: 14px 20px;
-  border: none;
-  font-size: 1rem;
-  outline: none;
-}
-.hero-voice-button {
-  background-color: #f39c12;
-  border: none;
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-.hero-voice-button:hover {
-  background-color: #e67e22;
-}
-.hero-search-button {
-  background-color: #e85a4f;
-  color: white;
-  border: none;
-  padding: 14px 24px;
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: 0.3s;
-  border-radius: 0 50px 50px 0;
-}
-.hero-search-button:hover {
-  background-color: #c0392b;
-}
-
 /* =====================================================
    🌈 GLOBAL BACKGROUND
 ===================================================== */
@@ -130,79 +63,8 @@ body {
   padding: 1.5rem 5% 2rem 5%;
 }
 
-/* Gradient nối Hero → nền */
-.hero-slideshow-container::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 80px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), #fffaf5);
-  z-index: 2;
-}
+/* FILTER SECTION */
 
-/* =====================================================
-   ✨ QUICK ACTIONS BAR
-===================================================== */
-.quick-actions {
-  display: flex;
-  justify-content: center;
-  gap: 22px;
-  position: relative;
-  margin-top: -30px;
-  margin-bottom: 20px;
-  padding: 14px 24px;
-  background: #fffaf5;
-  border-radius: 20px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
-  z-index: 10;
-}
-
-.quick-action {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  border-radius: 12px;
-  padding: 10px 18px;
-  font-weight: 600;
-  color: #fff;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
-}
-.quick-action:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-/* màu riêng từng nút */
-.quick-action.nearby {
-  background: #2196f3;
-}
-.quick-action.favorite {
-  background: #4caf50;
-}
-.quick-action.planner {
-  background: #ff9800;
-}
-.quick-action.explore {
-  background: #00bcd4;
-}
-.action-icon {
-  font-size: 1rem;
-}
-.action-label {
-  font-size: 0.95rem;
-}
-
-/* =====================================================
-   🗂️ FILTER SECTION
-===================================================== */
 .filter-container {
   display: flex;
   justify-content: space-between;
@@ -255,14 +117,16 @@ body {
 ===================================================== */
 .restaurant-grid-section h2 {
   font-size: 1.8rem;
-  margin-top: -80px;
+  margin: 0 0 1rem;
   border-left: 5px solid #e85a4f;
   padding-left: 10px;
 }
 .restaurants-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1.5rem;
+  align-items: stretch;
+  padding-bottom: 1.5rem;
 }
 
 /* =====================================================
@@ -270,61 +134,88 @@ body {
 ===================================================== */
 .restaurant-card {
   background: white;
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 10px;
+  overflow: clip;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
+
 .restaurant-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
+
 .card-image {
   width: 100%;
   height: 200px;
   object-fit: cover;
 }
+
 .card-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 0.8rem 1rem;
+  min-height: 140px; /* 🔹 giữ độ cao tối thiểu để không nhảy khi text dài */
 }
+
 .card-title {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   margin: 0 0 0.3rem 0;
-  white-space: nowrap;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1; /* 🔹 chỉ hiển thị 1 dòng */
+  -webkit-box-orient: vertical;
 }
+
 .card-address {
   font-size: 0.9rem;
   color: #666;
   margin: 0 0 0.6rem 0;
   line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 🔹 chỉ hiển thị 2 dòng */
+  -webkit-box-orient: vertical;
 }
+
 .card-footer {
   margin-top: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 0.9rem;
+  flex-wrap: wrap; /* 🔹 tránh tràn khi chữ tag dài */
+  gap: 6px;
 }
+
 .card-rating {
   font-weight: bold;
   display: flex;
   align-items: center;
   gap: 4px;
   color: #f39c12;
+  white-space: nowrap; /* giữ ⭐ và số cùng hàng */
 }
+
 .card-cuisine {
   background-color: #f0f0f0;
   padding: 3px 8px;
   border-radius: 4px;
   font-weight: 500;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  max-width: 100px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  text-align: center;
 }
 
 /* =====================================================

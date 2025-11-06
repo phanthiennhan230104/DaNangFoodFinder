@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaComments, FaTimes } from "react-icons/fa";
+import { FaComments, FaTimes, FaMicrophone, FaMicrophoneSlash } from "react-icons/fa";
 
 const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -7,36 +7,67 @@ const ChatbotWidget = () => {
     { from: "bot", text: "Hello 👋! How can I help you today?" },
   ]);
   const [input, setInput] = useState("");
+  const [listening, setListening] = useState(false);
 
-  const handleSend = () => {
-  if (input.trim() === "") return;
+  // Gửi tin nhắn của người dùng
+  const sendMessage = async (text) => {
+    const trimmed = (text || "").trim();
+    if (!trimmed) return;
 
-  // Add user's message
-  setMessages([...messages, { from: "user", text: input }]);
-  const userText = input.toLowerCase();
-  setInput("");
+    setMessages((prev) => [...prev, { from: "user", text: trimmed }]);
+    setInput("");
 
-  // Default bot reply
-  let botReply = "Sorry, I didn’t quite understand that 😅";
+    // Trả lời mặc định (có thể đổi bằng API gọi backend)
+    const botReply = `🔎 Looking for a dish or restaurant that matches your request: "${trimmed}"...`;
 
-  // --- simple rule-based chatbot ---
-  if (userText.includes("seafood")) {
-    botReply = "Suggestion: Uyen Chi Seafood Restaurant – 25 Nguyen Van Linh, Da Nang 🦞";
-  } else if (userText.includes("coffee")) {
-    botReply = "You can try 1990 Coffee at 10 Bach Dang ☕";
-  } else if (userText.includes("bun cha")) {
-    botReply = "Try Hanoi Bun Cha – 15 Le Duan 🍜";
-  }
+    setTimeout(() => {
+      setMessages((prev) => [...prev, { from: "bot", text: botReply }]);
+    }, 500);
 
-  // Send bot reply after delay
-  setTimeout(() => {
-    setMessages((prev) => [
-      ...prev,
-      { from: "bot", text: botReply },
-    ]);
-  }, 600);
-};
+    // TODO: Gọi API tìm kiếm thực tế ở đây
+    // Ví dụ:
+    // const res = await api.post("/chatbot/search", { query: trimmed });
+    // setMessages((prev) => [...prev, { from: "bot", text: res.data.answer }]);
+  };
 
+  const handleSend = () => sendMessage(input);
+
+  // === Nhận giọng nói (Web Speech API) ===
+  const startListening = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("❌ Your browser does not support speech recognition yet (try Chrome).");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    try {
+      recognition.start();
+      setListening(true);
+    } catch (e) {
+      console.warn("Recognition start error:", e);
+      setListening(false);
+      return;
+    }
+
+    recognition.onresult = (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript || "";
+      sendMessage(transcript);
+      setListening(false);
+    };
+
+    recognition.onerror = (err) => {
+      console.warn("Speech recognition error:", err);
+      setListening(false);
+    };
+
+    recognition.onend = () => setListening(false);
+  };
 
   return (
     <div
@@ -45,7 +76,6 @@ const ChatbotWidget = () => {
         top: "50%",
         right: "20px",
         transform: "translateY(-50%)",
-
         zIndex: 9999,
         fontFamily: "Poppins, sans-serif",
       }}
@@ -55,7 +85,7 @@ const ChatbotWidget = () => {
         <div
           style={{
             width: "320px",
-            height: "420px",
+            height: "460px",
             backgroundColor: "#fff",
             borderRadius: "16px",
             boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
@@ -75,14 +105,11 @@ const ChatbotWidget = () => {
               justifyContent: "space-between",
             }}
           >
-            <span style={{ fontWeight: "bold" }}>Chatbot Assistant</span>
-            <FaTimes
-              onClick={() => setIsOpen(false)}
-              style={{ cursor: "pointer" }}
-            />
+            <span style={{ fontWeight: "bold" }}>DNFF Assistant</span>
+            <FaTimes onClick={() => setIsOpen(false)} style={{ cursor: "pointer" }} />
           </div>
 
-          {/* Messages area */}
+          {/* Messages */}
           <div
             style={{
               flex: 1,
@@ -102,8 +129,7 @@ const ChatbotWidget = () => {
                 <span
                   style={{
                     display: "inline-block",
-                    backgroundColor:
-                      msg.from === "user" ? "#2563eb" : "#e5e7eb",
+                    backgroundColor: msg.from === "user" ? "#2563eb" : "#e5e7eb",
                     color: msg.from === "user" ? "#fff" : "#000",
                     padding: "8px 12px",
                     borderRadius: "18px",
@@ -117,18 +143,41 @@ const ChatbotWidget = () => {
             ))}
           </div>
 
-          {/* Input */}
+          {/* Input + Voice + Send */}
           <div
             style={{
               display: "flex",
               borderTop: "1px solid #ddd",
               padding: "10px",
               background: "#fff",
+              alignItems: "center",
+              gap: "8px",
             }}
           >
+            {/* Nút Voice */}
+            <button
+              onClick={startListening}
+              disabled={listening}
+              title={listening ? "Đang nghe..." : "Nói"}
+              style={{
+                backgroundColor: listening ? "#facc15" : "#f3f4f6",
+                border: "none",
+                borderRadius: "8px",
+                width: "40px",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: listening ? "not-allowed" : "pointer",
+              }}
+            >
+              {listening ? <FaMicrophoneSlash size={16} /> : <FaMicrophone size={16} />}
+            </button>
+
+            {/* Ô nhập */}
             <input
               type="text"
-              placeholder="Type a message..."
+              placeholder="Nhập hoặc nói món ăn..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -141,6 +190,8 @@ const ChatbotWidget = () => {
                 fontSize: "14px",
               }}
             />
+
+            {/* Gửi */}
             <button
               onClick={handleSend}
               style={{
@@ -149,17 +200,16 @@ const ChatbotWidget = () => {
                 border: "none",
                 borderRadius: "8px",
                 padding: "8px 12px",
-                marginLeft: "8px",
                 cursor: "pointer",
               }}
             >
-              Send
+              Gửi
             </button>
           </div>
         </div>
       )}
 
-      {/* Floating Button */}
+      {/* Floating button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
