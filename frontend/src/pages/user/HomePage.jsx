@@ -3,7 +3,6 @@ import api from "../../api";
 import HeroSection from "../../components/sections/Homepage/HeroSection";
 import FilterSection from "../../components/sections/Homepage/FilterSection";
 import RestaurantGrid from "../../components/sections/Homepage/RestaurantGrid";
-import QuickActions from "../../components/sections/Homepage/QuickActions";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import Footer from "../../components/layout/Footer";
 import "../../styles/user/HomePage.css";
@@ -92,32 +91,29 @@ function HomePage() {
     if (filters.address) params.append("address", filters.address);
     if (debouncedQ) params.append("q", debouncedQ);
 
-    if (coords && coords.lat != null && coords.lon != null) {
-      params.append("lat", coords.lat);
-      params.append("lon", coords.lon);
+    api
+  .get(`restaurants/?${params.toString()}`)
+  .then((res) => {
+    const data = res.data;
+    let list = [];
+
+    if (Array.isArray(data)) {
+      list = data;
+    } else if (data?.results) {
+      list = data.results;
+    } else if (Array.isArray(data?.items)) {
+      list = data.items;
+    } else if (Array.isArray(data?.data)) {
+      list = data.data;
     }
 
-    api
-      .get(`restaurants/?${params.toString()}`)
-      .then((res) => {
-        const data = res.data;
-        if (Array.isArray(data)) {
-          setRestaurants(data);
-        } else if (data?.results) {
-          setRestaurants(data.results);
-        } else if (Array.isArray(data?.items)) {
-          setRestaurants(data.items);
-        } else if (Array.isArray(data?.data)) {
-          setRestaurants(data.data);
-        } else {
-          setRestaurants([]);
-        }
-      })
-      .catch((err) => {
-        console.error("Error fetching restaurants:", err);
-        setRestaurants([]);
-      })
-      .finally(() => setLoading(false));
+    setRestaurants(list.slice(0, 8));
+  })
+  .catch((err) => {
+    console.error("Error fetching restaurants:", err);
+    setRestaurants([]);
+  })
+  .finally(() => setLoading(false));
   }, [filters.cuisine_type, filters.address, debouncedQ, coords]);
 
   useEffect(() => {
@@ -150,7 +146,6 @@ function HomePage() {
       <HeroSection onSearch={handleSearch} onClearSearch={handleClearSearch} />
 
       <main className="main-content">
-        <QuickActions coords={coords} onScrollToFilters={scrollToFilters} />
 
         <div ref={filterRef}>
           <FilterSection
