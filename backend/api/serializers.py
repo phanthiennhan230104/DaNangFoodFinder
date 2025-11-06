@@ -45,13 +45,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
     
-class ProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profile
-        fields = [
-            'user_id', 'fullname', 'dob', 'gender', 'phone', 'address'
-        ]
-        read_only_fields = ['user_id']
+
         
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     username_field = "email"
@@ -132,10 +126,10 @@ class FoodJourneySerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
     
-    
 class ProfileSerializer(serializers.ModelSerializer):
-    fullName = serializers.CharField(source='fullname')  # ✅ Quan trọng!
-    
+    fullName = serializers.CharField(source='fullname')
+
     class Meta:
         model = Profile
-        fields = ['fullName', 'dob', 'gender', 'phone', 'address']
+        fields = ['user_id', 'fullName', 'dob', 'gender', 'phone', 'address']
+        read_only_fields = ['user_id']

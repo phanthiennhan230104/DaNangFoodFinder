@@ -4,8 +4,10 @@ from api.views import CalculateRouteView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
     path('api/', include('api.urls')),
-    path("api/admin/", include("adminpanel.urls")),
-    path("api/auth/", include("authentication.urls")),
-    path('route/', CalculateRouteView.as_view(), name="route"),
+    path('api/auth/', include('authentication.urls')),
+    path('api/admin/', include('adminpanel.urls')),
+
+    path('route/', CalculateRouteView.as_view(), name='route'),
 ]
