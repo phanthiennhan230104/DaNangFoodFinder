@@ -15,7 +15,7 @@ import LandingPage from "./pages/LandingPage"
 import AdminCrawlDashboard from "./pages/admin/AdminCrawlDashboard";
 import ForgotPassword from "./pages/auth/ForgotPassword"
 import { ACCESS_TOKEN } from "./constants";
-
+import Profile from "./pages/user/Profile";
 
 import AdminHome from "./pages/admin/AdminHome"
 import EditAccount from "./pages/admin/EditAccount"
@@ -87,6 +87,15 @@ function App() {
                         </ProtectedRoute>
                       }
 
+                    />
+                    <Route
+                      path="profiles"
+                      element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      }
+                      
                     />
                     <Route
                       path="/nearby"

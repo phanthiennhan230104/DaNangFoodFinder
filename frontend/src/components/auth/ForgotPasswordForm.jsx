@@ -95,6 +95,7 @@ export default function ForgotPasswordForm() {
     setMessage("");
     try {
       await api.post("auth/reset-password/", {
+        email: email, 
         reset_token: resetToken,
         password1: password,
         password2: confirmPassword,

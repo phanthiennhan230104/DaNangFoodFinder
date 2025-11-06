@@ -5,6 +5,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
+from rest_framework import serializers
+from .models import Profile
 
 User = get_user_model()
 
@@ -129,3 +131,11 @@ class FoodJourneySerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
+    
+    
+class ProfileSerializer(serializers.ModelSerializer):
+    fullName = serializers.CharField(source='fullname')  # ✅ Quan trọng!
+    
+    class Meta:
+        model = Profile
+        fields = ['fullName', 'dob', 'gender', 'phone', 'address']
