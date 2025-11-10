@@ -3,6 +3,8 @@ from .views import (
     RestaurantListView, CuisineListView,
     JourneyRecommendationsView, FoodJourneyUpsertView,
     OverviewView, get_filters, translate_view, CalculateRouteView, get_my_profile, ProfileView
+    ,chatbot_test, chatbot_search, chatbot_rag_sql, chatbot_ai_search
+
 )
 from rest_framework_simplejwt.views import TokenBlacklistView
 
@@ -19,5 +21,10 @@ urlpatterns = [
     path("route/", CalculateRouteView.as_view(), name="route"),
     path("profile/", ProfileView.as_view(), name="user-profile"),
     path("profiles/me/", get_my_profile, name="profile_me"),
-
+    path('chatbot/test/', chatbot_test, name='chatbot-test'),
+    path('chatbot/search/', chatbot_search, name='chatbot-search'),
+    path('chatbot/rag-sql/', chatbot_rag_sql, name='chatbot-rag-sql'),
+    path('chatbot/rag-local/', chatbot_rag_sql, name='chatbot-rag-local'),
+    path('chatbot/ai-search/', chatbot_ai_search, name='chatbot-ai-search'),
 ]
+
