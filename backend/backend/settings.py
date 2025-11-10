@@ -12,6 +12,10 @@ load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 SECRET_KEY = os.getenv('SECRET_KEY')
 
+# External RAG-SQL service URL (point to the running RAG-SQL API)
+# Default assumes RAG-SQL runs on localhost:8001 to avoid conflict with Django's default 8000
+RAG_SQL_URL = os.getenv('RAG_SQL_URL', 'http://localhost:8001/question-answering')
+
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
@@ -94,7 +98,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'DaNangFoodFinderDB',     
         'USER': 'root',     
-        'PASSWORD': 'root',
+        'PASSWORD': '123456',
         'HOST': 'localhost',              
         'PORT': '3306',
     }

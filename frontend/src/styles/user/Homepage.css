@@ -1,55 +1,79 @@
-/* =====================================================
-   🌆 HERO SECTION - Slideshow Background
-===================================================== */
 .hero-slideshow-container {
   position: relative;
-  height: 70vh;
+  height: 72vh;
+  min-height: 520px;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
   color: #fffaf5;
   text-align: center;
+  isolation: isolate;
 }
 
-/* Ảnh nền trượt */
 .hero-slide {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background-size: cover;
   background-position: center;
   opacity: 0;
-  transform: scale(1);
-  transition: opacity 1.5s ease-in-out, transform 8s ease;
+  transform: scale(1.08);
+  transition: opacity 1.2s ease-in-out, transform 7s ease;
+  filter: saturate(1.05) contrast(1.02);
 }
 .hero-slide.active {
   opacity: 1;
   transform: scale(1);
 }
 
-/* Hero content */
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.16) 40%, rgba(0,0,0,0.10) 100%),
+    linear-gradient(120deg, rgba(255,107,53,0.34), rgba(247,147,30,0.16));
+  z-index: 1;
+}
+
 .hero-content {
   position: relative;
   z-index: 2;
-  max-width: 800px;
+  max-width: 900px;
   padding: 0 20px;
+  animation: hero-fade-up 700ms ease both;
 }
-.hero-content h1 {
+
+.hero-title {
   font-family: "Poppins", "Montserrat", sans-serif;
-  font-size: 3rem;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
   font-weight: 800;
+  letter-spacing: .5px;
+  margin-bottom: .75rem;
+  color: #fff;
+  text-shadow: 0 6px 16px rgba(0,0,0,.45);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #fffaf5;
-  margin-bottom: 1rem;
-  text-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
 }
-.hero-content p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
+.hero-title span {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-subtitle {
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  color: #fffaf5;
+  opacity: .95;
+  text-shadow: 0 3px 10px rgba(0,0,0,.35);
+}
+
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .hero-slideshow-container { height: 68vh; min-height: 460px; }
 }
 
 /* =====================================================
