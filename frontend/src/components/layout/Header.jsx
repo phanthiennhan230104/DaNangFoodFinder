@@ -118,15 +118,15 @@ export default function Header() {
 
           <ul className="nav-links">
             <li><a href="/home">Home</a></li>
-            <li><a href="/journey">My Journey</a></li>
+            <li><a href="/journey">Food Journey</a></li>
             <li><a href="/favorites">Favorites</a></li>
-            <li><a href="/feedback">Feedback</a></li>
+            <li><a href="/nearby">Nearby Restaurants</a></li>
           </ul>
 
           {/* 🔽 Dropdown Menu */}
           <div className="auth-buttons" ref={menuRef}>
             <button className="btn btn-secondary dropdown-toggle" onClick={toggleMenu}>
-              <span>Hi, {username}</span>
+              <span>Hi, {fullName || username}</span>
               <ChevronDown className={`chevron-icon ${open ? "rotate" : ""}`} size={18} />
             </button>
 

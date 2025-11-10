@@ -29,44 +29,9 @@ function HomePage() {
     q: "",
   });
 
-  const [coords, setCoords] = useState({ lat: 16.0678, lon: 108.2208 });
   const debouncedQ = useDebounce(filters.q, 450);
 
-  const getUserLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      console.warn("Trình duyệt không hỗ trợ định vị.");
-      return;
-    }
-
-    const success = (pos) => {
-      setCoords({
-        lat: pos.coords.latitude,
-        lon: pos.coords.longitude,
-      });
-      console.log("📍 Định vị thành công:", pos.coords);
-    };
-
-    const error = (err) => {
-      console.warn("⚠️ Geolocation error:", err);
-      if (err.code === 1) {
-        alert("Bạn đã chặn truy cập vị trí. Hệ thống sẽ dùng vị trí mặc định Đà Nẵng.");
-      } else if (err.code === 3) {
-        console.warn("Timeout: dùng vị trí mặc định Đà Nẵng.");
-      }
-      setCoords({ lat: 16.0678, lon: 108.2208 });
-    };
-
-    navigator.geolocation.getCurrentPosition(success, error, {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0,
-    });
-  }, []);
-
-  useEffect(() => {
-    getUserLocation();
-  }, [getUserLocation]);
-
+  /** 🔹 Lấy dữ liệu bộ lọc (cuisine, area) */
   useEffect(() => {
     let mounted = true;
     api
@@ -83,6 +48,7 @@ function HomePage() {
     };
   }, []);
 
+  /** 🔹 Lấy danh sách nhà hàng */
   const getRestaurants = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -92,49 +58,48 @@ function HomePage() {
     if (debouncedQ) params.append("q", debouncedQ);
 
     api
-  .get(`restaurants/?${params.toString()}`)
-  .then((res) => {
-    const data = res.data;
-    let list = [];
+      .get(`restaurants/?${params.toString()}`)
+      .then((res) => {
+        const data = res.data;
+        let list = [];
 
-    if (Array.isArray(data)) {
-      list = data;
-    } else if (data?.results) {
-      list = data.results;
-    } else if (Array.isArray(data?.items)) {
-      list = data.items;
-    } else if (Array.isArray(data?.data)) {
-      list = data.data;
-    }
+        if (Array.isArray(data)) list = data;
+        else if (data?.results) list = data.results;
+        else if (Array.isArray(data?.items)) list = data.items;
+        else if (Array.isArray(data?.data)) list = data.data;
 
-    setRestaurants(list.slice(0, 8));
-  })
-  .catch((err) => {
-    console.error("Error fetching restaurants:", err);
-    setRestaurants([]);
-  })
-  .finally(() => setLoading(false));
-  }, [filters.cuisine_type, filters.address, debouncedQ, coords]);
+        setRestaurants(list.slice(0, 8));
+      })
+      .catch((err) => {
+        console.error("Error fetching restaurants:", err);
+        setRestaurants([]);
+      })
+      .finally(() => setLoading(false));
+  }, [filters.cuisine_type, filters.address, debouncedQ]);
 
   useEffect(() => {
     getRestaurants();
   }, [getRestaurants]);
 
+  /** 🔹 Thay đổi filter */
   const handleFilterChange = (filterName, value) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
+    setFilters((prev) => ({
+      ...prev,
       [filterName]: value,
     }));
   };
 
+  /** 🔹 Tìm kiếm */
   const handleSearch = (query) => {
     setFilters((prev) => ({ ...prev, q: query || "" }));
   };
 
+  /** 🔹 Xóa tìm kiếm */
   const handleClearSearch = () => {
     setFilters((prev) => ({ ...prev, q: "" }));
   };
 
+  /** 🔹 Cuộn đến bộ lọc */
   const scrollToFilters = () => {
     if (filterRef.current) {
       filterRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -146,7 +111,6 @@ function HomePage() {
       <HeroSection onSearch={handleSearch} onClearSearch={handleClearSearch} />
 
       <main className="main-content">
-
         <div ref={filterRef}>
           <FilterSection
             onFilterChange={handleFilterChange}
@@ -154,7 +118,7 @@ function HomePage() {
             areas={filtersData.areas || []}
             cuisines={filtersData.cuisines || []}
           />
-        </div> 
+        </div>
 
         {loading ? (
           <LoadingIndicator />
@@ -162,6 +126,7 @@ function HomePage() {
           <RestaurantGrid title="Restaurant List" restaurants={restaurants} />
         )}
       </main>
+
       <Footer />
     </div>
   );
