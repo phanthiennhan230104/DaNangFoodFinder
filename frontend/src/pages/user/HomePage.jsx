@@ -108,7 +108,12 @@ function HomePage() {
 
   return (
     <div className="homepage-container">
-      <HeroSection onSearch={handleSearch} onClearSearch={handleClearSearch} />
+      <HeroSection
+        onSearch={handleSearch}
+        onClearSearch={handleClearSearch}
+        onExplore={scrollToFilters}
+      />
+
 
       <main className="main-content">
         <div ref={filterRef}>

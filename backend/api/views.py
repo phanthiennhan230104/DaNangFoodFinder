@@ -491,3 +491,398 @@ class ProfileView(generics.GenericAPIView):
                 {"detail": f"Error saving profile: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+# ==============================================================
+# 5️⃣ CHATBOT APIs - Safe Version
+# Thay thế code chatbot cũ bằng version này
+# ==============================================================
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def chatbot_test(request):
+    """Test endpoint"""
+    return Response({
+        'status': 'ok',
+        'message': 'Chatbot API is working! ✅',
+    })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def chatbot_search(request):
+    """
+    Tìm kiếm quán ăn - Safe version với error handling tốt
+    """
+    try:
+        query = request.data.get('query', '').strip()
+        
+        logger.info(f"🔍 Chatbot search: '{query}'")
+        
+        if not query:
+            return Response({
+                'answer': 'Vui lòng cho tôi biết bạn muốn tìm món ăn hoặc quán ăn nào? 🍴',
+                'results': [],
+                'total': 0
+            })
+        
+        # Tìm kiếm trong database - Safe version
+        try:
+            # Note: `description` is not a field on Restaurant (removed/renamed),
+            # so avoid querying it directly. Keep other safe filters.
+            # Also search the `rag_context_text` field which contains
+            # aggregated textual info (used for RAG/vectorization).
+            restaurants = Restaurant.objects.filter(
+                Q(name__icontains=query) |
+                Q(cuisine_type__icontains=query) |
+                Q(address__icontains=query) |
+                Q(rag_context_text__icontains=query)
+            )[:10]
+            
+            logger.info(f"📊 Query returned {restaurants.count()} restaurants")
+            
+        except Exception as db_error:
+            logger.error(f"❌ Database query error: {str(db_error)}")
+            return Response({
+                'answer': '⚠️ Lỗi truy vấn database. Vui lòng thử lại.',
+                'results': [],
+                'error': str(db_error)
+            }, status=500)
+        
+        # Xử lý kết quả - Kiểm tra từng field cẩn thận
+        results = []
+        for r in restaurants:
+            try:
+                # Lấy thông tin cơ bản - an toàn
+                restaurant_data = {
+                    'type': 'restaurant',
+                    'id': r.id if hasattr(r, 'id') else 0,
+                    'name': str(r.name) if hasattr(r, 'name') and r.name else 'Không có tên',
+                }
+                
+                # Lấy các field tùy chọn - kiểm tra từng cái
+                if hasattr(r, 'cuisine_type'):
+                    restaurant_data['cuisine_type'] = str(r.cuisine_type) if r.cuisine_type else 'Không rõ'
+                else:
+                    restaurant_data['cuisine_type'] = 'Không rõ'
+                
+                if hasattr(r, 'address'):
+                    restaurant_data['address'] = str(r.address) if r.address else ''
+                else:
+                    restaurant_data['address'] = ''
+                
+                if hasattr(r, 'phone_number'):
+                    restaurant_data['phone'] = str(r.phone_number) if r.phone_number else ''
+                else:
+                    restaurant_data['phone'] = ''
+                
+                # Price range - nhiều tên field khác nhau
+                price_display = 'Liên hệ'
+                if hasattr(r, 'price_range') and r.price_range:
+                    price_display = str(r.price_range)
+                elif hasattr(r, 'price') and r.price:
+                    price_display = str(r.price)
+                restaurant_data['price_range'] = price_display
+                
+                # Rating - có thể có nhiều tên field
+                rating = 0.0
+                if hasattr(r, 'average_rating') and r.average_rating:
+                    try:
+                        rating = float(r.average_rating)
+                    except (ValueError, TypeError):
+                        rating = 0.0
+                elif hasattr(r, 'rating') and r.rating:
+                    try:
+                        rating = float(r.rating)
+                    except (ValueError, TypeError):
+                        rating = 0.0
+                restaurant_data['rating'] = rating
+                
+                # Description: prefer explicit `description` if present,
+                # otherwise use `rag_context_text` which holds aggregated text.
+                desc = ''
+                if hasattr(r, 'description') and r.description:
+                    desc = str(r.description)
+                elif hasattr(r, 'rag_context_text') and r.rag_context_text:
+                    desc = str(r.rag_context_text)
+                restaurant_data['description'] = desc
+                
+                # Image - kiểm tra nhiều field
+                image_url = None
+                if hasattr(r, 'image_url') and r.image_url:
+                    image_url = str(r.image_url)
+                elif hasattr(r, 'image') and r.image:
+                    try:
+                        image_url = r.image.url
+                    except:
+                        image_url = None
+                restaurant_data['image'] = image_url
+                
+                results.append(restaurant_data)
+                
+            except Exception as item_error:
+                logger.warning(f"⚠️ Error processing restaurant {r.id if hasattr(r, 'id') else '?'}: {str(item_error)}")
+                continue
+        
+        logger.info(f"✅ Processed {len(results)} results successfully")
+        
+        # Sắp xếp theo rating
+        results.sort(key=lambda x: x.get('rating', 0), reverse=True)
+        
+        # Tạo câu trả lời
+        if results:
+            answer = f"🔍 Tìm thấy {len(results)} quán ăn phù hợp với '{query}'!"
+            
+            if len(results) >= 3:
+                top3 = results[:3]
+                answer += "\n\n🌟 Top 3 gợi ý:\n"
+                for i, r in enumerate(top3, 1):
+                    rating_str = f"{r['rating']:.1f}⭐" if r['rating'] > 0 else "Chưa có đánh giá"
+                    answer += f"{i}. {r['name']} - {r['cuisine_type']} ({rating_str})\n"
+        else:
+            answer = (
+                f"😔 Không tìm thấy kết quả cho '{query}'.\n\n"
+                "💡 Gợi ý tìm kiếm:\n"
+                "• Tên món: phở, bún bò, bánh xèo\n"
+                "• Loại ẩm thực: Việt Nam, Hàn Quốc\n"
+                "• Khu vực: Hải Châu, Sơn Trà"
+            )
+        
+        return Response({
+            'answer': answer,
+            'results': results,
+            'query': query,
+            'total': len(results)
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Chatbot error: {str(e)}", exc_info=True)
+        import traceback
+        traceback.print_exc()
+        
+        return Response({
+            'answer': '⚠️ Có lỗi xảy ra trên server. Vui lòng thử lại sau.',
+            'results': [],
+            'error': str(e),
+            'error_type': type(e).__name__
+        }, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def chatbot_ai_search(request):
+    """AI Search - với fallback về search thường nếu lỗi"""
+    try:
+        query = request.data.get('query', '').strip()
+        
+        if not query:
+            return Response({
+                'answer': 'Vui lòng cho tôi biết bạn muốn tìm gì? 🍴',
+                'results': []
+            })
+        
+        # Kiểm tra GROQ_API_KEY có tồn tại không
+        if not hasattr(settings, 'GROQ_API_KEY') or not settings.GROQ_API_KEY:
+            logger.warning("⚠️ GROQ_API_KEY not configured, falling back to simple search")
+            return chatbot_search(request)
+        
+        # Sử dụng Groq AI
+        from groq import Groq
+        client = Groq(api_key=settings.GROQ_API_KEY)
+        
+        prompt = f"""
+Phân tích câu hỏi và trả về JSON:
+Câu hỏi: "{query}"
+
+Format:
+{{
+    "keywords": ["từ khóa"],
+    "cuisine": "loại ẩm thực hoặc null",
+    "location": "địa điểm hoặc null"
+}}
+
+Chỉ JSON, không giải thích.
+"""
+        
+        ai_response = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant",
+            temperature=0.2,
+            max_tokens=200
+        )
+        
+        try:
+            extracted = json.loads(ai_response.choices[0].message.content.strip())
+        except:
+            extracted = {"keywords": [query]}
+        
+        logger.info(f"🤖 AI extracted: {extracted}")
+        
+        # Tìm kiếm với thông tin AI
+        qs = Restaurant.objects.all()
+        
+        keywords = extracted.get('keywords', [query])
+        if keywords:
+            q_filter = Q()
+            for kw in keywords:
+                q_filter |= (
+                    Q(name__icontains=kw) | 
+                    Q(cuisine_type__icontains=kw) |
+                    Q(rag_context_text__icontains=kw)
+                )
+            qs = qs.filter(q_filter)
+        
+        if extracted.get('cuisine'):
+            qs = qs.filter(cuisine_type__icontains=extracted['cuisine'])
+        
+        if extracted.get('location'):
+            qs = qs.filter(address__icontains=extracted['location'])
+        
+        restaurants = qs[:10]
+        
+        # Xử lý kết quả giống như chatbot_search
+        results = []
+        for r in restaurants:
+            try:
+                # Prefer rag_context_text as description when available
+                desc = ''
+                if hasattr(r, 'description') and r.description:
+                    desc = str(r.description)
+                elif hasattr(r, 'rag_context_text') and r.rag_context_text:
+                    desc = str(r.rag_context_text)
+
+                results.append({
+                    'type': 'restaurant',
+                    'id': r.id,
+                    'name': str(r.name) if r.name else 'Không có tên',
+                    'cuisine_type': str(r.cuisine_type) if hasattr(r, 'cuisine_type') and r.cuisine_type else 'Không rõ',
+                    'address': str(r.address) if hasattr(r, 'address') and r.address else '',
+                    'phone': str(r.phone_number) if hasattr(r, 'phone_number') and r.phone_number else '',
+                    'price_range': str(r.price_range) if hasattr(r, 'price_range') and r.price_range else 'Liên hệ',
+                    'rating': float(getattr(r, 'average_rating', 0) or getattr(r, 'rating', 0) or 0),
+                    'description': desc,
+                })
+            except Exception as e:
+                logger.warning(f"Error processing: {e}")
+                continue
+        
+        results.sort(key=lambda x: x['rating'], reverse=True)
+        
+        # Tạo câu trả lời bằng AI
+        if results:
+            summary = "\n".join([
+                f"- {r['name']}: {r['cuisine_type']}, {r['price_range']}"
+                for r in results[:3]
+            ])
+            
+            answer_prompt = f"""
+Người dùng hỏi: "{query}"
+Tìm thấy {len(results)} quán:
+{summary}
+
+Trả lời ngắn (2-3 câu), thân thiện bằng tiếng Việt.
+"""
+            
+            answer_response = client.chat.completions.create(
+                messages=[{"role": "user", "content": answer_prompt}],
+                model="llama-3.1-8b-instant",
+                temperature=0.7,
+                max_tokens=200
+            )
+            
+            answer = answer_response.choices[0].message.content.strip()
+        else:
+            answer = f"😔 Không tìm thấy kết quả cho '{query}'. Bạn thử tìm kiếm khác nhé!"
+        
+        return Response({
+            'answer': answer,
+            'results': results,
+            'query': query,
+            'total': len(results),
+            'ai_mode': True
+        })
+        
+    except Exception as e:
+        logger.error(f"AI Error: {e}", exc_info=True)
+        # Fallback về search thường
+        return chatbot_search(request)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def chatbot_rag_sql(request):
+    """Proxy to external RAG-SQL service (/question-answering).
+
+    Request JSON: { "query": "..." }
+    Response: { 'answer': str, 'results': [], 'source': 'rag-sql', 'raw': <raw rag response> }
+
+    If RAG-SQL fails, fallback to AI search or regular search.
+    """
+    try:
+        query = request.data.get('query', '').strip()
+        if not query:
+            return Response({'answer': 'Vui lòng cho tôi biết bạn muốn tìm gì? 🍴', 'results': []})
+
+        rag_url = getattr(settings, 'RAG_SQL_URL', 'http://localhost:8001/question-answering')
+
+        # If the RAG-SQL service is available via HTTP use it; otherwise try local integration
+        try:
+            resp = requests.post(rag_url, json={'question': query}, timeout=8)
+            if resp.status_code == 200:
+                data = resp.json()
+                answer = data.get('answer') or data.get('message') or ''
+                return Response({
+                    'answer': answer,
+                    'results': data.get('results', []),
+                    'source': 'rag-sql-remote',
+                    'raw': data,
+                    'query': query,
+                })
+            else:
+                logger.info(f"RAG-SQL remote returned status {resp.status_code}, falling back to local")
+        except Exception as e_remote:
+            logger.info(f"RAG-SQL remote unreachable: {e_remote}, trying local integration")
+
+        # Try local import/integration: call MonolithAgent directly
+        try:
+            from .rag_sql_local import get_monolith_predictor
+            predictor = get_monolith_predictor()
+            results = predictor(query)
+            # Build a friendly answer summary
+            if results and isinstance(results, list):
+                if len(results) == 0:
+                    answer = f"😔 Không tìm thấy kết quả cho '{query}'."
+                else:
+                    top3 = results[:3]
+                    summary_lines = []
+                    for r in top3:
+                        name = r.get('name') or r.get('restaurant_name') or ''
+                        cuisine = r.get('cuisine_type', '')
+                        price = r.get('price_range', '')
+                        summary_lines.append(f"- {name}: {cuisine} {price}".strip())
+                    answer = f"🔍 Tìm thấy {len(results)} quán.\n\nTop:\n" + "\n".join(summary_lines)
+            else:
+                answer = str(results)
+
+            return Response({
+                'answer': answer,
+                'results': results,
+                'source': 'rag-sql-local',
+                'query': query,
+            })
+        except Exception as e_local:
+            logger.exception("Local RAG-SQL integration failed: %s", e_local)
+            # fallback to AI/DB search
+            try:
+                return chatbot_ai_search(request)
+            except Exception:
+                return chatbot_search(request)
+
+    except Exception as e:
+        import traceback as _tb
+        tb = _tb.format_exc()
+        logger.error(f"chatbot_rag_sql error: {e}\n{tb}", exc_info=True)
+        return Response({
+            'answer': '⚠️ Có lỗi khi gọi RAG-SQL. Vui lòng thử lại sau.',
+            'results': [],
+            'error': str(e),
+            'traceback': tb,
+        }, status=500)
