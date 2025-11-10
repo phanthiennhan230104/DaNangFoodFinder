@@ -4,12 +4,7 @@ import "../../../styles/user/HomePage.css";
 function HeroSection() {
   const [currentImage, setCurrentImage] = useState(0);
 
-  const images = [
-    "/images/bg1.jpg",
-    "/images/bg2.jpg",
-    "/images/bg3.jpg",
-    "/images/bg4.jpg",
-  ];
+  const images = ["/images/bg1.jpg", "/images/bg2.jpg", "/images/bg3.jpg", "/images/bg4.jpg"];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -28,11 +23,16 @@ function HeroSection() {
         />
       ))}
 
-      <div className="hero-content">
-        <h1>Discover Da Nang Cuisine</h1>
-        <p>Find your favorite dishes and restaurants smartly.</p>
-      </div>
+      <div className="hero-overlay" aria-hidden="true" />
 
+      <div className="hero-content">
+        <h1 className="hero-title">
+          DISCOVER CUISINE
+          <br></br> 
+          <span>DA NANG</span> 
+        </h1>
+        <p className="hero-subtitle">Find your favorite dishes and restaurants smartly.</p>
+      </div>
     </div>
   );
 }
