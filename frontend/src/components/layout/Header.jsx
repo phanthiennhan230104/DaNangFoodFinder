@@ -120,7 +120,7 @@ export default function Header() {
             <li><a href="/home">Home</a></li>
             <li><a href="/journey">Food Journey</a></li>
             <li><a href="/favorites">Favorites</a></li>
-            <li><a href="/feedback">Feedback</a></li>
+            <li><a href="/nearby">Nearby Restaurants</a></li>
           </ul>
 
           {/* 🔽 Dropdown Menu */}
