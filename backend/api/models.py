@@ -76,12 +76,7 @@ class Profile(models.Model):
         return self.fullname
 
 
-class Account(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    is_email_verified = models.BooleanField(default=False)
 
-    def __str__(self):
-        return self.user.email
 
 
 class CrawledSource(models.Model):
@@ -176,13 +171,6 @@ class Favorite(models.Model):
         return f"{self.user.username} thích {self.restaurant.name}"
 
 
-class SearchHistory(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='search_history')
-    query_text = models.CharField(max_length=255)
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"'{self.query_text}' bởi {self.user.username}"
 
 
 class FoodJourney(models.Model): 
