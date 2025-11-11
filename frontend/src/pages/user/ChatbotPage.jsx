@@ -17,8 +17,9 @@ const ChatbotPage = () => {
       <div
         style={{
           position: "fixed",
-          bottom: "20px",
-          right: "20px",
+          top: "50%",                     
+          right: "20px",                  
+          transform: "translateY(-50%)",  
           width: "400px",
           height: "500px",
           backgroundColor: "white",
