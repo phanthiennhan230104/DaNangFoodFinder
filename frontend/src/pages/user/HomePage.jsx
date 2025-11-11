@@ -18,154 +18,83 @@ function useDebounce(value, delay = 400) {
 
 function HomePage() {
   const filterRef = useRef(null);
-
   const [restaurants, setRestaurants] = useState([]);
   const [filtersData, setFiltersData] = useState({ areas: [], cuisines: [] });
   const [loading, setLoading] = useState(true);
-
   const [filters, setFilters] = useState({
     cuisine_type: "",
     address: "",
     q: "",
   });
 
-  const [coords, setCoords] = useState({ lat: 16.0678, lon: 108.2208 });
   const debouncedQ = useDebounce(filters.q, 450);
 
-  const getUserLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      console.warn("Trình duyệt không hỗ trợ định vị.");
-      return;
-    }
-
-    const success = (pos) => {
-      setCoords({
-        lat: pos.coords.latitude,
-        lon: pos.coords.longitude,
-      });
-      console.log("📍 Định vị thành công:", pos.coords);
-    };
-
-    const error = (err) => {
-      console.warn("⚠️ Geolocation error:", err);
-      if (err.code === 1) {
-        alert("Bạn đã chặn truy cập vị trí. Hệ thống sẽ dùng vị trí mặc định Đà Nẵng.");
-      } else if (err.code === 3) {
-        console.warn("Timeout: dùng vị trí mặc định Đà Nẵng.");
-      }
-      setCoords({ lat: 16.0678, lon: 108.2208 });
-    };
-
-    navigator.geolocation.getCurrentPosition(success, error, {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0,
-    });
-  }, []);
-
   useEffect(() => {
-    getUserLocation();
-  }, [getUserLocation]);
-
-  useEffect(() => {
-    let mounted = true;
     api
       .get("filters/")
-      .then((res) => {
-        if (!mounted) return;
-        setFiltersData(res.data || { areas: [], cuisines: [] });
-      })
-      .catch((err) => {
-        console.error("Error fetching filter data:", err);
-      });
-    return () => {
-      mounted = false;
-    };
+      .then((res) => setFiltersData(res.data || { areas: [], cuisines: [] }))
+      .catch((err) => console.error("Error fetching filter data:", err));
   }, []);
 
   const getRestaurants = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
-
     if (filters.cuisine_type) params.append("cuisine_type", filters.cuisine_type);
     if (filters.address) params.append("address", filters.address);
     if (debouncedQ) params.append("q", debouncedQ);
 
     api
-  .get(`restaurants/?${params.toString()}`)
-  .then((res) => {
-    const data = res.data;
-    let list = [];
-
-    if (Array.isArray(data)) {
-      list = data;
-    } else if (data?.results) {
-      list = data.results;
-    } else if (Array.isArray(data?.items)) {
-      list = data.items;
-    } else if (Array.isArray(data?.data)) {
-      list = data.data;
-    }
-
-    setRestaurants(list.slice(0, 8));
-  })
-  .catch((err) => {
-    console.error("Error fetching restaurants:", err);
-    setRestaurants([]);
-  })
-  .finally(() => setLoading(false));
-  }, [filters.cuisine_type, filters.address, debouncedQ, coords]);
+      .get(`restaurants/?${params.toString()}`)
+      .then((res) => {
+        const data = res.data;
+        let list = [];
+        if (Array.isArray(data)) list = data;
+        else if (data?.results) list = data.results;
+        else if (Array.isArray(data?.items)) list = data.items;
+        else if (Array.isArray(data?.data)) list = data.data;
+        setRestaurants(list.slice(0, 8));
+      })
+      .catch((err) => {
+        console.error("Error fetching restaurants:", err);
+        setRestaurants([]);
+      })
+      .finally(() => setLoading(false));
+  }, [filters.cuisine_type, filters.address, debouncedQ]);
 
   useEffect(() => {
     getRestaurants();
   }, [getRestaurants]);
 
   const handleFilterChange = (filterName, value) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [filterName]: value,
-    }));
-  };
-
-  const handleSearch = (query) => {
-    setFilters((prev) => ({ ...prev, q: query || "" }));
-  };
-
-  const handleClearSearch = () => {
-    setFilters((prev) => ({ ...prev, q: "" }));
-  };
-
-  const scrollToFilters = () => {
-    if (filterRef.current) {
-      filterRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    setFilters((prev) => ({ ...prev, [filterName]: value }));
   };
 
   return (
     <div className="homepage-container">
       <HeroSection
-        onSearch={handleSearch}
-        onClearSearch={handleClearSearch}
-        onExplore={scrollToFilters}
+        onExplore={() => {
+          if (filterRef.current) {
+            filterRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }}
       />
-
-
       <main className="main-content">
+        <div className="container">
+          <div ref={filterRef}>
+            <FilterSection
+              onFilterChange={handleFilterChange}
+              filters={filters}
+              areas={filtersData.areas || []}
+              cuisines={filtersData.cuisines || []}
+            />
+          </div>
 
-        <div ref={filterRef}>
-          <FilterSection
-            onFilterChange={handleFilterChange}
-            filters={filters}
-            areas={filtersData.areas || []}
-            cuisines={filtersData.cuisines || []}
-          />
-        </div> 
-
-        {loading ? (
-          <LoadingIndicator />
-        ) : (
-          <RestaurantGrid title="Restaurant List" restaurants={restaurants} />
-        )}
+          {loading ? (
+            <LoadingIndicator />
+          ) : (
+            <RestaurantGrid title="Restaurant List" restaurants={restaurants} />
+          )}
+        </div>
       </main>
       <Footer />
     </div>

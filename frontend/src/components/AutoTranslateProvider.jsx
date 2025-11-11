@@ -1,9 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, createContext, useContext } from "react";
 import { translateText } from "../utils/translator";
 
-// 🌐 Ngôn ngữ gốc của UI
 const BASE_LANG = "en";
 const SUPPORTED = ["en", "vi"];
+
+// 🔹 Tạo Context để Header có thể lấy ngôn ngữ & hàm đổi ngôn ngữ
+export const LangContext = createContext({
+  lang: "en",
+  setLang: () => {},
+});
 
 function detectBrowserLang() {
   const cand = (navigator.language || "en").slice(0, 2).toLowerCase();
@@ -25,6 +30,26 @@ function collectTextNodes(root) {
   return nodes;
 }
 
+export function LanguageSwitcher() {
+  const { lang, setLang } = useContext(LangContext);
+  return (
+    <button
+      role="switch-lang"
+      onClick={() => setLang(lang === "en" ? "vi" : "en")}
+      style={{
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        fontWeight: 600,
+        marginLeft: "10px",
+        fontSize: "0.95rem",
+      }}
+    >
+      {lang === "en" ? "🇻🇳 VI" : "🇬🇧 EN"}
+    </button>
+  );
+}
+
 export default function AutoTranslateProvider({ children }) {
   const containerRef = useRef(null);
   const [lang, setLang] = useState(
@@ -39,7 +64,6 @@ export default function AutoTranslateProvider({ children }) {
     localStorage.setItem("lang", lang);
   }, [lang]);
 
-  // ==== DỊCH TOÀN BỘ ====
   async function translateContainer() {
     const container = containerRef.current;
     if (!container) return;
@@ -58,7 +82,6 @@ export default function AutoTranslateProvider({ children }) {
     const nodes = collectTextNodes(container);
     if (!nodes.length) return;
 
-    // Lưu text gốc
     nodes.forEach((node) => {
       if (!originalMap.current.has(node)) {
         originalMap.current.set(node, node.nodeValue);
@@ -69,14 +92,12 @@ export default function AutoTranslateProvider({ children }) {
     translatingRef.current = true;
     setLoading(true);
 
-    // 🌙 Thêm delay nhẹ (1 giây) cho mượt
     await new Promise((r) => setTimeout(r, 1000));
 
     const batchSize = 10;
     for (let i = 0; i < nodes.length; i += batchSize) {
       const batch = nodes.slice(i, i + batchSize);
       const joined = batch.map((n) => originalMap.current.get(n)).join(" ||| ");
-
       try {
         const translatedBatch = await translateText(joined, from, to);
         const parts = translatedBatch.split("|||");
@@ -92,13 +113,12 @@ export default function AutoTranslateProvider({ children }) {
     translatingRef.current = false;
     setLoading(false);
 
-    // Bật lại observer sau khi dịch xong
     const mo = observerRef.current;
     if (mo && container) {
       mo.observe(container, { childList: true, subtree: true, characterData: true });
     }
 
-    // ✨ Thêm hiệu ứng mượt
+    // Hiệu ứng fade-in
     container.classList.add("fade-in");
     setTimeout(() => container.classList.remove("fade-in"), 800);
   }
@@ -121,46 +141,8 @@ export default function AutoTranslateProvider({ children }) {
     return () => mo.disconnect();
   }, [lang]);
 
-  const Switcher = useMemo(
-    () => (
-      <div
-        style={{
-          position: "fixed",
-          right: 16,
-          bottom: 16,
-          background: "#fff",
-          border: "1px solid #e5e7eb",
-          borderRadius: 12,
-          padding: "8px 10px",
-          boxShadow: "0 6px 16px rgba(0,0,0,.12)",
-          zIndex: 9999,
-        }}
-      >
-        <button
-          onClick={() => {
-            const newLang = lang === "en" ? "vi" : "en";
-            setLang(newLang);
-            console.log("🌐 Switched to:", newLang);
-          }}
-          style={{
-            border: "none",
-            background: "transparent",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-        >
-          {lang === "en" ? "🇻🇳 VI" : "🇬🇧 EN"}
-        </button>
-      </div>
-    ),
-    [lang]
-  );
-
   return (
-    <>
-      {Switcher}
-
-      {/* 🌙 Overlay khi đang dịch */}
+    <LangContext.Provider value={{ lang, setLang }}>
       {loading && (
         <div
           style={{
@@ -177,6 +159,7 @@ export default function AutoTranslateProvider({ children }) {
             transition: "opacity 0.5s ease",
           }}
         >
+          Translating...
         </div>
       )}
 
@@ -188,6 +171,6 @@ export default function AutoTranslateProvider({ children }) {
       >
         {children}
       </div>
-    </>
+    </LangContext.Provider>
   );
 }

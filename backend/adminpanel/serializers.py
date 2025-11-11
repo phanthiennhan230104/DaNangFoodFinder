@@ -1,4 +1,4 @@
-from api.models import CustomUser, Profile, Role, Account
+from api.models import CustomUser, Profile, Role
 from rest_framework import serializers
 
 
@@ -6,7 +6,6 @@ class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = "__all__"
-
 
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)

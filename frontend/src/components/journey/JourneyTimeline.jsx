@@ -1,5 +1,6 @@
 import React from "react";
 import { Calendar, Coffee, Sandwich, UtensilsCrossed } from "lucide-react";
+import { motion } from "framer-motion";
 
 const JourneyTimeline = ({ journey, onRemoveFromJourney, totalBudget }) => {
   const slots = [
@@ -9,7 +10,12 @@ const JourneyTimeline = ({ journey, onRemoveFromJourney, totalBudget }) => {
   ];
 
   return (
-    <div>
+    <motion.div
+      className="journey-timeline"
+      initial={{ opacity: 0, y: 25 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <h2 className="timeline-title">
         <Calendar className="inline w-5 h-5 mr-2" />
         Your Journey
@@ -22,7 +28,12 @@ const JourneyTimeline = ({ journey, onRemoveFromJourney, totalBudget }) => {
 
       <div className="time-slots">
         {slots.map(({ key, label, icon }) => (
-          <div key={key} className="time-slot">
+          <motion.div
+            key={key}
+            className="time-slot"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.3 }}
+          >
             <div className="time-label">
               {icon}
               {label}
@@ -33,7 +44,16 @@ const JourneyTimeline = ({ journey, onRemoveFromJourney, totalBudget }) => {
                 <div className="restaurant-details">
                   🍽 {journey[key].cuisine_type} • 💵 {journey[key].price_range}
                 </div>
-                <button onClick={() => onRemoveFromJourney(key)}>❌ Remove</button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => onRemoveFromJourney(key)}
+                  className="btn btn-secondary"
+                  style={{ marginTop: "0.5rem" }}
+                >
+                  ❌ Remove
+                </motion.button>
               </>
             ) : (
               <>
@@ -41,10 +61,10 @@ const JourneyTimeline = ({ journey, onRemoveFromJourney, totalBudget }) => {
                 <div className="browse-suggestion">Browse recommendations above</div>
               </>
             )}
-          </div>
+          </motion.div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

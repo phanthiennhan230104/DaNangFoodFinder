@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
-from api.models import CustomUser, Profile, Role, Account
+from api.models import CustomUser, Profile, Role
 from .serializers import CustomUserSerializer, ProfileSerializer, RoleSerializer, AccountSerializer
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, get_user_model

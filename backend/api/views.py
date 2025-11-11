@@ -1,12 +1,4 @@
-"""
-views.py — DNFF Backend (Refactored)
-------------------------------------
-Gồm các nhóm:
-1️⃣ Authentication & User Profile
-2️⃣ Restaurant APIs
-3️⃣ Journey / Planner APIs
-4️⃣ Utility APIs (Translation, Overview, Routing)
-"""
+
 
 from typing import List
 import json
@@ -49,28 +41,19 @@ from .models import Profile
 from .serializers import ProfileSerializer
 
 User = get_user_model()
-
-
-# ==============================================================
-# 1️⃣ AUTHENTICATION & USER PROFILE
-# ==============================================================
-
 class RegisterView(generics.CreateAPIView):
-    """Đăng ký người dùng mới."""
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
-    """Đăng nhập và lấy JWT token."""
     serializer_class = CustomTokenObtainPairSerializer
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_my_profile(request):
-    """Lấy thông tin hồ sơ người dùng hiện tại."""
     try:
         profile = Profile.objects.get(user_id=request.user.user_id)
         serializer = ProfileSerializer(profile)
@@ -79,20 +62,10 @@ def get_my_profile(request):
         return Response(
             {"detail": "Profile not found"}, status=status.HTTP_404_NOT_FOUND
         )
-
-
-# ==============================================================
-# 2️⃣ RESTAURANT APIS
-# ==============================================================
-
+        
+        
 class RestaurantListView(generics.ListAPIView):
-    """
-    Danh sách nhà hàng (có lọc theo address & cuisine_type)
-    Hỗ trợ query param:
-      - address=Hải Châu
-      - cuisine_type=Việt Nam
-      - limit=8
-    """
+    
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
     permission_classes = [AllowAny]
@@ -101,12 +74,36 @@ class RestaurantListView(generics.ListAPIView):
         qs = super().get_queryset()
         address = self.request.query_params.get("address")
         cuisine = self.request.query_params.get("cuisine_type")
-        limit = int(self.request.query_params.get("limit", 8))
-
+        
         if address:
             qs = qs.filter(address__icontains=f"Quận {address}")
         if cuisine:
             qs = qs.filter(cuisine_type=cuisine)
+
+        limit_param = self.request.query_params.get("limit")
+        page_param = self.request.query_params.get("page")
+        page_size_param = self.request.query_params.get("page_size")
+
+        # If page-based pagination params are present, return qs and let DRF pagination handle slicing
+        if page_param or page_size_param:
+            return qs
+
+        # If limit explicitly requests all items
+        if limit_param is None:
+            # No limit provided and no pagination params -> return all records
+            return qs
+
+        if isinstance(limit_param, str) and limit_param.lower() in ("all", "none"):
+            return qs
+
+        try:
+            limit = int(limit_param)
+        except Exception:
+            # Fallback to returning all
+            return qs
+
+        if limit <= 0:
+            return qs
 
         return qs[:limit]
 
@@ -142,21 +139,10 @@ class CuisineListView(APIView):
         return Response(sorted(filtered))
 
 
-# ==============================================================
-# 3️⃣ JOURNEY / FOOD PLANNER
-# ==============================================================
+
 
 class JourneyRecommendationsView(APIView):
-    """
-    Gợi ý hành trình ăn uống (simple hoặc AI).
-    GET /api/journey/restaurants/
-    Query params:
-      - budget=300000
-      - preferences=Ẩm thực
-      - search=keyword
-      - strategy=simple|ai
-      - top_k, weights, split_ratio ...
-    """
+    
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
@@ -338,12 +324,7 @@ class FoodJourneyUpsertView(APIView):
             obj = serializer.save()
             return Response(FoodJourneySerializer(obj).data, status=200 if instance else 201)
         return Response(serializer.errors, status=400)
-
-
-# ==============================================================
-# 4️⃣ UTILITY / ADMIN / TRANSLATION / ROUTING
-# ==============================================================
-
+    
 class OverviewView(APIView):
     """Thống kê hệ thống (user, crawl data)."""
     permission_classes = [AllowAny]
