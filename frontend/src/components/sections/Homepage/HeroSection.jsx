@@ -27,7 +27,7 @@ function HeroSection({ onExplore }) {
 
       <div className="hero-content">
         <h1 className="hero-title">
-          DISCOVER CUISINE
+          FOOD DISCOVERY
           <br></br> 
           <span>DA NANG</span> 
         </h1>

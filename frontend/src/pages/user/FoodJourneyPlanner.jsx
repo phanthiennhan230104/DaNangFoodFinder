@@ -114,7 +114,7 @@ const FoodJourneyPlanner = () => {
             transition={{ duration: 0.4, delay: 0.1 }}
           >
             <h2 className="meal-title">
-              {mealType.charAt(0).toUpperCase() + mealType.slice(1)} Recommendations
+              {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
             </h2>
             {groupedRestaurants[mealType].length > 0 ? (
               groupedRestaurants[mealType].map((restaurant) => (
