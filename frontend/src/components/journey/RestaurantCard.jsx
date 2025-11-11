@@ -1,10 +1,16 @@
 import React from "react";
 import { MapPin } from "lucide-react";
+import { motion } from "framer-motion";
 
 const RestaurantCard = ({ restaurant, onAddToJourney, isInJourney }) => {
   return (
-    <div
+    <motion.div
       className="restaurant-card"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.03, boxShadow: "0 8px 20px rgba(0,0,0,0.1)" }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ duration: 0.3 }}
       onClick={() => !isInJourney && onAddToJourney(restaurant)}
     >
       <div className="restaurant-name">🏠 {restaurant.name}</div>
@@ -15,9 +21,16 @@ const RestaurantCard = ({ restaurant, onAddToJourney, isInJourney }) => {
         🍽 {restaurant.cuisine_type} • 💵 {restaurant.price_range}
       </div>
       {isInJourney && (
-        <div className="slot-status">✅ Already in your journey</div>
+        <motion.div
+          className="slot-status"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          ✅ Already in your journey
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
