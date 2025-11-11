@@ -81,13 +81,35 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
 class RestaurantSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = Restaurant
         fields = [
             "id", "name", "address", "cuisine_type",
             "price_range", "average_rating",
-             "opening_hours", "image",
+            "opening_hours", "image",
         ]
+
+    def get_image(self, obj):
+        # Return an absolute URL for the image when possible
+        request = self.context.get('request') if hasattr(self, 'context') else None
+        image_url = None
+        if hasattr(obj, 'image') and obj.image:
+            try:
+                # Django ImageField has .url
+                image_url = obj.image.url
+            except Exception:
+                image_url = str(obj.image)
+        elif hasattr(obj, 'image_url') and obj.image_url:
+            image_url = str(obj.image_url)
+
+        if not image_url:
+            return None
+
+        if request and not image_url.lower().startswith('http'):
+            return request.build_absolute_uri(image_url)
+        return image_url
 
 
 class FoodJourneySerializer(serializers.ModelSerializer):

@@ -5,78 +5,57 @@ import axios from "axios";
 const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { 
-      from: "bot", 
-      text: "Xin chào 👋! Tôi là trợ lý ảo của Da Nang Food Finder.\n\nTôi có thể giúp bạn:\n🍜 Tìm món ăn yêu thích\n🏪 Tìm quán ăn theo khu vực\n💰 Gợi ý theo mức giá\n\nHãy cho tôi biết bạn muốn ăn gì nhé!" 
-    },
+    { from: "bot", text: "Xin chào! Tôi có thể giúp bạn tìm món ăn và quán ăn." },
   ]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const messagesEndRef = useRef(null);
 
-  // Default: use local RAG integration in Django, fallback to DB search
   const RAG_API_URL = "http://localhost:8000/api/chatbot/rag-local/";
   const FALLBACK_SEARCH_URL = "http://localhost:8000/api/chatbot/search/";
-
-  // Auto scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Gửi tin nhắn của người dùng
   const sendMessage = async (text) => {
     const trimmed = (text || "").trim();
     if (!trimmed || isLoading) return;
 
-    // Thêm tin nhắn người dùng
     setMessages((prev) => [...prev, { from: "user", text: trimmed }]);
     setInput("");
     setIsLoading(true);
 
     try {
-      console.log("🔍 Sending query:", trimmed);
-      
-      // Gọi API RAG-SQL (proxy qua Django)
-      let response;
-      try {
-        response = await axios.post(
-          RAG_API_URL,
-          { query: trimmed },
-          { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
-        );
-      } catch (err) {
-        console.warn('RAG-SQL request failed, trying fallback search...', err);
-        // Fallback to safe DB search endpoint
-        response = await axios.post(
-          FALLBACK_SEARCH_URL,
-          { query: trimmed },
-          { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
-        );
-      }
+      const response = await (async () => {
+        try {
+          return await axios.post(
+            RAG_API_URL,
+            { query: trimmed },
+            { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
+          );
+        } catch (err) {
+          return await axios.post(
+            FALLBACK_SEARCH_URL,
+            { query: trimmed },
+            { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
+          );
+        }
+      })();
 
-      console.log("✅ Response:", response.data);
-
-      const { answer, results } = response.data;
-
-      // Thêm câu trả lời từ bot
+      const { answer, results } = response.data || { answer: "", results: [] };
       setMessages((prev) => [
         ...prev,
-        { from: "bot", text: answer, results: results || [] }
+        { from: "bot", text: answer || "Xin lỗi, không tìm thấy kết quả.", results: results || [] }
       ]);
     } catch (error) {
-      console.error("❌ API Error:", error);
-      
-      let errorMessage = "⚠️ Xin lỗi, có lỗi xảy ra khi tìm kiếm.";
-      
-      if (error.code === 'ECONNABORTED') {
-        errorMessage = "⏱️ Kết nối bị timeout. Vui lòng thử lại.";
-      } else if (error.response) {
-        errorMessage = `⚠️ Lỗi: ${error.response.status}. Vui lòng thử lại.`;
-      } else if (error.request) {
-        errorMessage = "🔌 Không thể kết nối đến server.\n\nVui lòng kiểm tra:\n• Server Django đang chạy?\n• Đúng port 8000?\n• CORS đã được cấu hình?";
-      }
-      
+      const errorMessage = error?.code === 'ECONNABORTED'
+        ? "⏱️ Kết nối bị timeout. Vui lòng thử lại."
+        : error?.response
+          ? `⚠️ Lỗi: ${error.response.status}. Vui lòng thử lại.`
+          : "🔌 Không thể kết nối đến server. Vui lòng kiểm tra server và CORS.";
+
       setMessages((prev) => [
         ...prev,
         { from: "bot", text: errorMessage }
@@ -88,7 +67,6 @@ const ChatbotWidget = () => {
 
   const handleSend = () => sendMessage(input);
 
-  // Nhận giọng nói (Web Speech API)
   const startListening = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -102,14 +80,8 @@ const ChatbotWidget = () => {
     recognition.continuous = false;
     recognition.interimResults = false;
 
-    try {
-      recognition.start();
-      setListening(true);
-    } catch (e) {
-      console.warn("Recognition start error:", e);
-      setListening(false);
-      return;
-    }
+    recognition.start();
+    setListening(true);
 
     recognition.onresult = (event) => {
       const transcript = event.results?.[0]?.[0]?.transcript || "";
@@ -117,15 +89,11 @@ const ChatbotWidget = () => {
       setListening(false);
     };
 
-    recognition.onerror = (err) => {
-      console.warn("Speech recognition error:", err);
-      setListening(false);
-    };
+    recognition.onerror = () => setListening(false);
 
     recognition.onend = () => setListening(false);
   };
 
-  // Component hiển thị kết quả quán ăn
   const RestaurantCard = ({ restaurant }) => {
     return (
       <div style={{
@@ -146,6 +114,7 @@ const ChatbotWidget = () => {
         e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
         e.currentTarget.style.transform = "translateY(0)";
       }}
+      onClick={() => setSelectedRestaurant(restaurant)}
       >
         <div style={{ display: "flex", gap: "12px" }}>
           {restaurant.image ? (
@@ -275,6 +244,47 @@ const ChatbotWidget = () => {
     );
   };
 
+  const RestaurantModal = ({ restaurant, onClose }) => {
+    if (!restaurant) return null;
+    return (
+      <div style={{
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10000
+      }} onClick={onClose}>
+        <div style={{
+          width: '480px',
+          background: '#fff',
+          borderRadius: '12px',
+          padding: '20px',
+        }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0 }}>{restaurant.name}</h3>
+            <button onClick={onClose} style={{ background: 'transparent', border: 'none', fontSize: 18, cursor: 'pointer' }}>✕</button>
+          </div>
+          <p style={{ color: '#6b7280' }}>{restaurant.cuisine_type} • {restaurant.price_range}</p>
+          {restaurant.image && <img src={restaurant.image} alt={restaurant.name} style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: 8 }} />}
+          <p style={{ marginTop: 10 }}>{restaurant.description || ''}</p>
+          <p style={{ color: '#6b7280' }}><FaMapMarkerAlt /> {restaurant.address}</p>
+          {restaurant.phone && <p style={{ color: '#6b7280' }}><FaPhone /> {restaurant.phone}</p>}
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <a href={`/nearby?query=${encodeURIComponent(restaurant.name)}`} style={{ textDecoration: 'none' }}>
+              <button style={{ padding: '8px 12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Xem trên bản đồ</button>
+            </a>
+            <button style={{ padding: '8px 12px', background: '#e5e7eb', color: '#111827', border: 'none', borderRadius: 6, cursor: 'pointer' }} onClick={onClose}>Đóng</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       style={{
@@ -285,7 +295,7 @@ const ChatbotWidget = () => {
         fontFamily: "Poppins, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
-      {/* Chatbox */}
+      
       {isOpen && (
         <div
           style={{
@@ -300,7 +310,7 @@ const ChatbotWidget = () => {
             marginBottom: "10px",
           }}
         >
-          {/* Header */}
+          
           <div
             style={{
               background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
@@ -327,7 +337,7 @@ const ChatbotWidget = () => {
             />
           </div>
 
-          {/* Messages */}
+          
           <div
             style={{
               flex: 1,
@@ -361,8 +371,6 @@ const ChatbotWidget = () => {
                   }}
                 >
                   {msg.text}
-                  
-                  {/* Hiển thị kết quả tìm kiếm */}
                   {msg.results && msg.results.length > 0 && (
                     <div style={{ marginTop: "8px" }}>
                       {msg.results.map((result, idx) => (
@@ -373,8 +381,11 @@ const ChatbotWidget = () => {
                 </div>
               </div>
             ))}
+            {selectedRestaurant && (
+              <RestaurantModal restaurant={selectedRestaurant} onClose={() => setSelectedRestaurant(null)} />
+            )}
             
-            {/* Loading indicator */}
+            
             {isLoading && (
               <div style={{ textAlign: "left", margin: "10px 0" }}>
                 <div style={{
@@ -422,7 +433,6 @@ const ChatbotWidget = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input + Voice + Send */}
           <div
             style={{
               display: "flex",
@@ -433,7 +443,6 @@ const ChatbotWidget = () => {
               gap: "8px",
             }}
           >
-            {/* Nút Voice */}
             <button
               onClick={startListening}
               disabled={listening || isLoading}
@@ -458,7 +467,7 @@ const ChatbotWidget = () => {
               )}
             </button>
 
-            {/* Ô nhập */}
+            
             <input
               type="text"
               placeholder="VD: phở bò, quán Hàn Quốc..."
@@ -477,7 +486,7 @@ const ChatbotWidget = () => {
               }}
             />
 
-            {/* Gửi */}
+            
             <button
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
@@ -499,7 +508,7 @@ const ChatbotWidget = () => {
         </div>
       )}
 
-      {/* Floating button */}
+      
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -530,7 +539,7 @@ const ChatbotWidget = () => {
         </button>
       )}
       
-      {/* CSS Animation */}
+      
       <style>{`
         @keyframes bounce {
           0%, 80%, 100% { 
