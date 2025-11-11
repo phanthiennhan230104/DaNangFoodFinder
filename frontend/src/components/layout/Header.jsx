@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { User, LogOut, Send, ChevronDown } from "lucide-react"; // ✅ Thêm import icons
+import { User, LogOut, Send, ChevronDown } from "lucide-react";
 import "../../styles/layout/Header.css";
 import { ACCESS_TOKEN } from "../../constants";
 import api from "../../api";
+import { LanguageSwitcher } from "../AutoTranslateProvider";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -14,7 +15,6 @@ export default function Header() {
 
   const toggleMenu = () => setOpen(!open);
 
-  // 🔒 Đóng dropdown khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -59,7 +59,6 @@ export default function Header() {
     }
   }, [isLoggedIn]);
 
-  // 🌐 Layout 1 - Landing (Chưa login)
   if (!isLoggedIn && location.pathname === "/") {
     return (
       <header className="header">
@@ -81,7 +80,6 @@ export default function Header() {
     );
   }
 
-  // 🧭 Layout 2 - Admin
   if (isLoggedIn && roleId === "1") {
     return (
       <header className="header admin-header">
@@ -107,7 +105,6 @@ export default function Header() {
     );
   }
 
-  // 👤 Layout 3 - User
   if (isLoggedIn && roleId !== "1") {
     return (
       <header className="header user-header">
@@ -119,16 +116,16 @@ export default function Header() {
           <ul className="nav-links">
             <li><a href="/home">Home</a></li>
             <li><a href="/journey">Food Journey</a></li>
-            <li><a href="/favorites">Favorites</a></li>
-            <li><a href="/nearby">Nearby Restaurants</a></li>
+            <li><a href="/favorites">Favorite</a></li>
+            <li><a href="/nearby">Nearby Restaurant</a></li>
           </ul>
 
-          {/* 🔽 Dropdown Menu */}
           <div className="auth-buttons" ref={menuRef}>
             <button className="btn btn-secondary dropdown-toggle" onClick={toggleMenu}>
               <span>Hi, {fullName || username}</span>
               <ChevronDown className={`chevron-icon ${open ? "rotate" : ""}`} size={18} />
             </button>
+             <LanguageSwitcher />
 
             <div className={`dropdown-card ${open ? "open" : ""}`}>
               <a href="/profiles" className="dropdown-item">

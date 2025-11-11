@@ -1,26 +1,25 @@
 .hero-slideshow-container {
   position: relative;
-  height: 72vh;
-  min-height: 520px;
+  height: 90vh;
   overflow: hidden;
   display: flex;
-  justify-content: center;
   align-items: center;
-  color: #fffaf5;
-  text-align: center;
-  isolation: isolate;
+  justify-content: center;
 }
 
 .hero-slide {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background-size: cover;
   background-position: center;
   opacity: 0;
-  transform: scale(1.08);
-  transition: opacity 1.2s ease-in-out, transform 7s ease;
-  filter: saturate(1.05) contrast(1.02);
+  transform: scale(1.05);
+  transition: opacity 1s ease, transform 5s ease;
 }
+
 .hero-slide.active {
   opacity: 1;
   transform: scale(1);
@@ -28,66 +27,125 @@
 
 .hero-overlay {
   position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.16) 40%, rgba(0,0,0,0.10) 100%),
-    linear-gradient(120deg, rgba(255,107,53,0.34), rgba(247,147,30,0.16));
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(0, 0, 0, 0.45),
+    rgba(0, 0, 0, 0.35)
+  );
   z-index: 1;
 }
 
 .hero-content {
   position: relative;
   z-index: 2;
-  max-width: 900px;
-  padding: 0 20px;
-  animation: hero-fade-up 700ms ease both;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 2.5rem 3.5rem;
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  animation: fadeUp 0.8s ease-out;
 }
 
 .hero-title {
-  font-family: "Poppins", "Montserrat", sans-serif;
-  font-size: clamp(2.2rem, 5vw, 3.6rem);
-  font-weight: 800;
-  letter-spacing: .5px;
-  margin-bottom: .75rem;
+  font-size: 3.2rem;
+  font-weight: 700;
   color: #fff;
-  text-shadow: 0 6px 16px rgba(0,0,0,.45);
-  text-transform: uppercase;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
 }
+
 .hero-title span {
-  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  display: block;
+  font-size: 2.5rem;
+  color: var(--color-accent);
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 .hero-subtitle {
-  font-size: clamp(1rem, 2.2vw, 1.2rem);
-  color: #fffaf5;
-  opacity: .95;
-  text-shadow: 0 3px 10px rgba(0,0,0,.35);
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #f8f8f8;
+  margin-top: 0.5rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-@keyframes hero-fade-up {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: translateY(0); }
+.hero-button {
+  margin-top: 1.5rem;
+  padding: 0.8rem 1.8rem;
+  border: none;
+  border-radius: var(--border-radius-pill);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
 }
 
-@media (max-width: 640px) {
-  .hero-slideshow-container { height: 68vh; min-height: 460px; }
+.hero-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.45);
 }
 
-/* =====================================================
-   🌈 GLOBAL BACKGROUND
-===================================================== */
+.hero-button:active {
+  transform: scale(0.96);
+  box-shadow: 0 3px 10px rgba(255, 107, 53, 0.3);
+}
+
+
+/* Animation */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-content {
+    padding: 1.5rem 2rem;
+  }
+
+  .hero-title {
+    font-size: 2.2rem;
+  }
+
+  .hero-title span {
+    font-size: 1.8rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+}
+
+
 body {
-  background-color: #fffaf5;
-}
-.main-content {
-  background-color: #fffaf5;
-  padding: 1.5rem 5% 2rem 5%;
+  background-color: var(--color-bg-light);
 }
 
-/* FILTER SECTION */
+.main-content {
+  background-color: var(--color-bg-light);
+  padding: 2rem 0;
+}
+
+.main-content > .container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 2rem;
+  box-sizing: border-box;
+}
 
 .filter-container {
   display: flex;
@@ -97,7 +155,7 @@ body {
   border-bottom: 1px solid #eee;
   margin-bottom: 1.2rem;
   flex-wrap: wrap;
-  gap: 1rem 0;
+  gap: 1rem;
 }
 
 .filter-groups {
@@ -113,9 +171,8 @@ body {
 }
 
 .filter-label {
-  font-weight: bold;
-  margin-right: 1rem;
-  align-self: center;
+  font-weight: 600;
+  color: var(--color-text-dark);
 }
 
 .filter-select {
@@ -132,34 +189,35 @@ body {
 
 .filter-select:focus {
   outline: none;
-  border-color: #e85a4f;
-  box-shadow: 0 0 0 2px rgba(232, 90, 79, 0.3);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.3);
 }
 
-/* =====================================================
-   🏠 RESTAURANT GRID SECTION
-===================================================== */
+.restaurant-grid-section {
+  margin: 0 auto;
+  max-width: var(--container-width);
+  padding: 0 2rem;
+}
+
 .restaurant-grid-section h2 {
   font-size: 1.8rem;
   margin: 0 0 1rem;
-  border-left: 5px solid #e85a4f;
+  border-left: 5px solid var(--color-accent);
   padding-left: 10px;
 }
+
 .restaurants-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.5rem;
   align-items: stretch;
   padding-bottom: 1.5rem;
 }
 
-/* =====================================================
-   🍜 RESTAURANT CARD
-===================================================== */
 .restaurant-card {
   background: white;
   border-radius: 10px;
-  overflow: clip;
+  overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   display: flex;
@@ -184,29 +242,29 @@ body {
   flex-direction: column;
   justify-content: space-between;
   padding: 0.8rem 1rem;
-  min-height: 140px; /* 🔹 giữ độ cao tối thiểu để không nhảy khi text dài */
+  min-height: 140px;
 }
 
 .card-title {
   font-size: 1.1rem;
-  margin: 0 0 0.3rem 0;
+  margin: 0 0 0.3rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 1; /* 🔹 chỉ hiển thị 1 dòng */
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
 }
 
 .card-address {
   font-size: 0.9rem;
   color: #666;
-  margin: 0 0 0.6rem 0;
+  margin: 0 0 0.6rem;
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* 🔹 chỉ hiển thị 2 dòng */
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
@@ -216,7 +274,7 @@ body {
   justify-content: space-between;
   align-items: center;
   font-size: 0.9rem;
-  flex-wrap: wrap; /* 🔹 tránh tràn khi chữ tag dài */
+  flex-wrap: wrap;
   gap: 6px;
 }
 
@@ -226,7 +284,7 @@ body {
   align-items: center;
   gap: 4px;
   color: #f39c12;
-  white-space: nowrap; /* giữ ⭐ và số cùng hàng */
+  white-space: nowrap;
 }
 
 .card-cuisine {
@@ -240,19 +298,4 @@ body {
   text-overflow: ellipsis;
   overflow: hidden;
   text-align: center;
-}
-
-/* =====================================================
-   📱 RESPONSIVE
-===================================================== */
-@media (max-width: 640px) {
-  .quick-actions {
-    flex-direction: column;
-    align-items: stretch;
-    margin-top: -25px;
-    gap: 10px;
-  }
-  .quick-action {
-    justify-content: center;
-  }
 }

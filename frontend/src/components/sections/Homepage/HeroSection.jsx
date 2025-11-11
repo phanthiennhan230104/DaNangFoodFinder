@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "../../../styles/user/HomePage.css";
 
-function HeroSection() {
+function HeroSection({ onExplore }) {
   const [currentImage, setCurrentImage] = useState(0);
 
   const images = ["/images/bg1.jpg", "/images/bg2.jpg", "/images/bg3.jpg", "/images/bg4.jpg"];
@@ -32,6 +32,9 @@ function HeroSection() {
           <span>DA NANG</span> 
         </h1>
         <p className="hero-subtitle">Find your favorite dishes and restaurants smartly.</p>
+        <button className="hero-button" onClick={onExplore}>
+          Explore Now
+        </button>
       </div>
     </div>
   );

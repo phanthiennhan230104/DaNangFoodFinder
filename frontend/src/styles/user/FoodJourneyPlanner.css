@@ -1,235 +1,280 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+.container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 2rem;
+  box-sizing: border-box;
+}
+
 .food-journey-container {
-  background-color: #f5f5dc; /* nền be nhẹ */
   min-height: 100vh;
-  padding: 2rem;
-  font-family: 'Courier New', monospace;
-  color: #333;
-}
-
-.header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.subtitle {
-  font-size: 1.1rem;
-  color: #666;
-  margin-bottom: 2rem;
+  background: var(--color-bg-light);
+  padding: calc(var(--header-height) + 2rem) 0 0;
+  font-family: 'Poppins', sans-serif;
+  color: var(--color-text-dark);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .controls-section {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1.5rem 2rem;
+  justify-content: flex-start;
+  background: var(--color-bg-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem 2rem;
 }
 
 .control-group {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.6rem;
+  flex: 1 1 220px;
+  min-width: 220px;
+  margin-top: 0;
+  height: 100%;
 }
 
 .control-label {
-  font-weight: bold;
-  min-width: 120px;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  font-size: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  white-space: nowrap;
 }
 
-/* input ngày */
-.date-input {
-  padding: 0.5rem 0.75rem;
-  border: 2px solid #333;
-  background: #fff;
-  font-family: inherit;
+.date-input,
+.search-input {
+  padding: 0.7rem 1rem;
+  border: 1.8px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
   font-size: 1rem;
+  transition: var(--transition-medium);
 }
 
-/* budget */
+.date-input:focus,
+.search-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 5px rgba(212, 105, 26, 0.3);
+}
+
 .budget-options {
   display: flex;
-  gap: 0.5rem;
   flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .budget-option {
-  padding: 0.5rem 1rem;
-  border: 2px solid #333;
-  background: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--border-radius-pill);
+  border: 1.8px solid var(--color-border);
+  background: var(--color-bg-white);
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-weight: 500;
+  transition: var(--transition-medium);
 }
 
 .budget-option:hover {
-  background-color: #e0e0e0;
+  background: var(--color-bg-light);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
 }
 
 .budget-option.selected {
-  background-color: #333;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
   color: #fff;
+  border: none;
+  box-shadow: 0 3px 10px rgba(255, 107, 53, 0.3);
 }
 
-.budget-option.selected:hover {
-  background-color: #555;
-}
-
-/* cuisine */
 .cuisine-tags {
   display: flex;
-  gap: 0.5rem;
   flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .cuisine-tag {
-  padding: 0.5rem 1rem;
-  border: 2px solid #333;
-  border-radius: 20px;
-  background: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--border-radius-pill);
+  border: 1.8px solid var(--color-border);
+  background: var(--color-bg-white);
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition-medium);
 }
 
 .cuisine-tag:hover {
-  background-color: #e0e0e0;
+  border-color: var(--color-primary);
+  background: var(--color-bg-light);
 }
 
 .cuisine-tag.selected {
-  background-color: #333;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: #fff;
+  border: none;
+  box-shadow: 0 3px 10px rgba(212, 105, 26, 0.25);
 }
 
-.cuisine-tag.selected:hover {
-  background-color: #555;
-}
-
-/* search */
 .search-section {
-  margin-bottom: 2rem;
+  flex: 1 1 100%;
 }
 
 .search-input {
   width: 100%;
-  max-width: 400px;
-  padding: 0.75rem;
-  border: 2px solid #333;
-  font-family: inherit;
-  font-size: 1rem;
-  background: white;
+  max-width: 450px;
+  background: #fff;
 }
 
-/* recommendations */
 .recommendations-section {
-  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .meal-section {
-  margin-bottom: 2rem;
-  border: 2px solid #333;
-  padding: 1.5rem;
-  background: white;
+  background: var(--color-bg-white);
+  border-radius: var(--border-radius-md);
+  padding: 1.75rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
 }
 
 .meal-title {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
   margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
 }
 
-/* timeline */
+.no-results {
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: 0.95rem;
+}
+
+.filter-suggestion {
+  font-size: 0.85rem;
+  color: var(--color-primary);
+  margin-top: 0.25rem;
+}
+
+.restaurant-card {
+  border: 1.8px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: 1.2rem;
+  background: #fff;
+  cursor: pointer;
+  transition: var(--transition-medium);
+}
+
+.restaurant-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.restaurant-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--color-primary-dark);
+  margin-bottom: 0.5rem;
+}
+
+.restaurant-details {
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.slot-status {
+  margin-top: 0.5rem;
+  font-weight: 500;
+  color: var(--color-accent);
+}
+
 .journey-timeline {
-  border: 2px solid #333;
-  padding: 1.5rem;
-  background: white;
+  background: var(--color-bg-white);
+  border-radius: var(--border-radius-md);
+  padding: 2rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
 }
 
 .timeline-title {
   font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
 }
 
 .budget-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-bg-light);
+  border-radius: var(--border-radius-pill);
+  padding: 0.75rem 1.25rem;
   margin-bottom: 1.5rem;
 }
 
 .budget-label {
-  font-weight: bold;
+  font-weight: 500;
+  color: var(--color-primary-dark);
 }
 
 .budget-amount {
-  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-accent);
 }
 
 .time-slots {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .time-slot {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  background: #f9f9f9;
+  background: #fff;
+  border-radius: var(--border-radius-md);
+  border: 1.5px solid var(--color-border);
+  padding: 1rem 1.25rem;
+  transition: var(--transition-medium);
+}
+
+.time-slot:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
 .time-label {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--color-primary-dark);
 }
 
-/* card restaurant */
-.restaurant-card {
-  border: 2px solid #333;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background: white;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.restaurant-card:hover {
-  background-color: #f0f0f0;
-}
-
-.restaurant-name {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.restaurant-details {
-  font-size: 0.9rem;
-  color: #666;
-}
-
-/* responsive */
 @media (max-width: 768px) {
-  .food-journey-container {
-    padding: 1rem;
-  }
-
-  .title {
-    font-size: 2rem;
+  .controls-section {
+    flex-direction: column;
   }
 
   .control-group {
-    flex-direction: column;
-    align-items: flex-start;
+    flex: 1 1 100%;
   }
 
-  .control-label {
-    min-width: auto;
+  .recommendations-section {
+    gap: 1.5rem;
   }
 
-  .time-slots {
-    gap: 1rem;
+  .journey-timeline {
+    padding: 1.5rem;
   }
 }
