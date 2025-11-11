@@ -3,7 +3,6 @@ import { translateText } from "../utils/translator";
 
 const BASE_LANG = "en";
 const SUPPORTED = ["en", "vi"];
-
 // 🔹 Tạo Context để Header có thể lấy ngôn ngữ & hàm đổi ngôn ngữ
 export const LangContext = createContext({
   lang: "en",
@@ -118,7 +117,6 @@ export default function AutoTranslateProvider({ children }) {
       mo.observe(container, { childList: true, subtree: true, characterData: true });
     }
 
-    // Hiệu ứng fade-in
     container.classList.add("fade-in");
     setTimeout(() => container.classList.remove("fade-in"), 800);
   }

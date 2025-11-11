@@ -84,13 +84,10 @@ class RestaurantListView(generics.ListAPIView):
         page_param = self.request.query_params.get("page")
         page_size_param = self.request.query_params.get("page_size")
 
-        # If page-based pagination params are present, return qs and let DRF pagination handle slicing
         if page_param or page_size_param:
             return qs
 
-        # If limit explicitly requests all items
         if limit_param is None:
-            # No limit provided and no pagination params -> return all records
             return qs
 
         if isinstance(limit_param, str) and limit_param.lower() in ("all", "none"):
@@ -99,7 +96,6 @@ class RestaurantListView(generics.ListAPIView):
         try:
             limit = int(limit_param)
         except Exception:
-            # Fallback to returning all
             return qs
 
         if limit <= 0:
@@ -110,9 +106,6 @@ class RestaurantListView(generics.ListAPIView):
 
 @api_view(["GET"])
 def get_filters(request):
-    """
-    Lấy danh sách khu vực (Quận) & loại ẩm thực (cuisine_type) duy nhất.
-    """
     addresses = Restaurant.objects.values_list("address", flat=True).distinct()
     areas = set()
 
@@ -130,7 +123,6 @@ def get_filters(request):
 
 
 class CuisineListView(APIView):
-    """Trả danh sách loại ẩm thực duy nhất."""
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
@@ -146,7 +138,6 @@ class JourneyRecommendationsView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        # --- Lấy tham số ---
         strategy = request.GET.get("strategy", "simple")
         budget = int(request.GET.get("budget", 300000))
         preferences_raw = request.GET.get("preferences", "")
@@ -155,14 +146,12 @@ class JourneyRecommendationsView(APIView):
         ]
         search = request.GET.get("search", "")
 
-        # --- Lọc danh sách ---
         qs = Restaurant.objects.all()
         if preferences:
             qs = qs.filter(cuisine_type__in=preferences)
         if search:
             qs = qs.filter(Q(name__icontains=search) | Q(address__icontains=search))
 
-        # --- Tạo danh sách ứng viên ---
         candidates: List[Candidate] = []
         for r in qs:
             price_val = parse_price_range(r.price_range, default_price=0)
@@ -181,7 +170,6 @@ class JourneyRecommendationsView(APIView):
                 )
             )
 
-        # --- Chiến lược AI ---
         if strategy == "ai":
             client = Groq(api_key=settings.GROQ_API_KEY)
             candidates_text = "\n".join(
@@ -218,13 +206,11 @@ class JourneyRecommendationsView(APIView):
                 "best_plan": plan,
             })
 
-        # --- Chiến lược simple ---
         top_k = int(request.GET.get("top_k", 6))
         breakfast_cut = int(request.GET.get("breakfast_cut", 100000))
         dinner_cut = int(request.GET.get("dinner_cut", 200000))
         over_allow_ratio = float(request.GET.get("over_allow_ratio", 0.1))
 
-        # --- Chia ngân sách ---
         try:
             r1, r2, r3 = [float(x) for x in request.GET.get("split_ratio", "0.3,0.4,0.3").split(",")]
         except Exception:
@@ -237,13 +223,11 @@ class JourneyRecommendationsView(APIView):
             "dinner": int(budget * r3),
         }
 
-        # --- Trọng số ---
         try:
             w_cuisine, w_price, w_rating = [float(x) for x in request.GET.get("weights", "0.5,0.3,0.2").split(",")]
         except Exception:
             w_cuisine, w_price, w_rating = 0.5, 0.3, 0.2
 
-        # --- Nhóm ứng viên ---
         grouped = {"breakfast": [], "lunch": [], "dinner": []}
         for c in candidates:
             if c.meal_type not in grouped:
@@ -298,7 +282,6 @@ class JourneyRecommendationsView(APIView):
 
 
 class FoodJourneyUpsertView(APIView):
-    """Tạo hoặc cập nhật lịch trình ăn uống."""
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -327,7 +310,6 @@ class FoodJourneyUpsertView(APIView):
         return Response(serializer.errors, status=400)
     
 class OverviewView(APIView):
-    """Thống kê hệ thống (user, crawl data)."""
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -347,7 +329,6 @@ class OverviewView(APIView):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def translate_view(request):
-    """Dịch văn bản bằng Groq API."""
     text = request.data.get("text", "")
     source = request.data.get("from", "en")
     target = request.data.get("to", "vi")
@@ -360,20 +341,44 @@ def translate_view(request):
         completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
-                {"role": "system",
-                 "content": f"Translate {source}→{target}, output only translation."},
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a professional translator for a web application about food discovery in Da Nang. "
+                        "Translate from English to Vietnamese using natural, modern language suited for a travel/food website. "
+                        "Avoid literal or technical terms like 'nghiệp vụ' or 'vận hành'. "
+                        "Use phrases familiar to Vietnamese users, e.g., 'khám phá ẩm thực', 'gợi ý món ăn', 'trải nghiệm ẩm thực'. "
+                        "Output translation only, no explanation."
+                    ),
+                },
                 {"role": "user", "content": text},
             ],
             temperature=0.2,
         )
+
         translated = completion.choices[0].message.content.strip()
-        return Response({"result": translated})
+        refined = refine_vietnamese(translated)
+        return Response({"result": refined})
+
     except Exception as e:
         return Response({"result": text, "error": str(e)})
 
 
+def refine_vietnamese(text: str) -> str:
+    replacements = [
+        (r"\b(Bữa sáng|Bữa trưa|Bữa tối)\s*(Gợi ý|Đề xuất)", "Gợi ý \\1"),
+        (r"\b(Gợi ý|Đề xuất)\s*(Bữa sáng|Bữa trưa|Bữa tối)", "Gợi ý \\2"),
+        (r"\b(Nhà hàng)\s*(Yêu thích|Ưa thích)", "\\2 \\1"),
+        (r"\b(Bản đồ)\s*(Mở|Đóng)", "\\2 \\1"),
+        (r"\b(Khuyến nghị)\b", "Gợi ý"),
+        (r"\s{2,}", " "),
+    ]
+    for pattern, repl in replacements:
+        text = re.sub(pattern, repl, text, flags=re.IGNORECASE)
+    return text.strip()
+
+
 class CalculateRouteView(APIView):
-    """Tính đường đi giữa hai tọa độ (OpenRouteService/OSRM)."""
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -384,7 +389,6 @@ class CalculateRouteView(APIView):
             return Response({"error": "Invalid coordinates. Need 2 points."}, status=400)
 
         try:
-            # --- OpenRouteService ---
             if api_key and api_key != 'eyJvcmciOiI1Yj...':
                 ors_url = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson'
                 ors_response = requests.post(
@@ -396,7 +400,6 @@ class CalculateRouteView(APIView):
                 if ors_response.status_code == 200:
                     return Response(ors_response.json())
 
-            # --- OSRM fallback ---
             osrm_url = (
                 f"https://router.project-osrm.org/route/v1/driving/"
                 f"{coordinates[0][0]},{coordinates[0][1]};"
@@ -491,15 +494,10 @@ class ProfileView(generics.GenericAPIView):
                 {"detail": f"Error saving profile: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-# ==============================================================
-# 5️⃣ CHATBOT APIs - Safe Version
-# Thay thế code chatbot cũ bằng version này
-# ==============================================================
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def chatbot_test(request):
-    """Test endpoint"""
     return Response({
         'status': 'ok',
         'message': 'Chatbot API is working! ✅',
@@ -509,9 +507,6 @@ def chatbot_test(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def chatbot_search(request):
-    """
-    Tìm kiếm quán ăn - Safe version với error handling tốt
-    """
     try:
         query = request.data.get('query', '').strip()
         
@@ -524,12 +519,7 @@ def chatbot_search(request):
                 'total': 0
             })
         
-        # Tìm kiếm trong database - Safe version
         try:
-            # Note: `description` is not a field on Restaurant (removed/renamed),
-            # so avoid querying it directly. Keep other safe filters.
-            # Also search the `rag_context_text` field which contains
-            # aggregated textual info (used for RAG/vectorization).
             restaurants = Restaurant.objects.filter(
                 Q(name__icontains=query) |
                 Q(cuisine_type__icontains=query) |
@@ -547,18 +537,15 @@ def chatbot_search(request):
                 'error': str(db_error)
             }, status=500)
         
-        # Xử lý kết quả - Kiểm tra từng field cẩn thận
         results = []
         for r in restaurants:
             try:
-                # Lấy thông tin cơ bản - an toàn
                 restaurant_data = {
                     'type': 'restaurant',
                     'id': r.id if hasattr(r, 'id') else 0,
                     'name': str(r.name) if hasattr(r, 'name') and r.name else 'Không có tên',
                 }
                 
-                # Lấy các field tùy chọn - kiểm tra từng cái
                 if hasattr(r, 'cuisine_type'):
                     restaurant_data['cuisine_type'] = str(r.cuisine_type) if r.cuisine_type else 'Không rõ'
                 else:
@@ -574,7 +561,6 @@ def chatbot_search(request):
                 else:
                     restaurant_data['phone'] = ''
                 
-                # Price range - nhiều tên field khác nhau
                 price_display = 'Liên hệ'
                 if hasattr(r, 'price_range') and r.price_range:
                     price_display = str(r.price_range)
@@ -582,7 +568,6 @@ def chatbot_search(request):
                     price_display = str(r.price)
                 restaurant_data['price_range'] = price_display
                 
-                # Rating - có thể có nhiều tên field
                 rating = 0.0
                 if hasattr(r, 'average_rating') and r.average_rating:
                     try:
@@ -595,9 +580,7 @@ def chatbot_search(request):
                     except (ValueError, TypeError):
                         rating = 0.0
                 restaurant_data['rating'] = rating
-                
-                # Description: prefer explicit `description` if present,
-                # otherwise use `rag_context_text` which holds aggregated text.
+
                 desc = ''
                 if hasattr(r, 'description') and r.description:
                     desc = str(r.description)
@@ -605,7 +588,6 @@ def chatbot_search(request):
                     desc = str(r.rag_context_text)
                 restaurant_data['description'] = desc
                 
-                # Image - kiểm tra nhiều field
                 image_url = None
                 if hasattr(r, 'image_url') and r.image_url:
                     image_url = str(r.image_url)
@@ -624,10 +606,8 @@ def chatbot_search(request):
         
         logger.info(f"✅ Processed {len(results)} results successfully")
         
-        # Sắp xếp theo rating
         results.sort(key=lambda x: x.get('rating', 0), reverse=True)
         
-        # Tạo câu trả lời
         if results:
             answer = f"🔍 Tìm thấy {len(results)} quán ăn phù hợp với '{query}'!"
             
@@ -669,7 +649,6 @@ def chatbot_search(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def chatbot_ai_search(request):
-    """AI Search - với fallback về search thường nếu lỗi"""
     try:
         query = request.data.get('query', '').strip()
         
@@ -679,12 +658,10 @@ def chatbot_ai_search(request):
                 'results': []
             })
         
-        # Kiểm tra GROQ_API_KEY có tồn tại không
         if not hasattr(settings, 'GROQ_API_KEY') or not settings.GROQ_API_KEY:
             logger.warning("⚠️ GROQ_API_KEY not configured, falling back to simple search")
             return chatbot_search(request)
         
-        # Sử dụng Groq AI
         from groq import Groq
         client = Groq(api_key=settings.GROQ_API_KEY)
         
@@ -716,7 +693,6 @@ Chỉ JSON, không giải thích.
         
         logger.info(f"🤖 AI extracted: {extracted}")
         
-        # Tìm kiếm với thông tin AI
         qs = Restaurant.objects.all()
         
         keywords = extracted.get('keywords', [query])
@@ -738,11 +714,9 @@ Chỉ JSON, không giải thích.
         
         restaurants = qs[:10]
         
-        # Xử lý kết quả giống như chatbot_search
         results = []
         for r in restaurants:
             try:
-                # Prefer rag_context_text as description when available
                 desc = ''
                 if hasattr(r, 'description') and r.description:
                     desc = str(r.description)
@@ -766,7 +740,6 @@ Chỉ JSON, không giải thích.
         
         results.sort(key=lambda x: x['rating'], reverse=True)
         
-        # Tạo câu trả lời bằng AI
         if results:
             summary = "\n".join([
                 f"- {r['name']}: {r['cuisine_type']}, {r['price_range']}"
@@ -802,7 +775,6 @@ Trả lời ngắn (2-3 câu), thân thiện bằng tiếng Việt.
         
     except Exception as e:
         logger.error(f"AI Error: {e}", exc_info=True)
-        # Fallback về search thường
         return chatbot_search(request)
 
 
@@ -823,7 +795,6 @@ def chatbot_rag_sql(request):
 
         rag_url = getattr(settings, 'RAG_SQL_URL', 'http://localhost:8001/question-answering')
 
-        # If the RAG-SQL service is available via HTTP use it; otherwise try local integration
         try:
             resp = requests.post(rag_url, json={'question': query}, timeout=8)
             if resp.status_code == 200:
@@ -841,12 +812,10 @@ def chatbot_rag_sql(request):
         except Exception as e_remote:
             logger.info(f"RAG-SQL remote unreachable: {e_remote}, trying local integration")
 
-        # Try local import/integration: call MonolithAgent directly
         try:
             from .rag_sql_local import get_monolith_predictor
             predictor = get_monolith_predictor()
             results = predictor(query)
-            # Build a friendly answer summary
             if results and isinstance(results, list):
                 if len(results) == 0:
                     answer = f"😔 Không tìm thấy kết quả cho '{query}'."
@@ -870,7 +839,6 @@ def chatbot_rag_sql(request):
             })
         except Exception as e_local:
             logger.exception("Local RAG-SQL integration failed: %s", e_local)
-            # fallback to AI/DB search
             try:
                 return chatbot_ai_search(request)
             except Exception:
