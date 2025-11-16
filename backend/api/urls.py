@@ -1,9 +1,9 @@
 from django.urls import path
 from .views import (
-    RestaurantListView, CuisineListView,
+    FeedbackListAdminView, RestaurantListView, CuisineListView,
     JourneyRecommendationsView, FoodJourneyUpsertView,
     OverviewView, get_filters, translate_view, CalculateRouteView, get_my_profile, ProfileView
-    ,chatbot_test, chatbot_search, chatbot_rag_sql, chatbot_ai_search
+    ,chatbot_test, chatbot_search, chatbot_rag_sql, chatbot_ai_search,FeedbackCreateView
 
 )
 from rest_framework_simplejwt.views import TokenBlacklistView
@@ -26,5 +26,8 @@ urlpatterns = [
     path('chatbot/rag-sql/', chatbot_rag_sql, name='chatbot-rag-sql'),
     path('chatbot/rag-local/', chatbot_rag_sql, name='chatbot-rag-local'),
     path('chatbot/ai-search/', chatbot_ai_search, name='chatbot-ai-search'),
+    path('feedback/', FeedbackCreateView.as_view(), name='feedback-create'),
+    path("feedback-list/", FeedbackListAdminView.as_view(), name="feedback-list"),
+
 ]
 

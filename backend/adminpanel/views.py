@@ -8,8 +8,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
-from api.models import CustomUser, Profile, Role
-from .serializers import CustomUserSerializer, ProfileSerializer, RoleSerializer, AccountSerializer
+from api.models import CustomUser, Feedback, Profile, Role
+from .serializers import CustomUserSerializer, FeedbackSerializer, FeedbackUpdateSerializer, ProfileSerializer, RoleSerializer, AccountSerializer
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import status
@@ -215,3 +215,8 @@ class LoginView(APIView):
             }, status=status.HTTP_200_OK)
         return Response({"detail": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
+
+
+class FeedbackUpdateAPIView(generics.UpdateAPIView):
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackUpdateSerializer

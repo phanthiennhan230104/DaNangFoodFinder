@@ -92,6 +92,7 @@ export default function Header() {
             <li><a href="/admin/accounts">Accounts</a></li>
             <li><a href="/admin/roles">Roles</a></li>
             <li><a href="/admin/crawl">Crawl Data</a></li>
+            <li><a href="/admin/feedback">Feedback</a></li>
           </ul>
 
           <div className="auth-buttons">
