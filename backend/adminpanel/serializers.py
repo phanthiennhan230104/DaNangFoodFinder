@@ -1,4 +1,4 @@
-from api.models import CustomUser, Profile, Role
+from api.models import CustomUser, Feedback, Profile, Role
 from rest_framework import serializers
 
 
@@ -171,3 +171,16 @@ class AccountSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = ['id', 'feedback_type', 'subject', 'message', 'contact_email', 'is_resolved', 'created_at']
+        read_only_fields = ['id', 'is_resolved', 'created_at']
+
+
+class FeedbackUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = ['message_response', 'is_resolved']

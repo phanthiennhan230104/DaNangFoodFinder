@@ -1,56 +1,67 @@
-import React from "react"
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom"
+import React from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { AuthProvider } from "./components/contexts/AuthContext";
 import AutoTranslateProvider from "./components/AutoTranslateProvider.jsx";
 import "./styles/auto-translate.css";
-import Header from "./components/layout/Header"
-import Login from "./pages/auth/Login"
-import Register from "./pages/auth/Register"
-import HomePage from "./pages/user/HomePage"
-import RestaurantMap from "./pages/user/RestaurantMap"
-import NotFound from "./pages/NotFound"
-import ProtectedRoute from "./components/ProtectedRoute"
-import FoodJourneyPlanner from "./pages/user/FoodJourneyPlanner"
-import LandingPage from "./pages/LandingPage"
+import Header from "./components/layout/Header";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import HomePage from "./pages/user/HomePage";
+import RestaurantMap from "./pages/user/RestaurantMap";
+import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
+import FoodJourneyPlanner from "./pages/user/FoodJourneyPlanner";
+import LandingPage from "./pages/LandingPage";
 import AdminCrawlDashboard from "./pages/admin/AdminCrawlDashboard";
-import ForgotPassword from "./pages/auth/ForgotPassword"
+import ForgotPassword from "./pages/auth/ForgotPassword";
 import { ACCESS_TOKEN } from "./constants";
 import Profile from "./pages/user/Profile";
 
-import AdminHome from "./pages/admin/AdminHome"
-import EditAccount from "./pages/admin/EditAccount"
-import EditRole from "./pages/admin/EditRole"
-import RoleManagement from "./pages/admin/RoleManagement"
-import AccountManagement from "./pages/admin/AccountManagement"
-import AddAccount from "./pages/admin/AddAccount"
-import AddRole from "./pages/admin/AddRole"
+import AdminHome from "./pages/admin/AdminHome";
+import EditAccount from "./pages/admin/EditAccount";
+import EditRole from "./pages/admin/EditRole";
+import RoleManagement from "./pages/admin/RoleManagement";
+import AccountManagement from "./pages/admin/AccountManagement";
+import AddAccount from "./pages/admin/AddAccount";
+import AddRole from "./pages/admin/AddRole";
 import ChatbotWidget from "./components/ChatbotWidget";
+import Feedback from "./pages/user/Feedback.jsx";
+import FeedbackList from "./pages/admin/FeedbackList.jsx";
+import FeedbackResolved from "./pages/user/FeedbackResolved.jsx";
 
 function Logout() {
   React.useEffect(() => {
     localStorage.clear();
     window.location.replace("/login");
   }, []);
-  return <div style={{ textAlign: "center", padding: "40px" }}>Logging out...</div>;
+  return (
+    <div style={{ textAlign: "center", padding: "40px" }}>Logging out...</div>
+  );
 }
 
 function RegisterAndLogout() {
-  localStorage.clear()
-  return <Register />
+  localStorage.clear();
+  return <Register />;
 }
 
 function Layout({ children }) {
-  const location = useLocation()
-  const hideHeaderPaths = ["/login", "/register", "/forgot-password"]
+  const location = useLocation();
+  const hideHeaderPaths = ["/login", "/register", "/forgot-password"];
 
-  const shouldHideHeader = hideHeaderPaths.includes(location.pathname)
+  const shouldHideHeader = hideHeaderPaths.includes(location.pathname);
 
   return (
     <>
       {!shouldHideHeader && <Header />}
       {children}
     </>
-  )
+  );
 }
 
 function App() {
@@ -86,7 +97,6 @@ function App() {
                           <HomePage />
                         </ProtectedRoute>
                       }
-
                     />
                     <Route
                       path="profiles"
@@ -95,14 +105,22 @@ function App() {
                           <Profile />
                         </ProtectedRoute>
                       }
-                      
+                    />
+
+                    <Route
+                      path="feedback"
+                      element={
+                        <ProtectedRoute>
+                          <Feedback />
+                        </ProtectedRoute>
+                      }
                     />
                     <Route
                       path="/nearby"
                       element={
                         <ProtectedRoute>
                           <RestaurantMap />
-</ProtectedRoute>
+                        </ProtectedRoute>
                       }
                     />
 
@@ -116,6 +134,15 @@ function App() {
                     />
 
                     <Route
+                      path="/feedback-resolved"
+                      element={
+                        <ProtectedRoute>
+                          <FeedbackResolved />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route
                       path="chat"
                       element={
                         <ProtectedRoute>
@@ -123,23 +150,44 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-  
 
                     {/* Admin */}
-                    <Route path="admin/crawl" element={<AdminCrawlDashboard />} />
-                    <Route path="/admin/crawl" element={<AdminCrawlDashboard />} />
+                    <Route
+                      path="admin/crawl"
+                      element={<AdminCrawlDashboard />}
+                    />
+                    <Route
+                      path="/admin/crawl"
+                      element={<AdminCrawlDashboard />}
+                    />
                     <Route path="/admin/home" element={<AdminHome />} />
-                    <Route path="/admin/accounts" element={<AccountManagement />} />
+                    <Route
+                      path="/admin/accounts"
+                      element={<AccountManagement />}
+                    />
                     <Route path="/admin/roles" element={<RoleManagement />} />
                     <Route path="/admin/roles/add" element={<AddRole />} />
-                    <Route path="/admin/accounts/add" element={<AddAccount />} />
-                    <Route path="/admin/accounts/edit/:userId" element={<EditAccount />} />
-                    <Route path="/admin/roles/edit/:roleId" element={<EditRole />} />
+                    <Route
+                      path="/admin/accounts/add"
+                      element={<AddAccount />}
+                    />
+                    <Route
+                      path="/admin/accounts/edit/:userId"
+                      element={<EditAccount />}
+                    />
+                    <Route
+                      path="/admin/roles/edit/:roleId"
+                      element={<EditRole />}
+                    />
+                    <Route path="/admin/feedback" element={<FeedbackList />} />
 
                     {/* Auth */}
                     <Route path="login" element={<Login />} />
                     <Route path="logout" element={<Logout />} />
-                    <Route path="forgot-password" element={<ForgotPassword />} />
+                    <Route
+                      path="forgot-password"
+                      element={<ForgotPassword />}
+                    />
                     <Route path="register" element={<RegisterAndLogout />} />
 
                     {/* 404 */}
@@ -149,9 +197,8 @@ function App() {
               }
             />
           </Routes>
-        {/* 🟢 Chatbot floating and visible on all pages */}
+          {/* 🟢 Chatbot floating and visible on all pages */}
           <ChatbotWidget />
-
         </BrowserRouter>
       </AuthProvider>
     </AutoTranslateProvider>
