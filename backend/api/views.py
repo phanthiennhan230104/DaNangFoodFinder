@@ -21,7 +21,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from groq import Groq
 
-from .models import Restaurant, FoodJourney, CustomUser, CrawledData, Profile
+from .models import Restaurant, FoodJourney, CustomUser, CrawledData, Profile,Feedback
 from .serializers import (
     UserSerializer,
     RestaurantSerializer,
@@ -29,7 +29,9 @@ from .serializers import (
     RegisterSerializer,
     CustomTokenObtainPairSerializer,
     ProfileSerializer,
+    FeedbackSerializer
 )
+
 from .services.journey_recommender import (
     Candidate,
     parse_price_range,
@@ -107,6 +109,30 @@ class RestaurantListView(generics.ListAPIView):
 
         return qs[:limit]
 
+
+
+class FeedbackCreateView(generics.CreateAPIView):
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Cho phép gửi cả khi chưa đăng nhập
+
+    def perform_create(self, serializer):
+        user = self.request.user if self.request.user.is_authenticated else None
+        serializer.save(user=user)
+
+
+
+class FeedbackListAdminView(APIView):
+    def get(self, request):
+        is_resolved = request.query_params.get('is_resolved')
+        if is_resolved == 'false':
+            feedbacks = Feedback.objects.filter(is_resolved=False)
+        elif is_resolved == 'true':
+            feedbacks = Feedback.objects.filter(is_resolved=True)
+        else:
+            feedbacks = Feedback.objects.all()
+        serializer = FeedbackSerializer(feedbacks, many=True)
+        return Response(serializer.data)
 
 @api_view(["GET"])
 def get_filters(request):

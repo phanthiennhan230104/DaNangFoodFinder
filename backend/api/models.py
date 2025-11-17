@@ -149,6 +149,7 @@ class Feedback(models.Model):
     contact_email = models.EmailField(blank=True, null=True)
     is_resolved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    message_response = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table = "Feedbacks"

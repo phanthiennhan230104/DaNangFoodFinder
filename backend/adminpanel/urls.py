@@ -1,12 +1,12 @@
 from django.urls import path
-from .views import crawl_pipeline
+from .views import  crawl_pipeline
 
 from adminpanel.views import (
     RoleListView, RoleCreateView, RoleDetailView, RoleUpdateView, RoleDeleteView,
     UserListView, UserCreateView, UserDetailView, UserUpdateView, UserDeleteView,
     ProfileListView, ProfileCreateView, ProfileDetailView, ProfileUpdateView, ProfileDeleteView,
     AccountListView, AccountCreateView, AccountDetailView, AccountUpdateView, AccountDeleteView,
-    LoginView
+    LoginView,FeedbackUpdateAPIView
 )
 urlpatterns = [
     path("crawl/", crawl_pipeline, name="crawl_pipeline"),
@@ -39,6 +39,9 @@ urlpatterns = [
     path('accounts/<int:pk>/', AccountDetailView.as_view(), name='account-detail'),
     path('accounts/<int:pk>/update/', AccountUpdateView.as_view(), name='account-update'),
     path('accounts/<int:pk>/delete/', AccountDeleteView.as_view(), name='account-delete'),
+
+
+    path('feedback/<int:pk>/update/', FeedbackUpdateAPIView.as_view(), name='feedback-update'),
 
 
     path('login/', LoginView.as_view(), name='login'),

@@ -5,8 +5,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions
-from rest_framework import serializers
 from .models import Profile
+from .models import Feedback
 
 User = get_user_model()
 
@@ -155,3 +155,10 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ['user_id', 'fullName', 'dob', 'gender', 'phone', 'address']
         read_only_fields = ['user_id']
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = ['id', 'feedback_type', 'subject', 'message', 'contact_email', 'is_resolved', 'created_at','message_response']
+        read_only_fields = ['id', 'is_resolved', 'created_at']
