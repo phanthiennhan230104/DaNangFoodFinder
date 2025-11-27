@@ -4,8 +4,10 @@ from django.core.management.base import BaseCommand
 from asgiref.sync import sync_to_async
 from api.models import Restaurant, CrawledSource, CrawledData
 
-
-async def fetch_detail(context, rest):
+async def fetch_detail(context, rest: Restaurant):
+    """
+    Mở trang detail Foody bằng Playwright và lấy full HTML.
+    """
     try:
         page = await context.new_page()
         await page.goto(rest.detail_url, timeout=60000)
@@ -19,6 +21,7 @@ async def fetch_detail(context, rest):
 
 
 class Command(BaseCommand):
+    help = "Crawl detail page cho Foody restaurant, lưu vào CrawledData.linked_restaurant"
 
     def add_arguments(self, parser):
         parser.add_argument("--limit", type=int, default=10)
@@ -37,20 +40,20 @@ class Command(BaseCommand):
 
         restaurants = await sync_to_async(list)(
             Restaurant.objects.filter(
-                detail_url__isnull=False,
-                price_range__isnull=True
+                detail_url__icontains="foody.vn",
+                price_range__isnull=True,
             )[:limit]
         )
 
         if not restaurants:
-            print("⚠️ No restaurants found for crawling details.")
+            print("No restaurants found for crawling Foody details.")
             return
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
             context = await browser.new_context(
                 viewport={"width": 1280, "height": 800},
-                locale="en-US"
+                locale="en-US",
             )
 
             tasks = [fetch_detail(context, r) for r in restaurants]
@@ -59,7 +62,7 @@ class Command(BaseCommand):
 
         valid_results = [r for r in results if r and r["html"]]
         if not valid_results:
-            print("⚠️ No valid HTML results to save.")
+            print("No valid HTML results to save.")
             return
 
         saved_count = 0
@@ -69,7 +72,11 @@ class Command(BaseCommand):
             rest = item["rest"]
             html = (item["html"] or "").strip()
 
-            if not html or "<html" not in html.lower() or "captcha-delivery.com" in html:
+            if (
+                not html
+                or "<html" not in html.lower()
+                or "captcha-delivery.com" in html
+            ):
                 await sync_to_async(rest.delete)()
                 deleted_count += 1
                 continue
@@ -81,14 +88,14 @@ class Command(BaseCommand):
                 url=rest.detail_url,
                 raw_html=html,
                 linked_restaurant=rest,
-                status="Pending",
+                status=CrawledData.StatusChoices.PENDING,
             )
 
             saved_count += 1
 
         if saved_count:
-            print(f"[OK] Crawled {saved_count} valid detail pages")
+            print(f"[OK] Crawled {saved_count} valid Foody detail pages")
         if deleted_count:
             print(f"[DELETED] Removed {deleted_count} invalid or incomplete entries")
 
-        print("--- ✅ Hoàn tất crawl_detail pipeline! ---")
+        print("--- Hoàn tất crawl_detail pipeline! ---")

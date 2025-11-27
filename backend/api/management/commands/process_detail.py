@@ -5,18 +5,18 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from api.models import CrawledData, Restaurant
 
-
 class Command(BaseCommand):
+    help = "Parse Foody detail HTML từ CrawledData.linked_restaurant và update Restaurant"
 
     def handle(self, *args, **options):
         items = CrawledData.objects.filter(
-            status="Pending",
+            status=CrawledData.StatusChoices.PENDING,
             linked_restaurant__isnull=False,
-            source__name="Foody"
-        )
+            source__name="Foody",
+        ).select_related("linked_restaurant")
 
         if not items.exists():
-            print("⚠️ No pending Foody detail data found.")
+            print("No pending Foody detail data found.")
             return
 
         updated_count = 0
@@ -24,7 +24,7 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             for item in items:
-                rest = item.linked_restaurant
+                rest: Restaurant = item.linked_restaurant
 
                 if not rest or not (rest.name and rest.address and rest.detail_url):
                     if rest:
@@ -33,15 +33,17 @@ class Command(BaseCommand):
                     deleted_count += 1
                     continue
 
-                soup = BeautifulSoup(item.raw_html, "lxml")
+                soup = BeautifulSoup(item.raw_html or "", "lxml")
                 script = soup.find("script", text=re.compile("initDataMain"))
-                if not script:
+                if not script or not script.string:
                     rest.delete()
                     item.delete()
                     deleted_count += 1
                     continue
 
-                match = re.search(r"var initDataMain\s*=\s*({.*});", script.string, re.S)
+                match = re.search(
+                    r"var initDataMain\s*=\s*({.*});", script.string, re.S
+                )
                 if not match:
                     rest.delete()
                     item.delete()
@@ -63,9 +65,11 @@ class Command(BaseCommand):
 
                 rest.price_range = (
                     f"{int(price_min):,} - {int(price_max):,} đ"
-                    if price_min and price_max else None
+                    if price_min and price_max
+                    else None
                 )
 
+                rest.opening_hours = None
                 if opening:
                     try:
                         ot = opening[0]
@@ -76,8 +80,12 @@ class Command(BaseCommand):
                     except Exception:
                         rest.opening_hours = None
 
+                rest.cuisine_type = None
                 if cuisines:
-                    rest.cuisine_type = cuisines[0].get("NameEn") or cuisines[0].get("Name") or "Other"
+                    c0 = cuisines[0]
+                    rest.cuisine_type = (
+                        c0.get("NameEn") or c0.get("Name") or "Other"
+                    )
 
                 if not (rest.price_range and rest.opening_hours and rest.cuisine_type):
                     rest.delete()
@@ -86,13 +94,13 @@ class Command(BaseCommand):
                     continue
 
                 rest.save()
-                item.status = "Processed"
-                item.save()
+                item.status = CrawledData.StatusChoices.PROCESSED
+                item.save(update_fields=["status"])
                 updated_count += 1
 
         if updated_count:
-            print(f"[OK] Updated {updated_count} valid restaurant details")
+            print(f"[OK] Updated {updated_count} valid Foody restaurant details")
         if deleted_count:
             print(f"[DELETED] Removed {deleted_count} invalid or incomplete records")
 
-        print("--- ✅ Hoàn tất process_detail pipeline! ---")
+        print("--- Hoàn tất process_detail pipeline! ---")

@@ -14,24 +14,18 @@ SELECTORS = {
         "image": "img",
         "detail_url": "h2 a",
     },
-    "tripadvisor": {
-        "container": "div.YHnoF",
-        "name": "a.Lwqic.Cj.b",
-        "address": "span.DsyBj.DxyfE",
-        "rating": "svg[aria-label*='bubbles']",
-        "image": "img",
-        "detail_url": "a.Lwqic.Cj.b",
-    },
 }
 
 
-def parse_one(item):
+def parse_one(item: CrawledData):
     key = item.source.name.lower()
     selectors = SELECTORS.get(key)
     if not selectors:
+        item.status = CrawledData.StatusChoices.PROCESSED
+        item.save(update_fields=["status"])
         return []
 
-    soup = BeautifulSoup(item.raw_html, "lxml")
+    soup = BeautifulSoup(item.raw_html or "", "lxml")
     restaurants = soup.select(selectors["container"])
     results = []
 
@@ -64,13 +58,13 @@ def parse_one(item):
 
         if key == "foody" and href.startswith("/"):
             href = f"https://www.foody.vn{href}"
-        elif key == "tripadvisor" and href.startswith("/"):
-            href = f"https://www.tripadvisor.com{href}"
 
         if not (name and address and href):
             continue
 
-        if Restaurant.objects.filter(Q(name=name, address=address) | Q(detail_url=href)).exists():
+        if Restaurant.objects.filter(
+            Q(name=name, address=address) | Q(detail_url=href)
+        ).exists():
             continue
 
         results.append(
@@ -84,21 +78,29 @@ def parse_one(item):
             )
         )
 
-    item.status = "Processed"
-    item.save()
+    item.status = CrawledData.StatusChoices.PROCESSED
+    item.save(update_fields=["status"])
     return results
 
 
 class Command(BaseCommand):
+    help = "Parse CrawledData (list page) thành Restaurant (Foody)"
+
     def add_arguments(self, parser):
-        parser.add_argument("--source", type=str, default=None, help="Filter source name")
+        parser.add_argument(
+            "--source", type=str, default=None, help="Filter by source name (optional)"
+        )
 
     def handle(self, *args, **options):
         source_name = options.get("source")
-        qs = CrawledData.objects.filter(status="Pending").select_related("source")
+        qs = CrawledData.objects.filter(
+            status=CrawledData.StatusChoices.PENDING
+        ).select_related("source")
+
         if source_name:
             qs = qs.filter(source__name__iexact=source_name)
-        qs = qs[:300] 
+
+        qs = qs[:300]
 
         all_restaurants = []
         with ThreadPoolExecutor(max_workers=8) as executor:
@@ -121,9 +123,7 @@ class Command(BaseCommand):
             invalid_qs.delete()
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"[OK] Saved {len(all_restaurants)} valid restaurants"
-            )
+            self.style.SUCCESS(f"[OK] Saved {len(all_restaurants)} valid restaurants")
         )
         if deleted_count:
             self.stdout.write(
@@ -131,4 +131,4 @@ class Command(BaseCommand):
                     f"[DELETED] Removed {deleted_count} invalid or incomplete records"
                 )
             )
-        self.stdout.write(self.style.SUCCESS("--- ✅ Done process_data pipeline! ---"))
+        self.stdout.write(self.style.SUCCESS("--- Done process_data pipeline! ---"))
