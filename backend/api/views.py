@@ -39,6 +39,8 @@ from .services.journey_recommender import (
     score_candidate,
     pick_best_triplet,
 )
+from .services.geocode_service import geocode_address, normalize_danang_address
+from .services.route_service import get_route
 from .models import Profile
 from .serializers import ProfileSerializer
 
@@ -56,14 +58,22 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_my_profile(request):
-    try:
-        profile = Profile.objects.get(user_id=request.user.user_id)
-        serializer = ProfileSerializer(profile)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    except Profile.DoesNotExist:
-        return Response(
-            {"detail": "Profile not found"}, status=status.HTTP_404_NOT_FOUND
-        )
+    """
+    Trả về profile của user hiện tại.
+    Nếu chưa có profile thì tự động tạo với giá trị mặc định,
+    để frontend luôn nhận được dữ liệu (không trả 404).
+    """
+    profile, created = Profile.objects.get_or_create(
+        user=request.user,
+        defaults={
+            "fullname": "",
+            "dob": "2000-01-01",
+            "gender": "",
+        },
+    )
+    serializer = ProfileSerializer(profile)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
         
         
 class RestaurantListView(generics.ListAPIView):
@@ -936,3 +946,103 @@ def chatbot_rag_sql(request):
             'error': str(e),
             'traceback': tb,
         }, status=500)
+# ==============================================================
+# RESTAURANT MAP API (TỪ FILE CŨ – GIỮ NGUYÊN CHỨC NĂNG)
+# ==============================================================
+
+from .services.geocode_service import geocode_address, normalize_danang_address
+from .services.route_service import get_route
+from django.db.models import Q
+
+
+class RestaurantMapListView(APIView):
+    """
+    GET /api/restaurants/map/
+    Trả toàn bộ nhà hàng cho bản đồ
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        restaurants = Restaurant.objects.all()
+        return Response(RestaurantSerializer(restaurants, many=True).data)
+
+
+class RestaurantMapSearchView(APIView):
+    """
+    GET /api/restaurants/map/search/?q=...
+    Tìm kiếm theo tên + địa chỉ
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        q = request.GET.get("q", "")
+        items = Restaurant.objects.filter(
+            Q(name__icontains=q) | Q(address__icontains=q)
+        )
+        return Response(RestaurantSerializer(items, many=True).data)
+
+
+class GeocodeRestaurantView(APIView):
+    """
+    POST /api/geocode/
+    Body:
+    {
+        "name": "...",
+        "address": "..."
+    }
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        name = request.data.get("name", "")
+        address = request.data.get("address", "")
+
+        if not address:
+            return Response({
+                "lat": None,
+                "lng": None,
+                "confidence": 0,
+                "_debug": {"normalized": ""}
+            })
+
+        result = geocode_address(address, name)
+
+        if not result:
+            return Response({
+                "lat": None,
+                "lng": None,
+                "confidence": 0,
+                "_debug": {"normalized": normalize_danang_address(address)}
+            })
+
+        resp = dict(result)
+        resp["_debug"] = {"normalized": normalize_danang_address(address)}
+        return Response(resp)
+
+
+class OSRMRouteView(APIView):
+    """
+    POST /api/route-osrm/
+    Body:
+    {
+        "start": { "lat": .., "lng": .. },
+        "end":   { "lat": .., "lng": .. }
+    }
+
+    Trả về:
+      { "coords": [ [lat,lng], ... ] }
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        start = request.data.get("start")
+        end = request.data.get("end")
+
+        if not start or not end:
+            return Response({"error": "Missing start or end"}, status=400)
+
+        try:
+            coords = get_route(start, end)
+            return Response({"coords": coords})
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)

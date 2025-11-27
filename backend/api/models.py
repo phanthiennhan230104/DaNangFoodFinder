@@ -19,12 +19,14 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError("The Email must be set")
         email = self.normalize_email(email)
+
         role = extra_fields.get("role")
         if not role:
             role, _ = Role.objects.get_or_create(
                 name="User", defaults={"description": "Normal user"}
             )
             extra_fields["role"] = role
+
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -33,17 +35,19 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
+
         role, _ = Role.objects.get_or_create(
             name="Admin", defaults={"description": "Superuser"}
         )
         extra_fields["role"] = role
+
         return self.create_user(email, password, **extra_fields)
+
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     user_id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True)
     created_date = models.DateTimeField(default=timezone.now)
-
     role = models.ForeignKey(Role, on_delete=models.CASCADE, null=True, blank=True)
 
     USERNAME_FIELD = "email"
@@ -54,15 +58,19 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    def __str__(self):
-        return self.email
-
     class Meta:
         db_table = "Users"
 
+    def __str__(self):
+        return self.email
 
 class Profile(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, primary_key=True, related_name='profile')
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name='profile'
+    )
     fullname = models.CharField(max_length=255)
     dob = models.DateField()
     gender = models.CharField(max_length=10)
@@ -75,17 +83,15 @@ class Profile(models.Model):
     def __str__(self):
         return self.fullname
 
-
-
-
-
 class CrawledSource(models.Model):
-    name = models.CharField(max_length=255, unique=True, help_text="Tên của nguồn dữ liệu, ví dụ: Foody")
-    base_url = models.URLField(max_length=255, blank=True, null=True, help_text="URL gốc của trang web")
+    name = models.CharField(max_length=255, unique=True)
+    base_url = models.URLField(max_length=255, blank=True, null=True)
 
-    def __str__(self):
+    class Meta:
+        db_table = "CrawledSource"
+
+    def __str__(self) -> str:
         return self.name
-
 
 class CrawledData(models.Model):
     class StatusChoices(models.TextChoices):
@@ -94,37 +100,95 @@ class CrawledData(models.Model):
         ERROR = 'Error', 'Bị lỗi'
 
     source = models.ForeignKey(CrawledSource, on_delete=models.CASCADE, related_name='crawled_items')
-    url = models.URLField(max_length=2048, help_text="URL cụ thể của trang được crawl")
-    raw_html = models.TextField(blank=True, null=True, help_text="Nội dung HTML thô")
+    url = models.URLField(max_length=2048)
+    raw_html = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=StatusChoices.choices, default=StatusChoices.PENDING)
     crawled_at = models.DateTimeField(auto_now_add=True)
+    linked_restaurant = models.ForeignKey('Restaurant', on_delete=models.SET_NULL, null=True, blank=True, related_name='crawled_records')
 
-    linked_restaurant = models.ForeignKey(
-        'Restaurant', on_delete=models.SET_NULL,
-        null=True, blank=True, related_name='crawled_records'
-    )
+    class Meta:
+        db_table = "CrawledData"
+        unique_together = ("source", "url")
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["source", "status"]),
+            models.Index(fields=["url"]),
+        ]
 
-    def __str__(self):
-        return f"Dữ liệu từ {self.source.name} - {self.status}"
-
-
+    def __str__(self) -> str:
+        return f"{self.source.name} - {self.status}"
 
 class Restaurant(models.Model):
     name = models.CharField(max_length=255)
     address = models.TextField()
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     opening_hours = models.CharField(max_length=500, blank=True, null=True)
     cuisine_type = models.CharField(max_length=100, blank=True, null=True)
     price_range = models.CharField(max_length=100, blank=True, null=True)
     average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
-    rag_context_text = models.TextField(blank=True, null=True, help_text="Văn bản tổng hợp thông tin về nhà hàng để vector hóa.")
+    total_review_count = models.IntegerField(default=0)
+    quality_score = models.DecimalField(max_digits=4, decimal_places=2, default=0.0)
+    is_featured = models.BooleanField(default=False)
+    rag_context_text = models.TextField(blank=True, null=True)
     image = models.URLField(max_length=500, blank=True, null=True)
+    detail_url = models.URLField(max_length=2048, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_updated_at = models.DateTimeField(auto_now=True)
-    detail_url = models.URLField(max_length=2048, blank=True, null=True)
+    
 
-    def __str__(self):
+    class Meta:
+        db_table = "Restaurants"
+        unique_together = ("name", "address")
+        indexes = [
+            models.Index(fields=["average_rating"]),
+            models.Index(fields=["quality_score"]),
+            models.Index(fields=["detail_url"]),
+        ]
+
+    def __str__(self) -> str:
         return self.name
 
+class RestaurantReview(models.Model):
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="reviews")
+    source = models.ForeignKey(CrawledSource, on_delete=models.CASCADE, related_name="reviews")
+    source_review_id = models.CharField(max_length=255, blank=True, null=True)
+    rating = models.DecimalField(max_digits=2, decimal_places=1, null=True, blank=True)
+    comment = models.TextField(blank=True, null=True)
+    review_language = models.CharField(max_length=10, default="vi")
+    review_time = models.DateTimeField(null=True, blank=True)
+    reviewer_name = models.CharField(max_length=255, blank=True, null=True)
+    sentiment_score = models.FloatField(default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "RestaurantReviews"
+        indexes = [
+            models.Index(fields=["restaurant", "source"]),
+            models.Index(fields=["review_time"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.restaurant.name} - {self.source.name}"
+
+class RestaurantSourceStats(models.Model):
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="source_stats")
+    source = models.ForeignKey(CrawledSource, on_delete=models.CASCADE, related_name="restaurant_stats")
+    external_place_id = models.CharField(max_length=255, blank=True, null=True)
+    source_url = models.URLField(max_length=2048, blank=True, null=True)
+    avg_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
+    review_count = models.IntegerField(default=0)
+    last_review_time = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "RestaurantSourceStats"
+        unique_together = ("restaurant", "source")
+        indexes = [
+            models.Index(fields=["source"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.restaurant.name} - {self.source.name}"
 
 class Feedback(models.Model):
     class FeedbackType(models.TextChoices):
@@ -158,32 +222,60 @@ class Feedback(models.Model):
     def __str__(self):
         sender = self.user.email if self.user else "Anonymous"
         return f"[{self.feedback_type}] {sender} - {self.subject or 'No subject'}"
-
-
+    
 class Favorite(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='favorites')
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='favorited_by')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='favorites'
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.CASCADE,
+        related_name='favorited_by'
+    )
     date_saved = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = "Favorites"
         unique_together = ('user', 'restaurant')
 
     def __str__(self):
-        return f"{self.user.username} thích {self.restaurant.name}"
+        return f"{self.user.email} - {self.restaurant.name}"
 
+class FoodJourney(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="journeys"
+    )
+    date = models.DateField()
+    breakfast = models.ForeignKey(
+        Restaurant,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="breakfast_journeys"
+    )
+    lunch = models.ForeignKey(
+        Restaurant,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="lunch_journeys"
+    )
+    dinner = models.ForeignKey(
+        Restaurant,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dinner_journeys"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = "FoodJourney"
+        unique_together = ("user", "date")
 
-
-class FoodJourney(models.Model): 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="journeys") 
-    date = models.DateField() 
-    breakfast = models.ForeignKey(Restaurant, on_delete=models.SET_NULL, null=True, blank=True, related_name="breakfast_journeys") 
-    lunch = models.ForeignKey(Restaurant, on_delete=models.SET_NULL, null=True, blank=True, related_name="lunch_journeys") 
-    dinner = models.ForeignKey(Restaurant, on_delete=models.SET_NULL, null=True, blank=True, related_name="dinner_journeys") 
-    created_at = models.DateTimeField(auto_now_add=True) 
-
-    class Meta: 
-        unique_together = ("user", "date") 
-    
-    def __str__(self): 
-        return f"{self.user.username} - {self.date}"
+    def __str__(self):
+        return f"{self.user.email} - {self.date}"
