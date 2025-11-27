@@ -8,153 +8,121 @@ import "../../styles/user/Profile.css";
 export default function Profile() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    fullName: "",
+    fullname: "",
     dob: "",
     gender: "",
-    phone: "",
+    phone_number: "",
     address: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Load profile hiện tại
+  // LOAD PROFILE
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await api.get("/profile/");
         console.log("✅ Profile loaded:", res.data);
-        
+
         setFormData({
-          fullName: res.data.fullName || "",
+          fullname: res.data.fullname || "",
           dob: res.data.dob || "",
           gender: res.data.gender || "",
-          phone: res.data.phone || "",
+          phone_number: res.data.phone_number || "",
           address: res.data.address || "",
         });
       } catch (err) {
         console.error("❌ Failed to load profile:", err);
-        console.error("Error response:", err.response?.data);
-        setError(`Load error: ${err.response?.data?.detail || err.message}`);
+        setError("Failed to load profile.");
       }
     };
     fetchProfile();
   }, []);
 
+  // HANDLE INPUT CHANGE
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // SAVE PROFILE
   const handleSave = async () => {
     try {
       setLoading(true);
       setError(null);
+      console.log("📤 Sending:", formData);
 
-      console.log("📤 Sending profile data:", formData);
-
-      // Validate dữ liệu trước khi gửi
-      if (!formData.fullName.trim()) {
-        throw new Error("Full Name is required");
-      }
-      if (!formData.dob) {
-        throw new Error("Date of Birth is required");
-      }
-      if (!formData.gender) {
-        throw new Error("Gender is required");
-      }
+      if (!formData.fullname.trim())
+        return alert("Full name is required");
+      if (!formData.dob)
+        return alert("Date of Birth is required");
+      if (!formData.gender)
+        return alert("Gender is required");
 
       const response = await api.post("/profile/", formData);
-      
-      console.log("✅ Profile saved:", response.data);
-      alert(response.data.message || "Profile saved successfully!");
+      console.log("✅ Saved:", response.data);
+
+      alert("Profile saved successfully!");
       navigate("/home");
+
     } catch (error) {
       console.error("❌ Error saving profile:", error);
-      console.error("Error response:", error.response?.data);
       
-      // Hiển thị lỗi chi tiết
-      let errorMessage = "Failed to save profile. ";
-      
+      let msg = "Save failed.\n";
       if (error.response?.data) {
-        const errData = error.response.data;
-        
-        // Nếu có lỗi validation từng field
-        if (typeof errData === 'object' && !errData.message) {
-          errorMessage += "\n";
-          Object.keys(errData).forEach(key => {
-            errorMessage += `\n• ${key}: ${errData[key]}`;
-          });
-        } else {
-          errorMessage += errData.message || errData.detail || JSON.stringify(errData);
-        }
-      } else {
-        errorMessage += error.message;
+        Object.entries(error.response.data).forEach(([k, v]) => {
+          msg += `• ${k}: ${v}\n`;
+        });
       }
-      
-      setError(errorMessage);
-      alert(errorMessage);
+      alert(msg);
+      setError(msg);
+
     } finally {
       setLoading(false);
     }
   };
-
-  const handleBack = () => navigate(-1);
 
   return (
     <div className="profile-container">
       <div className="profile-card">
         <div className="profile-header">
           <h1>Profile</h1>
-          <p>Enter information to update your profile</p>
+          <p>Update your personal information</p>
         </div>
 
-        {/* Error Display */}
         {error && (
-          <div style={{
-            padding: '12px',
-            marginBottom: '16px',
-            backgroundColor: '#fee',
-            border: '1px solid #fcc',
-            borderRadius: '8px',
-            color: '#c33',
-            fontSize: '14px',
-            whiteSpace: 'pre-line'
-          }}>
-            <strong>⚠️ Error:</strong>
-            <pre style={{ marginTop: '8px', fontSize: '12px' }}>{error}</pre>
-          </div>
+          <div className="error-box">{error}</div>
         )}
 
-        {/* Form Fields */}
+        {/* FULL NAME */}
         <div className="profile-field">
-          <label className="profile-label">Full Name </label>
+          <label className="profile-label">Full Name</label>
           <input
             className="profile-input"
             type="text"
-            placeholder="Enter full name..."
-            value={formData.fullName}
-            onChange={(e) => handleInputChange("fullName", e.target.value)}
-            required
+            value={formData.fullname}
+            onChange={(e) => handleInputChange("fullname", e.target.value)}
           />
         </div>
 
+        {/* DOB */}
         <div className="profile-field">
-          <label className="profile-label">Date of Birth </label>
+          <label className="profile-label">Date of Birth</label>
           <input
             className="profile-input"
             type="date"
             value={formData.dob}
             onChange={(e) => handleInputChange("dob", e.target.value)}
-            required
           />
         </div>
 
+        {/* GENDER */}
         <div className="profile-field">
-          <label className="profile-label">Gender </label>
+          <label className="profile-label">Gender</label>
           <select
             className="profile-input"
             value={formData.gender}
             onChange={(e) => handleInputChange("gender", e.target.value)}
-            required
           >
             <option value="">Select gender</option>
             <option value="male">Male</option>
@@ -163,41 +131,39 @@ export default function Profile() {
           </select>
         </div>
 
+        {/* PHONE */}
         <div className="profile-field">
           <label className="profile-label">Phone</label>
           <input
             className="profile-input"
             type="tel"
-            placeholder="Enter phone number..."
-            value={formData.phone}
-            onChange={(e) => handleInputChange("phone", e.target.value)}
+            value={formData.phone_number}
+            onChange={(e) => handleInputChange("phone_number", e.target.value)}
           />
         </div>
 
+        {/* ADDRESS */}
         <div className="profile-field">
           <label className="profile-label">Address</label>
           <input
             className="profile-input"
             type="text"
-            placeholder="Enter address..."
             value={formData.address}
             onChange={(e) => handleInputChange("address", e.target.value)}
           />
         </div>
 
-        {/* Buttons */}
+        {/* BUTTONS */}
         <div className="profile-buttons">
-          <button className="btn-back" onClick={handleBack} disabled={loading}>
+          <button className="btn-back" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>
+
           <button className="btn-save" onClick={handleSave} disabled={loading}>
-            {loading ? "Saving..." : (
-              <>
-                <Save className="w-4 h-4" />
-                Save Changes
-              </>
-            )}
+            {loading ? "Saving..." : <>
+              <Save className="w-4 h-4" /> Save Changes
+            </>}
           </button>
         </div>
       </div>
