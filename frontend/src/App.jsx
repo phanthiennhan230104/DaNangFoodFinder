@@ -9,6 +9,7 @@ import {
 import { AuthProvider } from "./components/contexts/AuthContext";
 import AutoTranslateProvider from "./components/AutoTranslateProvider.jsx";
 import "./styles/auto-translate.css";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Header from "./components/layout/Header";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -22,6 +23,7 @@ import AdminCrawlDashboard from "./pages/admin/AdminCrawlDashboard";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import { ACCESS_TOKEN } from "./constants";
 import Profile from "./pages/user/Profile";
+import Favorites from "./pages/user/Favorites";
 
 import AdminHome from "./pages/admin/AdminHome";
 import EditAccount from "./pages/admin/EditAccount";
@@ -65,10 +67,12 @@ function Layout({ children }) {
 }
 
 function App() {
+  const queryClient = new QueryClient();
   return (
-    <AutoTranslateProvider>
-      <AuthProvider>
-        <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <AutoTranslateProvider>
+        <AuthProvider>
+          <BrowserRouter>
           <Routes>
             <Route
               path="/"
@@ -95,6 +99,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <HomePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="favorites"
+                      element={
+                        <ProtectedRoute>
+                          <Favorites />
                         </ProtectedRoute>
                       }
                     />
@@ -199,9 +211,10 @@ function App() {
           </Routes>
           {/* 🟢 Chatbot floating and visible on all pages */}
           <ChatbotWidget />
-        </BrowserRouter>
-      </AuthProvider>
-    </AutoTranslateProvider>
+          </BrowserRouter>
+        </AuthProvider>
+      </AutoTranslateProvider>
+    </QueryClientProvider>
   );
 }
 

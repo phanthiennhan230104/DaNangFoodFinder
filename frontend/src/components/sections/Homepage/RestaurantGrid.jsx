@@ -1,14 +1,18 @@
-
-import RestaurantCard from '../../cards/RestaurantCard';
+import RestaurantCard from "../../cards/RestaurantCard";
 import "../../../styles/user/HomePage.css";
 
-function RestaurantGrid({ title, restaurants }) {
+function RestaurantGrid({ title, restaurants, onSelectRestaurant }) {
   return (
     <section className="restaurant-grid-section">
       <h2>{title}</h2>
+
       <div className="restaurants-grid">
         {restaurants.map((restaurant) => (
-          <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+          <RestaurantCard
+            key={restaurant.id}
+            restaurant={restaurant}
+            onSelect={onSelectRestaurant}
+          />
         ))}
       </div>
     </section>

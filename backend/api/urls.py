@@ -8,6 +8,7 @@ from .views import (
 
     # Restaurants & Cuisines
     RestaurantListView,
+    RestaurantDetailView,
     CuisineListView,
     RestaurantMapListView,
     RestaurantMapSearchView,
@@ -39,6 +40,9 @@ from .views import (
     # Feedback
     FeedbackCreateView,
     FeedbackListAdminView,
+    # Favorites
+    FavoriteListCreateView,
+    FavoriteDestroyView,
 )
 
 urlpatterns = [
@@ -49,6 +53,7 @@ urlpatterns = [
 
     # ---------------------- RESTAURANTS ----------------------
     path("restaurants/", RestaurantListView.as_view(), name="restaurant-list"),
+    path("restaurants/<int:pk>/", RestaurantDetailView.as_view(), name="restaurant-detail"),
     path("cuisines/", CuisineListView.as_view(), name="cuisine-list"),
     path("filters/", get_filters, name="filters"),
 
@@ -83,4 +88,7 @@ urlpatterns = [
     # ---------------------- FEEDBACK ----------------------
     path("feedback/", FeedbackCreateView.as_view(), name="feedback-create"),
     path("feedback-list/", FeedbackListAdminView.as_view(), name="feedback-list"),
+    # Favorites for users
+    path("favorites/", FavoriteListCreateView.as_view(), name="favorites-list-create"),
+    path("favorites/<int:restaurant_id>/", FavoriteDestroyView.as_view(), name="favorites-destroy"),
 ]
