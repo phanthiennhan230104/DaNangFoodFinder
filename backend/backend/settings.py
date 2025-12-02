@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "adminpanel",
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+     "sslserver",
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -96,7 +97,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'DaNangFoodFinderDB',     
+        'NAME': 'danangfoodfinder',     
         'USER': 'root',     
         'PASSWORD': 'root',
         'HOST': 'localhost',              
@@ -115,6 +116,7 @@ AUTH_PASSWORD_VALIDATORS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+     "https://localhost:5173",
 ]
 
 CACHES = {
@@ -132,7 +134,10 @@ USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 CORS_ALLOW_CREDENTIALS = True
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -174,3 +179,7 @@ LOGGING = {
         },
     },
 }
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+print("BACKEND GOOGLE_CLIENT_ID:", GOOGLE_CLIENT_ID)
+
