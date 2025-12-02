@@ -6,7 +6,11 @@ from rest_framework.decorators import api_view, permission_classes
 from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.utils import timezone
 import random, uuid, time
+import requests
+from django.conf import settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import (
     RegisterSerializer,
@@ -184,3 +188,141 @@ class ResetPasswordView(APIView):
         cache.delete(f"reset_{email}")
 
         return Response({"message": "Password reset successfully."}, status=200)
+
+
+class GoogleLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        id_token = request.data.get("id_token")
+        if not id_token:
+            return Response({"detail": "Missing id_token"}, status=400)
+
+        try:
+            # Gửi token lên Google để verify
+            r = requests.get(
+                "https://oauth2.googleapis.com/tokeninfo",
+                params={"id_token": id_token},
+                timeout=5,
+            )
+        except Exception as e:
+            print("Error calling Google tokeninfo:", e)
+            return Response({"detail": "Error verifying token with Google"}, status=400)
+
+        if r.status_code != 200:
+            print("Google tokeninfo status != 200:", r.status_code, r.text)
+            return Response({"detail": "Invalid Google token"}, status=400)
+
+        data = r.json()
+        aud = data.get("aud")
+        email = data.get("email")
+        email_verified = str(data.get("email_verified", "")).lower() in ["true", "1"]
+
+        # Debug log
+        print("Google token data:", data)
+        print("settings.GOOGLE_CLIENT_ID:", settings.GOOGLE_CLIENT_ID)
+
+        # Kiểm tra client_id
+        if aud != settings.GOOGLE_CLIENT_ID:
+            print("AUD mismatch:", aud, "!=", settings.GOOGLE_CLIENT_ID)
+            return Response({"detail": "Invalid client_id"}, status=400)
+
+        if not email or not email_verified:
+            return Response({"detail": "Email not verified by Google"}, status=400)
+
+        # Tìm hoặc tạo user
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user = User.objects.create_user(
+                email=email,
+                password=None,  # user login bằng Google, không set password
+            )
+            user.is_active = True
+            user.is_email_verified = True
+            user.save()
+            
+            user.last_login = time.timezone.now()
+            user.save(update_fields=["last_login"])
+
+
+        # Tạo JWT token
+        refresh = RefreshToken.for_user(user)
+        access = refresh.access_token
+
+        return Response(
+            {
+                "refresh": str(refresh),
+                "access": str(access),
+                "email": user.email,
+                "user_id": getattr(user, "user_id", None),
+            },
+            status=200,
+        )
+
+class FacebookLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        access_token = request.data.get("access_token")
+        if not access_token:
+            return Response({"detail": "Missing access_token"}, status=400)
+
+        try:
+            # gọi Facebook Graph API để verify token & lấy info
+            r = requests.get(
+                "https://graph.facebook.com/me",
+                params={
+                    "fields": "id,name,email",
+                    "access_token": access_token,
+                },
+                timeout=5,
+            )
+        except Exception as e:
+            print("Error calling Facebook Graph:", e)
+            return Response({"detail": "Error verifying token with Facebook"}, status=400)
+
+        if r.status_code != 200:
+            print("Facebook graph status != 200:", r.status_code, r.text)
+            return Response({"detail": "Invalid Facebook token"}, status=400)
+
+        data = r.json()
+        fb_id = data.get("id")
+        email = data.get("email")
+        name = data.get("name") or ""
+
+        # 1 số tài khoản FB không cho email -> tạo email fake theo id
+        if not email:
+            email = f"{fb_id}@facebook.local"
+
+        # Tìm hoặc tạo user
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user = User.objects.create_user(
+                email=email,
+                password=None,  # đăng nhập bằng social, không dùng password
+            )
+            user.is_active = True
+            user.is_email_verified = True
+            # nếu model có field name/full_name thì set:
+            if hasattr(user, "full_name"):
+                user.full_name = name
+            user.save()
+            
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
+
+        # Tạo JWT token giống GoogleLoginView
+        refresh = RefreshToken.for_user(user)
+        access = refresh.access_token
+
+        return Response(
+            {
+                "refresh": str(refresh),
+                "access": str(access),
+                "email": user.email,
+                "user_id": getattr(user, "user_id", None),
+            },
+            status=200,
+        )

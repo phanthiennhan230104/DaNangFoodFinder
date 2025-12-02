@@ -6,6 +6,7 @@ class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = "__all__"
+#*** -------------------sửa -------------------***#
 
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
@@ -32,6 +33,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
         password = validated_data.pop("password", None)
         role = validated_data.pop("role")
         
+        request = self.context.get("request")
+        if request and request.user.is_staff:
+            validated_data["is_email_verified"] = True
+        
         user = CustomUser(**validated_data)
         user.role = role
 
@@ -41,7 +46,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             user.set_unusable_password()
 
 
-        if role == 1:
+        if role.role_id == 1:
             user.is_staff = True
             user.is_superuser = True
         else:
@@ -57,30 +62,27 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         password = validated_data.pop("password", None)
-        roles  = validated_data.pop("role", None) 
+        roles = validated_data.pop("role", None)
 
         if password:
             instance.set_password(password)
 
-        if roles.role_id:
-            try:
-                role = Role.objects.get(pk=roles.role_id)
-                instance.role = role
+        if roles:
+            instance.role = roles
 
-                if roles.role_id == 1:
-                    instance.is_staff = True
-                    instance.is_superuser = True
-                else:
-                    instance.is_staff = False
-                    instance.is_superuser = False
-            except Role.DoesNotExist:
-                raise serializers.ValidationError({"role_id": "Invalid role ID"})
+            if roles.role_id == 1:
+                instance.is_staff = True
+                instance.is_superuser = True
+            else:
+                instance.is_staff = False
+                instance.is_superuser = False
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
         instance.save()
         return instance
+
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -114,6 +116,10 @@ class AccountSerializer(serializers.ModelSerializer):
         except Role.DoesNotExist:
             raise serializers.ValidationError({"role_id": "Invalid role ID"})
 
+        request = self.context.get("request")
+        if request and request.user.is_staff:
+            validated_data["is_email_verified"] = True
+        
         user = CustomUser(**validated_data)
         user.role = role
 
