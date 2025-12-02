@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/contexts/AuthContext";
+import { motion } from "framer-motion";
 import useFavorites from "../hooks/useFavorites";
 import { AnimatePresence } from "framer-motion";
 import "../styles/user/RestaurantDetailPopup.css";
