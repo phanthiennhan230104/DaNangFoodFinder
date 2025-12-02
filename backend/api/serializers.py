@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Restaurant, FoodJourney, Profile
+from .models import Favorite
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
@@ -82,6 +83,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class RestaurantSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
+    website = serializers.SerializerMethodField()
 
     class Meta:
         model = Restaurant
@@ -89,6 +92,8 @@ class RestaurantSerializer(serializers.ModelSerializer):
             "id", "name", "address", "cuisine_type",
             "price_range", "average_rating",
             "opening_hours", "image",
+            # additional detail fields for detail endpoint
+            "description", "website", "created_at", "last_updated_at",
         ]
 
     def get_image(self, obj):
@@ -110,6 +115,16 @@ class RestaurantSerializer(serializers.ModelSerializer):
         if request and not image_url.lower().startswith('http'):
             return request.build_absolute_uri(image_url)
         return image_url
+
+    def get_description(self, obj):
+        # use rag_context_text as a human-readable description when available
+        return obj.rag_context_text or None
+
+    def get_website(self, obj):
+        # provide a backwards-compatible 'website' field using detail_url
+        if getattr(obj, 'detail_url', None):
+            return obj.detail_url
+        return None
 
 
 class FoodJourneySerializer(serializers.ModelSerializer):
@@ -162,3 +177,16 @@ class FeedbackSerializer(serializers.ModelSerializer):
         model = Feedback
         fields = ['id', 'feedback_type', 'subject', 'message', 'contact_email', 'is_resolved', 'created_at','message_response']
         read_only_fields = ['id', 'is_resolved', 'created_at']
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    # include nested restaurant summary
+    restaurant = RestaurantSerializer(read_only=True)
+    restaurant_id = serializers.PrimaryKeyRelatedField(
+        source='restaurant', queryset=Restaurant.objects.all(), write_only=True, required=True
+    )
+
+    class Meta:
+        model = Favorite
+        fields = ["id", "restaurant", "restaurant_id", "date_saved"]
+        read_only_fields = ["id", "restaurant", "date_saved"]

@@ -10,9 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^4.34.8",
     "axios": "^1.11.0",
     "dayjs": "^1.11.18",
-    "framer-motion": "^12.23.24",
+    "framer-motion": "^12.23.25",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.544.0",

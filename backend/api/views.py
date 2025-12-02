@@ -22,6 +22,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from groq import Groq
 
 from .models import Restaurant, FoodJourney, CustomUser, CrawledData, Profile,Feedback
+from .models import Favorite
 from .serializers import (
     UserSerializer,
     RestaurantSerializer,
@@ -30,6 +31,7 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
     ProfileSerializer,
     FeedbackSerializer
+    , FavoriteSerializer
 )
 
 from .services.journey_recommender import (
@@ -118,6 +120,53 @@ class RestaurantListView(generics.ListAPIView):
             return qs
 
         return qs[:limit]
+
+
+class RestaurantDetailView(generics.RetrieveAPIView):
+    """Retrieve a single restaurant by PK (detail view).
+
+    This endpoint complements the existing ListAPIView. It uses the same
+    RestaurantSerializer and returns more detailed fields for UI popups.
+    """
+    queryset = Restaurant.objects.all()
+    serializer_class = RestaurantSerializer
+    permission_classes = [AllowAny]
+
+
+class FavoriteListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # list favorites for current user
+        favs = Favorite.objects.filter(user=request.user).select_related('restaurant')
+        serializer = FavoriteSerializer(favs, many=True, context={"request": request})
+        return Response(serializer.data)
+
+    def post(self, request):
+        # create favorite for current user (idempotent)
+        restaurant_id = request.data.get('restaurant_id')
+        if not restaurant_id:
+            return Response({"detail": "Missing restaurant_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            restaurant = Restaurant.objects.get(pk=restaurant_id)
+        except Restaurant.DoesNotExist:
+            return Response({"detail": "Restaurant not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        fav, created = Favorite.objects.get_or_create(user=request.user, restaurant=restaurant)
+        serializer = FavoriteSerializer(fav, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
+class FavoriteDestroyView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, restaurant_id):
+        fav = Favorite.objects.filter(user=request.user, restaurant_id=restaurant_id).first()
+        if not fav:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        fav.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
