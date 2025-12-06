@@ -410,19 +410,24 @@ class FoodJourneyUpsertView(APIView):
         return Response(serializer.errors, status=400)
     
 class OverviewView(APIView):
-    """Thống kê hệ thống (user, crawl data)."""
+    """Thống kê hệ thống (user, restaurant, feedback)."""
     permission_classes = [AllowAny]
 
     def get(self, request):
         users = list(CustomUser.objects.values(
             "last_login", "is_email_verified", "email", "created_date"
         ))
-        crawled = CrawledData.objects.count()
-        active = sum(1 for u in users if u.get("is_email_verified"))
+        # crawled = CrawledData.objects.count()
+
+        restaurant = Restaurant.objects.count()
+
+        feedback = Feedback.objects.count()
+
+        # active = sum(1 for u in users if u.get("is_email_verified"))
         return Response({
             "total": len(users),
-            "active": active,
-            "crawled": crawled,
+            "restaurant": restaurant,
+            "feedback": feedback,
             "data": users,
         })
 
