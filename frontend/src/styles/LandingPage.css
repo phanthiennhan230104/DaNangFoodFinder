@@ -1,0 +1,230 @@
+/* Container chính */
+.landing-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(to bottom right, #fff7ed, #fef3c7);
+}
+
+/* Banner content */
+.banner-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+  visibility: visible;
+  opacity: 1;
+}
+
+.landing-container.hide-banner .banner-content {
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Background pattern */
+.background-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  background-image: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23f97316" fill-opacity="0.4"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+}
+
+/* Content wrapper */
+.content-wrapper {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  max-width: 64rem;
+}
+
+/* Chef icon */
+.chef-icon {
+  width: 5rem;
+  height: 5rem;
+  margin: 0 auto 1.5rem;
+  color: #f97316;
+}
+
+/* DNFF Logo */
+.dnff-logo {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 2rem;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(249, 115, 22, 0.2));
+}
+
+/* Main title */
+.main-title {
+  font-size: 4.5rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.main-title .highlight {
+  color: #f97316;
+}
+
+/* Subtitle */
+.subtitle {
+  font-size: 1.5rem;
+  color: #4b5563;
+  margin-bottom: 3rem;
+  font-weight: 300;
+}
+
+/* Explore button */
+.explore-btn {
+  position: relative;
+  padding: 1.25rem 3rem;
+  background: linear-gradient(to right, #f97316, #f59e0b);
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: none;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.explore-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 25px 50px -12px rgba(251, 146, 60, 0.5);
+}
+
+.btn-text {
+  position: relative;
+  z-index: 10;
+}
+
+.btn-hover-effect {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, #f59e0b, #f97316);
+  border-radius: 9999px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.explore-btn:hover .btn-hover-effect {
+  opacity: 1;
+}
+
+/* Decorative circles */
+.decorative-circle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.5;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.decorative-circle.left {
+  top: 5rem;
+  left: 5rem;
+  width: 8rem;
+  height: 8rem;
+  background-color: #fed7aa;
+}
+
+.decorative-circle.right {
+  bottom: 8rem;
+  right: 8rem;
+  width: 10rem;
+  height: 10rem;
+  background-color: #fde68a;
+  animation-delay: 1s;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Curtain effects */
+.curtain {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 30;
+}
+
+.curtain-left {
+  left: 0;
+  background: linear-gradient(to right, #ea580c, #f97316);
+  transform: translateX(-100%);
+  transform-origin: right;
+}
+
+.curtain-right {
+  right: 0;
+  background: linear-gradient(to left, #d97706, #f59e0b);
+  transform: translateX(100%);
+  transform-origin: left;
+}
+
+.curtain.open {
+  transform: translateX(0);
+}
+
+.curtain-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: black;
+  opacity: 0.2;
+}
+
+/* Login wrapper */
+.login-wrapper {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(2px);
+}
+
+.login-wrapper.show {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 0.4s;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-title {
+    font-size: 3rem;
+  }
+  
+  .subtitle {
+    font-size: 1.25rem;
+  }
+  
+  .chef-icon {
+    width: 4rem;
+    height: 4rem;
+  }
+  
+  .explore-btn {
+    padding: 1rem 2.5rem;
+    font-size: 1.125rem;
+  }
+}
