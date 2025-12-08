@@ -12,7 +12,7 @@ import "leaflet/dist/leaflet.css";
 
 import "../../styles/user/RestaurantMap.css";
 
-// ====== BOUNDS: Giới hạn map trong thành phố Đà Nẵng ======
+// ====== BOUNDS: Limit map within Da Nang city ======
 // SW and NE corners (approx). Expanded by ~10km (~0.09° lat, ~0.094° lon) each direction
 const DANANG_BOUNDS = L.latLngBounds([
     [15.62, 107.906], // southWest (expanded further vertically ~+10km)
@@ -49,9 +49,9 @@ const CameraControl = ({ focus }) => {
 };
 
 // ================== CONFIG ==================
-const DEFAULT_CENTER = { lat: 16.0678, lng: 108.2208 }; // Đà Nẵng
+const DEFAULT_CENTER = { lat: 16.0678, lng: 108.2208 }; // Da Nang
 
-// Fix icon mặc định của Leaflet khi dùng bundler
+// Fix default Leaflet icon when using a bundler
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl:
@@ -60,7 +60,7 @@ L.Icon.Default.mergeOptions({
     shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
-// Icon user riêng màu xanh
+// User icon (blue)
 const userIcon = new L.Icon({
     iconUrl:
         "https://cdn-icons-png.flaticon.com/512/684/684908.png",
@@ -68,7 +68,7 @@ const userIcon = new L.Icon({
     iconAnchor: [16, 32],
 });
 
-// ================== HÀM TIỆN ÍCH ==================
+// ================== HELPER FUNCTIONS ==================
 const normalizeRestaurant = (r) => {
     const lat = r.lat ?? r.latitude ?? null;
     const lng = r.lng ?? r.longitude ?? null;
@@ -93,12 +93,12 @@ const calcDistanceKm = (lat1, lon1, lat2, lon2) => {
 };
 
 const formatRating = (rating) => {
-    if (!rating) return "Chưa có";
+    if (!rating) return "N/A";
     const n = Number(rating);
-    return isNaN(n) ? "Chưa có" : n.toFixed(1);
+    return isNaN(n) ? "N/A" : n.toFixed(1);
 };
 
-// ================== COMPONENT CHÍNH ==================
+// ================== MAIN COMPONENT ==================
 const RestaurantMap = () => {
     const [restaurants, setRestaurants] = useState([]);
     const [filtered, setFiltered] = useState([]);
@@ -113,7 +113,7 @@ const RestaurantMap = () => {
 
     const mapRef = useRef(null);
 
-    // ===== Lấy vị trí người dùng =====
+    // ===== Get user location =====
     useEffect(() => {
         if (!navigator.geolocation) return;
 
@@ -130,7 +130,7 @@ const RestaurantMap = () => {
         );
     }, []);
 
-    // ===== Lấy danh sách nhà hàng =====
+    // ===== Fetch restaurants =====
     const fetchRestaurants = async () => {
         setLoading(true);
         setError("");
@@ -143,7 +143,7 @@ const RestaurantMap = () => {
             setRestaurants(normalized);
             setFiltered(normalized);
         } catch {
-            setError("Không thể tải danh sách nhà hàng.");
+            setError("Unable to load restaurant list.");
         } finally {
             setLoading(false);
         }
@@ -153,7 +153,7 @@ const RestaurantMap = () => {
         fetchRestaurants();
     }, []);
 
-    // ===== Tìm kiếm =====
+    // ===== Search =====
     const handleSearch = async () => {
         if (!search.trim()) {
             setFiltered(restaurants);
@@ -171,7 +171,7 @@ const RestaurantMap = () => {
 
             setFiltered(data.map(normalizeRestaurant));
         } catch {
-            setError("Không thể tìm kiếm.");
+            setError("Unable to search.");
         } finally {
             setLoading(false);
         }
@@ -185,9 +185,9 @@ const RestaurantMap = () => {
         setError("");
     };
 
-    // ===== Định vị nhà hàng =====
+    // ===== Geocode restaurant =====
     const geocodeRestaurant = async (r) => {
-        if (!r.address) return alert("Nhà hàng chưa có địa chỉ.");
+        if (!r.address) return alert("Restaurant has no address.");
         setLoading(true);
 
         try {
@@ -200,7 +200,7 @@ const RestaurantMap = () => {
             const data = await res.json();
 
             if (!data.lat || !data.lng) {
-                alert("❌ Không tìm thấy tọa độ nhà hàng.");
+                alert("❌ Unable to find restaurant coordinates.");
                 return;
             }
 
@@ -215,15 +215,15 @@ const RestaurantMap = () => {
             setMapFocus({ lat: data.lat, lng: data.lng, zoom: 16 });
 
         } catch {
-            setError("Không thể định vị nhà hàng.");
+            setError("Unable to locate the restaurant.");
         } finally {
             setLoading(false);
         }
     };
 
-    // ===== Tuyến đường =====
+    // ===== Route =====
     const getRoute = async (r) => {
-        if (!r.lat || !r.lng) return alert("Cần định vị trước!");
+        if (!r.lat || !r.lng) return alert("Please locate the restaurant first!");
 
         setLoading(true);
 
@@ -246,7 +246,7 @@ const RestaurantMap = () => {
                 setMapFocus(null);
 
         } catch {
-            setError("Không thể tính tuyến đường.");
+            setError("Unable to calculate the route.");
         } finally {
             setLoading(false);
         }
@@ -258,18 +258,18 @@ const RestaurantMap = () => {
         setSelectedId(null);
         setRouteCoords([]);
 
-        // XÓA toàn bộ lat/lng (reset định vị)
+        // CLEAR all lat/lng (reset location)
         const reset = restaurants.map((r) => ({ ...r, lat: null, lng: null }));
         setRestaurants(reset);
         setFiltered(reset);
 
-        // 🔥 Zoom về trung tâm ĐN
+        // 🔥 Zoom back to Da Nang center
         setMapFocus({ lat: DEFAULT_CENTER.lat, lng: DEFAULT_CENTER.lng, zoom: 13 });
     };
 
     // ===== Focus vị trí người dùng =====
     const focusUserLocation = () => {
-        if (!hasUserLocation) return alert("Không lấy được vị trí.");
+        if (!hasUserLocation) return alert("Unable to get location.");
 
         setMapFocus({ lat: userLocation.lat, lng: userLocation.lng, zoom: 15 });
     };
@@ -286,8 +286,8 @@ const RestaurantMap = () => {
             <div className="restaurants-sidebar">
                 <div className="sidebar-header">
                     <div>
-                        <h3>Khám phá nhà hàng</h3>
-                        <p className="sidebar-subtitle">Đà Nẵng • Ẩm thực quanh bạn</p>
+                        <h3>Discover Restaurants</h3>
+                        <p className="sidebar-subtitle">Da Nang • Cuisine near you</p>
                     </div>
 
                     <button className="map-control-button" onClick={handleReset}>
@@ -298,9 +298,9 @@ const RestaurantMap = () => {
                 {/* Search */}
                 <div className="search-container">
                     <div className="search-input-group">
-                        <input
+                            <input
                             className="search-input"
-                            placeholder="Tìm theo tên, địa chỉ, món ăn..."
+                            placeholder="Search by name, address, dish..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -319,14 +319,14 @@ const RestaurantMap = () => {
                 </div>
 
                 {/* Loading & Error */}
-                {loading && <div className="loading-message">⏳ Đang xử lý...</div>}
+                {loading && <div className="loading-message">⏳ Loading...</div>}
                 {error && <div className="error-message">{error}</div>}
 
                 {/* Stats */}
                 <div className="stats-panel">
-                    <small>Tổng: <strong>{restaurants.length}</strong></small>
-                    <small>Hiển thị: <strong>{filtered.length}</strong></small>
-                    <small>Có tọa độ: <strong>{restaurantsWithCoords.length}</strong></small>
+                    <small>Total: <strong>{restaurants.length}</strong></small>
+                    <small>Shown: <strong>{filtered.length}</strong></small>
+                    <small>With coordinates: <strong>{restaurantsWithCoords.length}</strong></small>
                 </div>
 
                 {/* Danh sách */}
@@ -376,9 +376,9 @@ const RestaurantMap = () => {
                                         {distance ? (
                                             <span className="distance-chip">🛣️ {distance} km</span>
                                         ) : r.lat ? (
-                                            <span className="distance-chip">📍 Đã định vị</span>
+                                            <span className="distance-chip">📍 Located</span>
                                         ) : (
-                                            <span className="distance-chip warn">⚠ Chưa định vị</span>
+                                            <span className="distance-chip warn">⚠ Not located</span>
                                         )}
                                     </div>
 
@@ -389,14 +389,14 @@ const RestaurantMap = () => {
                                                 className="geocode-single-button"
                                                 onClick={() => geocodeRestaurant(r)}
                                             >
-                                                📍 Định vị
+                                                📍 Locate
                                             </button>
                                         ) : (
                                             <button
                                                 className="select-restaurant-button"
                                                 onClick={() => getRoute(r)}
                                             >
-                                                ➤ Chỉ đường
+                                                ➤ Directions
                                             </button>
                                         )}
                                     </div>
@@ -410,9 +410,9 @@ const RestaurantMap = () => {
             {/* MAP */}
             <div className="map-container">
                 {/* Nút điều khiển ở trên map */}
-                <div className="map-controls">
+                    <div className="map-controls">
                     <button className="map-control-button" onClick={focusUserLocation}>
-                        👤 Vị trí của tôi
+                        👤 My location
                     </button>
                 </div>
 
@@ -443,7 +443,7 @@ const RestaurantMap = () => {
                     {/* Marker user */}
                     {hasUserLocation && (
                         <Marker position={userLocation} icon={userIcon}>
-                            <Popup>Bạn đang ở đây</Popup>
+                            <Popup>You are here</Popup>
                         </Marker>
                     )}
 
@@ -468,7 +468,7 @@ const RestaurantMap = () => {
 
                                         {distance && (
                                             <p>
-                                                🛣️ Cách bạn{" "}
+                                                🛣️ Distance from you {" "}
                                                 <strong>{distance} km</strong>
                                             </p>
                                         )}
@@ -478,7 +478,7 @@ const RestaurantMap = () => {
                                                 className="direction-button primary"
                                                 onClick={() => getRoute(r)}
                                             >
-                                                ➤ Chỉ đường
+                                                ➤ Directions
                                                 </button>
 
                                             <a
