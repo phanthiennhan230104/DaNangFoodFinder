@@ -30,13 +30,13 @@ export default function Favorites() {
 
   return (
     <div className="container">
-      <h1 style={{ marginTop: 14, marginBottom: 12 }}>Yêu thích của bạn</h1>
+      <h1 style={{ marginTop: 14, marginBottom: 12 }}>Your Favorites</h1>
       {loading ? (
         <LoadingIndicator />
       ) : (
         <section className="favorites-grid">
           <RestaurantGrid
-            title="Các nhà hàng bạn đã thích"
+            title="Your favorite restaurants"
             restaurants={favoritesData}
             onSelectRestaurant={handleSelectRestaurant}
           />

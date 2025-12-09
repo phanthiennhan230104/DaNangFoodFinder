@@ -39,7 +39,7 @@ function RestaurantCard({ restaurant, onSelect }) {
         style={{ cursor: onSelect ? 'pointer' : 'default' }}
       />
       {/* small heart button */}
-      <button className={`card-heart ${isFavorited ? 'on' : ''}`} onClick={toggleFav} title={isFavorited ? 'Bỏ yêu thích' : 'Yêu thích'}>
+      <button className={`card-heart ${isFavorited ? 'on' : ''}`} onClick={toggleFav} title={isFavorited ? 'Unfavorite' : 'Favorite'}>
         {isFavorited ? '❤' : '♡'}
       </button>
 

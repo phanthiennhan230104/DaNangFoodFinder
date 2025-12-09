@@ -140,8 +140,8 @@ export default function RestaurantDetailPopup({ restaurant, onClose }) {
               {/* INFO SECTION */}
               <div className="popup-info-modern">
                 <div className="info-row">
-                  <strong>💵 Giá:</strong>
-                  <span>{restaurant.price_range || "Không có"}</span>
+                  <strong>💵 Price:</strong>
+                  <span>{restaurant.price_range || "Not available"}</span>
                 </div>
 
                 <div className="info-row">
@@ -154,14 +154,14 @@ export default function RestaurantDetailPopup({ restaurant, onClose }) {
                 </div>
 
                 <div className="info-row">
-                  <strong>⏰ Giờ mở cửa:</strong>
+                  <strong>⏰ Opening Hours:</strong>
                   <span>
-                    {open && close ? `${open} - ${close}` : "Không có thông tin"}
+                    {open && close ? `${open} - ${close}` : "No information"}
                   </span>
                 </div>
 
                 <div className="info-row">
-                  <strong>📍 Trạng thái:</strong>
+                  <strong>📍 Status:</strong>
                   <span
                     className={`status-badge ${
                       openStatus === "open"
@@ -169,9 +169,7 @@ export default function RestaurantDetailPopup({ restaurant, onClose }) {
                         : "status-closed"
                     }`}
                   >
-                    {openStatus === "open"
-                      ? "🟢 Đang mở cửa"
-                      : "🔴 Đã đóng cửa"}
+                    {openStatus === "open" ? "🟢 Open" : "🔴 Closed"}
                   </span>
                 </div>
               </div>
@@ -185,12 +183,12 @@ export default function RestaurantDetailPopup({ restaurant, onClose }) {
                     rel="noreferrer"
                     href={`https://www.google.com/maps/dir/?api=1&destination=${restaurant.lat},${restaurant.lng}`}
                   >
-                    ➤ Chỉ đường
+                    ➤ Directions
                   </a>
                 )}
 
                 <button className="btn-modern secondary" onClick={onClose}>
-                  Đóng
+                  Close
                 </button>
               </div>
             </div>
