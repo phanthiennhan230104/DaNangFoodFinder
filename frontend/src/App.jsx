@@ -9,7 +9,8 @@ import {
 import { AuthProvider } from "./components/contexts/AuthContext";
 import AutoTranslateProvider from "./components/AutoTranslateProvider.jsx";
 import "./styles/auto-translate.css";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import Header from "./components/layout/Header";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -36,6 +37,7 @@ import ChatbotWidget from "./components/ChatbotWidget";
 import Feedback from "./pages/user/Feedback.jsx";
 import FeedbackList from "./pages/admin/FeedbackList.jsx";
 import FeedbackResolved from "./pages/user/FeedbackResolved.jsx";
+import Forbidden from "./pages/Forbidden.jsx";
 
 function Logout() {
   React.useEffect(() => {
@@ -51,7 +53,6 @@ function RegisterAndLogout() {
   localStorage.clear();
   return <Register />;
 }
-
 function Layout({ children }) {
   const location = useLocation();
   const hideHeaderPaths = ["/login", "/register", "/forgot-password"];
@@ -65,152 +66,210 @@ function Layout({ children }) {
     </>
   );
 }
+const queryClient = new QueryClient();
 
 function App() {
-  const queryClient = new QueryClient();
+  const isLoggedIn = !!localStorage.getItem(ACCESS_TOKEN);
+  const roleId = localStorage.getItem("ROLE_ID");
+
   return (
     <QueryClientProvider client={queryClient}>
       <AutoTranslateProvider>
         <AuthProvider>
           <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                localStorage.getItem(ACCESS_TOKEN) ? (
-                  localStorage.getItem("ROLE_ID") === "1" ? (
-                    <Navigate to="/admin/home" />
+            <Routes>
+              {/* Root: điều hướng theo role nếu đã login */}
+              <Route
+                path="/"
+                element={
+                  isLoggedIn ? (
+                    roleId === "1" ? (
+                      <Navigate to="/admin/home" />
+                    ) : (
+                      <Navigate to="/home" />
+                    )
                   ) : (
-                    <Navigate to="/home" />
+                    <LandingPage />
                   )
-                ) : (
-                  <LandingPage />
-                )
-              }
-            />
+                }
+              />
 
-            <Route
-              path="/*"
-              element={
-                <Layout>
-                  <Routes>
-                    <Route
-                      path="home"
-                      element={
-                        <ProtectedRoute>
-                          <HomePage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="favorites"
-                      element={
-                        <ProtectedRoute>
-                          <Favorites />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="profiles"
-                      element={
-                        <ProtectedRoute>
-                          <Profile />
-                        </ProtectedRoute>
-                      }
-                    />
+              {/* Tất cả các route khác */}
+              <Route
+                path="/*"
+                element={
+                  <Layout>
+                    <Routes>
+                      {/* USER ROUTES - chỉ ROLE_ID = "2" */}
+                      <Route
+                        path="home"
+                        element={
+                          <ProtectedRoute allowedRoles={["2"]}>
+                            <HomePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="favorites"
+                        element={
+                          <ProtectedRoute allowedRoles={["2"]}>
+                            <Favorites />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="profile"
+                        element={
+                          <ProtectedRoute allowedRoles={["2"]}>
+                            <Profile />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="feedback"
+                        element={
+                          <ProtectedRoute allowedRoles={["2"]}>
+                            <Feedback />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/nearby"
+                        element={
+                          <ProtectedRoute allowedRoles={["2"]}>
+                            <RestaurantMap />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="journey"
+                        element={
+                          <ProtectedRoute allowedRoles={["2"]}>
+                            <FoodJourneyPlanner />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/feedback-resolved"
+                        element={
+                          <ProtectedRoute allowedRoles={["2"]}>
+                            <FeedbackResolved />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="chat"
+                        element={
+                          <ProtectedRoute allowedRoles={["2"]}>
+                            <ChatbotWidget />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    <Route
-                      path="feedback"
-                      element={
-                        <ProtectedRoute>
-                          <Feedback />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/nearby"
-                      element={
-                        <ProtectedRoute>
-                          <RestaurantMap />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* ADMIN ROUTES - chỉ ROLE_ID = "1" */}
+                      <Route
+                        path="admin/crawl"
+                        element={
+                          <ProtectedRoute allowedRoles={["1"]}>
+                            <AdminCrawlDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/crawl"
+                        element={
+                          <ProtectedRoute allowedRoles={["1"]}>
+                            <AdminCrawlDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/home"
+                        element={
+                          <ProtectedRoute allowedRoles={["1"]}>
+                            <AdminHome />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/accounts"
+                        element={
+                          <ProtectedRoute allowedRoles={["1"]}>
+                            <AccountManagement />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/roles"
+                        element={
+                          <ProtectedRoute allowedRoles={["1"]}>
+                            <RoleManagement />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/roles/add"
+                        element={
+                          <ProtectedRoute allowedRoles={["1"]}>
+                            <AddRole />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/accounts/add"
+                        element={
+                          <ProtectedRoute allowedRoles={["1"]}>
+                            <AddAccount />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/accounts/edit/:userId"
+                        element={
+                          <ProtectedRoute allowedRoles={["1"]}>
+                            <EditAccount />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/roles/edit/:roleId"
+                        element={
+                          <ProtectedRoute allowedRoles={["1"]}>
+                            <EditRole />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/feedback"
+                        element={
+                          <ProtectedRoute allowedRoles={["1"]}>
+                            <FeedbackList />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    <Route
-                      path="journey"
-                      element={
-                        <ProtectedRoute>
-                          <FoodJourneyPlanner />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* 403 - Forbidden */}
+                      <Route path="403" element={<Forbidden />} />
 
-                    <Route
-                      path="/feedback-resolved"
-                      element={
-                        <ProtectedRoute>
-                          <FeedbackResolved />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Auth (không cần ProtectedRoute) */}
+                      <Route path="login" element={<Login />} />
+                      <Route path="logout" element={<Logout />} />
+                      <Route
+                        path="forgot-password"
+                        element={<ForgotPassword />}
+                      />
+                      <Route path="register" element={<RegisterAndLogout />} />
 
-                    <Route
-                      path="chat"
-                      element={
-                        <ProtectedRoute>
-                          <ChatbotWidget />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* 404 */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Layout>
+                }
+              />
+            </Routes>
 
-                    {/* Admin */}
-                    <Route
-                      path="admin/crawl"
-                      element={<AdminCrawlDashboard />}
-                    />
-                    <Route
-                      path="/admin/crawl"
-                      element={<AdminCrawlDashboard />}
-                    />
-                    <Route path="/admin/home" element={<AdminHome />} />
-                    <Route
-                      path="/admin/accounts"
-                      element={<AccountManagement />}
-                    />
-                    <Route path="/admin/roles" element={<RoleManagement />} />
-                    <Route path="/admin/roles/add" element={<AddRole />} />
-                    <Route
-                      path="/admin/accounts/add"
-                      element={<AddAccount />}
-                    />
-                    <Route
-                      path="/admin/accounts/edit/:userId"
-                      element={<EditAccount />}
-                    />
-                    <Route
-                      path="/admin/roles/edit/:roleId"
-                      element={<EditRole />}
-                    />
-                    <Route path="/admin/feedback" element={<FeedbackList />} />
-
-                    {/* Auth */}
-                    <Route path="login" element={<Login />} />
-                    <Route path="logout" element={<Logout />} />
-                    <Route
-                      path="forgot-password"
-                      element={<ForgotPassword />}
-                    />
-                    <Route path="register" element={<RegisterAndLogout />} />
-
-                    {/* 404 */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Layout>
-              }
-            />
-          </Routes>
-          {/* 🟢 Chatbot floating and visible on all pages */}
-          <ChatbotWidget />
+            {/* Chatbot floating và visible trên mọi trang */}
+            <ChatbotWidget />
           </BrowserRouter>
         </AuthProvider>
       </AutoTranslateProvider>
