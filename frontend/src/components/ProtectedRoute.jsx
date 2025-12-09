@@ -1,14 +1,16 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import api from "../api";
 import { REFRESH_TOKEN, ACCESS_TOKEN } from "../constants";
 import { useState, useEffect } from "react";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, allowedRoles }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const location = useLocation();
 
   useEffect(() => {
     auth().catch(() => setIsAuthenticated(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshToken = async () => {
@@ -57,7 +59,20 @@ function ProtectedRoute({ children }) {
     return <div>Loading...</div>;
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  // Chưa đăng nhập → về login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Đã đăng nhập → kiểm tra role
+  const roleId = localStorage.getItem("ROLE_ID");
+
+  // Nếu route có allowedRoles mà role hiện tại không thuộc → 403
+  if (allowedRoles && !allowedRoles.includes(roleId)) {
+    return <Navigate to="/403" replace />;
+  }
+
+  return children;
 }
 
 export default ProtectedRoute;
