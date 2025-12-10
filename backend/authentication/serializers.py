@@ -1,3 +1,4 @@
+import email
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -14,7 +15,6 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "password"]
-
     def create(self, validated_data):
         user = User.objects.create_user(
             email=validated_data["email"],
@@ -36,13 +36,13 @@ class MyTokenObtainPairSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError({"detail": "Email hoặc mật khẩu không đúng"})
+            raise serializers.ValidationError({"detail": "Incorrect email or password"})
         
         if not user.check_password(password):
-            raise serializers.ValidationError({"detail": "Email hoặc mật khẩu không đúng"})
+            raise serializers.ValidationError({"detail": "Incorrect email or password"})
         
         if not user.is_active:
-            raise serializers.ValidationError({"detail": "Tài khoản chưa được xác thực OTP"})
+            raise serializers.ValidationError({"detail": "The account has not been verified with OTP"})
         
         # Tạo token - SỬA ĐỂ TRÁNH LỖI
         refresh = RefreshToken()
