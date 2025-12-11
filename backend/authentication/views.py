@@ -236,7 +236,7 @@ class GoogleLoginView(APIView):
         except User.DoesNotExist:
             user = User.objects.create_user(
                 email=email,
-                password=None,  # user login bằng Google, không set password
+                password=None,  
             )
             user.is_active = True
             user.is_email_verified = True
@@ -247,73 +247,6 @@ class GoogleLoginView(APIView):
 
 
         # Tạo JWT token
-        refresh = RefreshToken.for_user(user)
-        access = refresh.access_token
-
-        return Response(
-            {
-                "refresh": str(refresh),
-                "access": str(access),
-                "email": user.email,
-                "user_id": getattr(user, "user_id", None),
-            },
-            status=200,
-        )
-
-class FacebookLoginView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        access_token = request.data.get("access_token")
-        if not access_token:
-            return Response({"detail": "Missing access_token"}, status=400)
-
-        try:
-            # gọi Facebook Graph API để verify token & lấy info
-            r = requests.get(
-                "https://graph.facebook.com/me",
-                params={
-                    "fields": "id,name,email",
-                    "access_token": access_token,
-                },
-                timeout=5,
-            )
-        except Exception as e:
-            print("Error calling Facebook Graph:", e)
-            return Response({"detail": "Error verifying token with Facebook"}, status=400)
-
-        if r.status_code != 200:
-            print("Facebook graph status != 200:", r.status_code, r.text)
-            return Response({"detail": "Invalid Facebook token"}, status=400)
-
-        data = r.json()
-        fb_id = data.get("id")
-        email = data.get("email")
-        name = data.get("name") or ""
-
-        # 1 số tài khoản FB không cho email -> tạo email fake theo id
-        if not email:
-            email = f"{fb_id}@facebook.local"
-
-        # Tìm hoặc tạo user
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            user = User.objects.create_user(
-                email=email,
-                password=None,  # đăng nhập bằng social, không dùng password
-            )
-            user.is_active = True
-            user.is_email_verified = True
-            # nếu model có field name/full_name thì set:
-            if hasattr(user, "full_name"):
-                user.full_name = name
-            user.save()
-            
-        user.last_login = timezone.now()
-        user.save(update_fields=["last_login"])
-
-        # Tạo JWT token giống GoogleLoginView
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
 
