@@ -76,7 +76,7 @@ function LoginForm() {
       setLoading(true);
       try {
         const id_token = response.credential;
-        if (!id_token) throw new Error("Không lấy được id_token từ Google");
+        if (!id_token) throw new Error("Unable to retrieve the id_token from Google.");
 
         const res = await api.post("auth/login/google/", { id_token });
         localStorage.setItem(ACCESS_TOKEN, res.data.access);
@@ -98,7 +98,7 @@ function LoginForm() {
       } catch (err) {
         console.error("Google login error:", err.response?.data || err);
         alert(
-          "Đăng nhập Google thất bại: " +
+          "Google login failed: " +
             (err.response?.data?.detail || err.message)
         );
       } finally {
@@ -118,7 +118,7 @@ function LoginForm() {
     }
 
     if (!window.google?.accounts?.id) {
-      console.error("Google SDK chưa được load");
+      console.error("Google SDK has not been loaded yet.");
       return;
     }
 
@@ -138,6 +138,7 @@ function LoginForm() {
         width: 320,
         shape: "pill",
         text: "continue_with",
+        locale: "en",
       });
     }
   }, []);
@@ -177,7 +178,7 @@ function LoginForm() {
                 err.response?.data || err
               );
               alert(
-                "Đăng nhập Facebook thất bại: " +
+                "Facebook login failed: " +
                   (err.response?.data?.detail || err.message)
               );
             } finally {
@@ -263,7 +264,7 @@ function LoginForm() {
 
             {/* Divider “hoặc” */}
             <div className="divider">
-              <span>hoặc</span>
+              <span>or</span>
             </div>
 
             {/* GOOGLE: SDK tự render vào div này */}
@@ -287,9 +288,9 @@ function LoginForm() {
               <img
                 src="/images/f_logo_RGB-Blue_1024.png"
                 alt="facebook"
-                className="google-clone-icon"
+                className="fb-icon-left"
               />
-              <span>Đăng nhập bằng Facebook</span>
+              <span className="fb-text">Sign in with Facebook</span>
             </button>
           </form>
         </div>
