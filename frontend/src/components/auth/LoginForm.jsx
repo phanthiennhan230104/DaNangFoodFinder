@@ -142,57 +142,6 @@ function LoginForm() {
       });
     }
   }, []);
-
-  // ================== FACEBOOK ================== (GIỮ NGUYÊN)
-  const handleFacebookLogin = () => {
-    if (!window.FB) return;
-
-    setLoading(true);
-
-    window.FB.login(
-      function (response) {
-        (async () => {
-          if (response.authResponse) {
-            const fbAccessToken = response.authResponse.accessToken;
-            try {
-              const data = await loginWithFacebook(fbAccessToken);
-              localStorage.setItem(ACCESS_TOKEN, data.access);
-              localStorage.setItem(REFRESH_TOKEN, data.refresh);
-
-              const userRes = await api.get("auth/me/");
-              const roleId = userRes.data.role_id;
-              localStorage.setItem("ROLE_ID", roleId);
-
-              login({
-                email: userRes.data.email,
-                user_id: userRes.data.user_id,
-                role_id: userRes.data.role_id,
-                role_name: userRes.data.role_name,
-              });
-
-              if (roleId === 1 || roleId === "1") navigate("/admin/home");
-              else navigate("/home");
-            } catch (err) {
-              console.error(
-                "Facebook login error:",
-                err.response?.data || err
-              );
-              alert(
-                "Facebook login failed: " +
-                  (err.response?.data?.detail || err.message)
-              );
-            } finally {
-              setLoading(false);
-            }
-          } else {
-            setLoading(false);
-          }
-        })();
-      },
-      { scope: "public_profile" }
-    );
-  };
-
   // ================== UI ==================
   const handleRegister = () => navigate("/register");
   const handleForgotPassword = () => navigate("/forgot-password");
@@ -277,21 +226,6 @@ function LoginForm() {
                 marginBottom: "8px",
               }}
             ></div>
-
-            {/* FACEBOOK: nút custom, giữ nguyên logic + CSS */}
-            <button
-              type="button"
-              className="google-clone-facebook"
-              onClick={handleFacebookLogin}
-              disabled={loading}
-            >
-              <img
-                src="/images/f_logo_RGB-Blue_1024.png"
-                alt="facebook"
-                className="fb-icon-left"
-              />
-              <span className="fb-text">Sign in with Facebook</span>
-            </button>
           </form>
         </div>
       </div>
