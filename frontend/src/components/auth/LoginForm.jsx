@@ -76,7 +76,7 @@ function LoginForm() {
       setLoading(true);
       try {
         const id_token = response.credential;
-        if (!id_token) throw new Error("Không lấy được id_token từ Google");
+        if (!id_token) throw new Error("Unable to retrieve the id_token from Google.");
 
         const res = await api.post("auth/login/google/", { id_token });
         localStorage.setItem(ACCESS_TOKEN, res.data.access);
@@ -98,7 +98,7 @@ function LoginForm() {
       } catch (err) {
         console.error("Google login error:", err.response?.data || err);
         alert(
-          "Đăng nhập Google thất bại: " +
+          "Google login failed: " +
             (err.response?.data?.detail || err.message)
         );
       } finally {
@@ -118,7 +118,7 @@ function LoginForm() {
     }
 
     if (!window.google?.accounts?.id) {
-      console.error("Google SDK chưa được load");
+      console.error("Google SDK has not been loaded yet.");
       return;
     }
 
@@ -138,60 +138,10 @@ function LoginForm() {
         width: 320,
         shape: "pill",
         text: "continue_with",
+        locale: "en",
       });
     }
   }, []);
-
-  // ================== FACEBOOK ================== (GIỮ NGUYÊN)
-  const handleFacebookLogin = () => {
-    if (!window.FB) return;
-
-    setLoading(true);
-
-    window.FB.login(
-      function (response) {
-        (async () => {
-          if (response.authResponse) {
-            const fbAccessToken = response.authResponse.accessToken;
-            try {
-              const data = await loginWithFacebook(fbAccessToken);
-              localStorage.setItem(ACCESS_TOKEN, data.access);
-              localStorage.setItem(REFRESH_TOKEN, data.refresh);
-
-              const userRes = await api.get("auth/me/");
-              const roleId = userRes.data.role_id;
-              localStorage.setItem("ROLE_ID", roleId);
-
-              login({
-                email: userRes.data.email,
-                user_id: userRes.data.user_id,
-                role_id: userRes.data.role_id,
-                role_name: userRes.data.role_name,
-              });
-
-              if (roleId === 1 || roleId === "1") navigate("/admin/home");
-              else navigate("/home");
-            } catch (err) {
-              console.error(
-                "Facebook login error:",
-                err.response?.data || err
-              );
-              alert(
-                "Đăng nhập Facebook thất bại: " +
-                  (err.response?.data?.detail || err.message)
-              );
-            } finally {
-              setLoading(false);
-            }
-          } else {
-            setLoading(false);
-          }
-        })();
-      },
-      { scope: "public_profile" }
-    );
-  };
-
   // ================== UI ==================
   const handleRegister = () => navigate("/register");
   const handleForgotPassword = () => navigate("/forgot-password");
@@ -263,7 +213,7 @@ function LoginForm() {
 
             {/* Divider “hoặc” */}
             <div className="divider">
-              <span>hoặc</span>
+              <span>or</span>
             </div>
 
             {/* GOOGLE: SDK tự render vào div này */}
@@ -276,21 +226,6 @@ function LoginForm() {
                 marginBottom: "8px",
               }}
             ></div>
-
-            {/* FACEBOOK: nút custom, giữ nguyên logic + CSS */}
-            <button
-              type="button"
-              className="google-clone-facebook"
-              onClick={handleFacebookLogin}
-              disabled={loading}
-            >
-              <img
-                src="/images/f_logo_RGB-Blue_1024.png"
-                alt="facebook"
-                className="google-clone-icon"
-              />
-              <span>Đăng nhập bằng Facebook</span>
-            </button>
           </form>
         </div>
       </div>
