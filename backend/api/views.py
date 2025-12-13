@@ -1010,15 +1010,13 @@ from django.db.models import Q
 
 
 class RestaurantMapListView(APIView):
-    """
-    GET /api/restaurants/map/
-    Trả toàn bộ nhà hàng cho bản đồ
-    """
     permission_classes = [AllowAny]
 
     def get(self, request):
-        restaurants = Restaurant.objects.all()
-        return Response(RestaurantSerializer(restaurants, many=True).data)
+        # Use the RestaurantSerializer so the frontend receives image and average_rating
+        qs = Restaurant.objects.all()
+        serializer = RestaurantSerializer(qs, many=True, context={"request": request})
+        return Response(serializer.data)
 
 
 class RestaurantMapSearchView(APIView):
@@ -1050,6 +1048,13 @@ class GeocodeRestaurantView(APIView):
     def post(self, request):
         name = request.data.get("name", "")
         address = request.data.get("address", "")
+        restaurant_id = request.data.get("restaurant_id")
+        restaurant_obj = None
+        if restaurant_id:
+            try:
+                restaurant_obj = Restaurant.objects.get(id=restaurant_id)
+            except Restaurant.DoesNotExist:
+                restaurant_obj = None
 
         if not address:
             return Response({
@@ -1059,7 +1064,8 @@ class GeocodeRestaurantView(APIView):
                 "_debug": {"normalized": ""}
             })
 
-        result = geocode_address(address, name)
+        # pass restaurant_obj so geocode_address can persist lat/lng when available
+        result = geocode_address(address, name, save_instance=restaurant_obj)
 
         if not result:
             return Response({
@@ -1072,6 +1078,36 @@ class GeocodeRestaurantView(APIView):
         resp = dict(result)
         resp["_debug"] = {"normalized": normalize_danang_address(address)}
         return Response(resp)
+    
+class GeocodeAllRestaurantsView(APIView):
+    """
+    POST /api/geocode/all/
+    Tự động geocode toàn bộ nhà hàng chưa có latitude & longitude.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        restaurants = Restaurant.objects.all()
+
+        updated = 0
+        failed = []
+
+        for r in restaurants:
+            result = geocode_address(r.address, r.name)
+
+            if result:
+                r.latitude = result["lat"]
+                r.longitude = result["lng"]
+                r.save()
+                updated += 1
+            else:
+                failed.append({"id": r.id, "name": r.name})
+
+        return Response({
+            "total": restaurants.count(),
+            "updated": updated,
+            "failed": failed,
+        })
 
 
 class OSRMRouteView(APIView):

@@ -92,17 +92,15 @@ class RestaurantSerializer(serializers.ModelSerializer):
             "id", "name", "address", "cuisine_type",
             "price_range", "average_rating",
             "opening_hours", "image",
-            # additional detail fields for detail endpoint
+            "latitude", "longitude",
             "description", "website", "created_at", "last_updated_at",
         ]
 
     def get_image(self, obj):
-        # Return an absolute URL for the image when possible
         request = self.context.get('request') if hasattr(self, 'context') else None
         image_url = None
         if hasattr(obj, 'image') and obj.image:
             try:
-                # Django ImageField has .url
                 image_url = obj.image.url
             except Exception:
                 image_url = str(obj.image)
@@ -117,11 +115,9 @@ class RestaurantSerializer(serializers.ModelSerializer):
         return image_url
 
     def get_description(self, obj):
-        # use rag_context_text as a human-readable description when available
         return obj.rag_context_text or None
 
     def get_website(self, obj):
-        # provide a backwards-compatible 'website' field using detail_url
         if getattr(obj, 'detail_url', None):
             return obj.detail_url
         return None

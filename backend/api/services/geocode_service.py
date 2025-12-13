@@ -61,7 +61,7 @@ def normalize_danang_address(address: str) -> str:
 # API GEOCODING
 # =============================
 
-def geocode_address(address: str, restaurant_name: str = ""):
+def geocode_address(address: str, restaurant_name: str = "", save_instance=None):
     """Geocode 1 địa chỉ bằng OpenStreetMap (Nominatim)."""
 
     if not address:
@@ -137,6 +137,35 @@ def geocode_address(address: str, restaurant_name: str = ""):
     viewbox = f"{min_lon},{max_lat},{max_lon},{min_lat}"
 
     tried_query = None
+
+    def _maybe_save(result):
+        """If a model instance was passed, persist lat/lng to DB."""
+        if not save_instance or not result:
+            return
+        try:
+            # local import to avoid potential circular imports at module import time
+            from api.models import Restaurant
+
+            lat = result.get("lat")
+            lng = result.get("lng")
+            if lat is None or lng is None:
+                return
+
+            # If a Restaurant instance (or any model instance with id/PK) was given,
+            # update it safely using queryset.update to avoid race conditions.
+            if hasattr(save_instance, "id") and save_instance.id:
+                Restaurant.objects.filter(id=save_instance.id).update(latitude=lat, longitude=lng)
+            else:
+                # Fallback: try setting attributes and saving
+                setattr(save_instance, "latitude", lat)
+                setattr(save_instance, "longitude", lng)
+                try:
+                    save_instance.save()
+                except Exception:
+                    pass
+            print(f"[GEOCODE] ✅ Saved geocode to DB for instance id={getattr(save_instance, 'id', None)}")
+        except Exception as e:
+            print("[GEOCODE] ⚠️ Failed to save geocode to DB:", e)
     try:
         queries = make_variants(normalized)
         for q in queries:
@@ -158,13 +187,17 @@ def geocode_address(address: str, restaurant_name: str = ""):
 
             tried_query = q
             if data:
-                return {
+                result = {
                     "lat": float(data[0]["lat"]),
                     "lng": float(data[0]["lon"]),
                     "display_name": data[0].get("display_name", ""),
                     "confidence": 7,
                     "_queried": q,
                 }
+                _maybe_save(result)
+                if save_instance:
+                    result["saved"] = True
+                return result
 
         # nothing found from Nominatim
         print("ℹ️ Nominatim returned no results for queries:", queries)
@@ -190,7 +223,11 @@ def geocode_address(address: str, restaurant_name: str = ""):
             first = g_json["results"][0]
             loc = first["geometry"]["location"]
             display = first.get("formatted_address", "")
-            return {"lat": float(loc["lat"]), "lng": float(loc["lng"]), "display_name": display, "confidence": 6}
+            result = {"lat": float(loc["lat"]), "lng": float(loc["lng"]), "display_name": display, "confidence": 6}
+            _maybe_save(result)
+            if save_instance:
+                result["saved"] = True
+            return result
 
         print("ℹ️ Google Geocoding returned status:", g_json.get("status"))
         return None
