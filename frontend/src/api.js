@@ -50,10 +50,5 @@ export const saveUserProfile = async (profileData) => {
     }
 };
 
-export const loginWithFacebook = async (fbAccessToken) => {
-  const res = await api.post("auth/facebook/", {
-    access_token: fbAccessToken,
-  });
-  return res.data;
-};
+
 export default api;
