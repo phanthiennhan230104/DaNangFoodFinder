@@ -3,11 +3,11 @@ import re
 from django.conf import settings
 
 # =============================
-# CHUẨN HÓA ĐỊA CHỈ ĐÀ NẴNG
+# NORMALIZE DA NANG ADDRESSES
 # =============================
 
 def normalize_danang_address(address: str) -> str:
-    """Chuẩn hóa địa chỉ Đà Nẵng để tăng tỷ lệ tìm tọa độ thành công."""
+    """Normalize a Da Nang address to improve geocoding match success."""
 
     if not address or not isinstance(address, str):
         return ""
@@ -18,7 +18,7 @@ def normalize_danang_address(address: str) -> str:
 
     addr_low = addr.lower()
 
-    # --- Thay thế từ viết tắt ---
+    # --- Replace common abbreviations ---
     replacements = {
         r"\bp\.\s*": "phường ",
         r"\bq\.\s*": "quận ",
@@ -35,23 +35,23 @@ def normalize_danang_address(address: str) -> str:
     for pattern, full in replacements.items():
         addr_low = re.sub(pattern, full, addr_low, flags=re.IGNORECASE)
 
-    # Chuẩn hóa phường / quận bị dính chữ
+    # Normalize ward/district tokens that may be concatenated with words
     addr_low = re.sub(r"(phường|phuong)(?=[a-z])", r"\1 ", addr_low)
     addr_low = re.sub(r"(quận|quan)(?=[a-z])", r"\1 ", addr_low)
 
-    # Chuẩn hóa dấu phẩy
+    # Normalize commas and extra whitespace
     addr_low = re.sub(r"\s*,\s*", ", ", addr_low)
     addr_low = re.sub(r"\s{2,}", " ", addr_low)
 
-    # BẮT BUỘC thêm "Đà Nẵng" nếu thiếu
+    # Ensure 'Đà Nẵng' is present (append if missing)
     if "đà nẵng" not in addr_low and "da nang" not in addr_low:
         addr_low += ", đà nẵng"
 
-    # BẮT BUỘC thêm Việt Nam
+    # Ensure 'Vietnam' is present (append if missing)
     if "vietnam" not in addr_low and "việt nam" not in addr_low:
         addr_low += ", vietnam"
 
-    # Viết hoa từng ký tự đầu cho đẹp
+    # Capitalize each word for nicer formatting
     addr_final = " ".join([w.capitalize() for w in addr_low.split(" ")])
 
     return addr_final
@@ -61,13 +61,13 @@ def normalize_danang_address(address: str) -> str:
 # API GEOCODING
 # =============================
 
-def geocode_address(address: str, restaurant_name: str = "", save_instance=None):
-    """Geocode 1 địa chỉ bằng OpenStreetMap (Nominatim)."""
+def geocode_address(address: str, restaurant_name: str = ""):
+    """Geocode a single address using OpenStreetMap (Nominatim)."""
 
     if not address:
         return None
 
-    # Chuẩn hóa địa chỉ TRƯỚC
+    # Normalize the address first
     normalized = normalize_danang_address(address)
 
     print("\n==========================")
@@ -115,7 +115,7 @@ def geocode_address(address: str, restaurant_name: str = "", save_instance=None)
                 if v3 not in variants:
                     variants.append(v3)
 
-        # finally, try without diacritics / simpler english 'Da Nang' form
+        # finally, try without diacritics / simpler English 'Da Nang' form
         v4 = q.replace('Đà Nẵng', 'Da Nang').replace('đà nẵng', 'Da Nang')
         if v4 and v4 not in variants:
             variants.append(v4)
@@ -127,9 +127,9 @@ def geocode_address(address: str, restaurant_name: str = "", save_instance=None)
         "Accept-Language": "vi"
     }
 
-    # Bounding box for Đà Nẵng (lon/lat) to bias/restrict Nominatim results
+    # Bounding box for Da Nang (lon/lat) to bias/restrict Nominatim results
     # Format for viewbox: left,top,right,bottom (lon_max/lat order)
-    # We'll use a slightly generous bbox around central Đà Nẵng
+    # We'll use a slightly generous bbox around central Da Nang
     min_lat = 15.95
     max_lat = 16.20
     min_lon = 108.10

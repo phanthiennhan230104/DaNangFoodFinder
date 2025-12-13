@@ -196,7 +196,7 @@ class FeedbackListAdminView(APIView):
 @api_view(["GET"])
 def get_filters(request):
     """
-    Lấy danh sách khu vực (Quận) & loại ẩm thực (cuisine_type) duy nhất.
+    Get unique list of areas (Districts) and cuisine types.
     """
     addresses = Restaurant.objects.values_list("address", flat=True).distinct()
     areas = set()
@@ -1010,6 +1010,10 @@ from django.db.models import Q
 
 
 class RestaurantMapListView(APIView):
+    """
+    GET /api/restaurants/map/
+    Return all restaurants for the map
+    """
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -1022,7 +1026,7 @@ class RestaurantMapListView(APIView):
 class RestaurantMapSearchView(APIView):
     """
     GET /api/restaurants/map/search/?q=...
-    Tìm kiếm theo tên + địa chỉ
+    Search by name and address
     """
     permission_classes = [AllowAny]
 
