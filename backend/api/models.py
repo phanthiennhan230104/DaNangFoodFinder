@@ -108,11 +108,10 @@ class CrawledData(models.Model):
 
     class Meta:
         db_table = "CrawledData"
-        unique_together = ("source", "url")
         indexes = [
             models.Index(fields=["status"]),
             models.Index(fields=["source", "status"]),
-            models.Index(fields=["url"]),
+            models.Index(fields=["source", "url"], name="crawled_source_url_idx"),
         ]
 
     def __str__(self) -> str:
@@ -120,7 +119,7 @@ class CrawledData(models.Model):
 
 class Restaurant(models.Model):
     name = models.CharField(max_length=255)
-    address = models.TextField()
+    address = models.CharField(max_length=500)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     opening_hours = models.CharField(max_length=500, blank=True, null=True)
@@ -139,11 +138,11 @@ class Restaurant(models.Model):
 
     class Meta:
         db_table = "Restaurants"
-        unique_together = ("name", "address")
         indexes = [
+            models.Index(fields=["name", "address"], name="restaurant_name_address_idx"),
             models.Index(fields=["average_rating"]),
             models.Index(fields=["quality_score"]),
-            models.Index(fields=["detail_url"]),
+            models.Index(fields=["detail_url"], name="restaurant_detail_url_idx"),
         ]
 
     def __str__(self) -> str:

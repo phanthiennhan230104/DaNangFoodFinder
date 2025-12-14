@@ -1,5 +1,6 @@
 import asyncio
 import aiohttp
+import ssl
 from asgiref.sync import sync_to_async
 from django.core.management.base import BaseCommand
 from api.models import CrawledSource, CrawledData
@@ -15,7 +16,7 @@ HEADERS = {
 
 async def fetch_html(session, url: str):
     try:
-        async with session.get(url, headers=HEADERS, timeout=30) as resp:
+        async with session.get(url, headers=HEADERS, timeout=30, ssl=False) as resp:
             html = await resp.text()
             if not html or len(html) < 5000:
                 return None

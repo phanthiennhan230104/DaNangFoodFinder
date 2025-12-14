@@ -54,6 +54,7 @@ class Command(BaseCommand):
             context = await browser.new_context(
                 viewport={"width": 1280, "height": 800},
                 locale="en-US",
+                    ignore_https_errors=True,
             )
 
             tasks = [fetch_detail(context, r) for r in restaurants]

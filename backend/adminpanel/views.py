@@ -1,5 +1,6 @@
 import sys
 import subprocess
+from django.conf import settings
 from django.http import StreamingHttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -28,9 +29,12 @@ PYTHON_EXEC = sys.executable
 
 
 def run_command(args):
+    from django.conf import settings
+    base_dir = settings.BASE_DIR  
+
     process = subprocess.Popen(
         [PYTHON_EXEC, "manage.py"] + args,
-        cwd="E:/DaNangFoodFinder/backend",
+        cwd=str(base_dir),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
