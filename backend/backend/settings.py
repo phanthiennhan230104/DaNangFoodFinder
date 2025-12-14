@@ -97,9 +97,9 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'danangfoodfinder',     
+        'NAME': 'danangfoodfinderdb',     
         'USER': 'root',     
-        'PASSWORD': 'root',
+        'PASSWORD': 'nhan2004',
         'HOST': 'localhost',              
         'PORT': '3306',
     }
