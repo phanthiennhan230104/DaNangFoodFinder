@@ -126,7 +126,6 @@ class Restaurant(models.Model):
     cuisine_type = models.CharField(max_length=100, blank=True, null=True)
     price_range = models.CharField(max_length=100, blank=True, null=True)
     average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
-    total_review_count = models.IntegerField(default=0)
     quality_score = models.DecimalField(max_digits=4, decimal_places=2, default=0.0)
     is_featured = models.BooleanField(default=False)
     rag_context_text = models.TextField(blank=True, null=True)

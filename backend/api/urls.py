@@ -26,6 +26,7 @@ from .views import (
     CalculateRouteView,
     OSRMRouteView,
     GeocodeRestaurantView,
+    GeocodeAllRestaurantsView,   # <<< THÊM VÀO Ở ĐÂY
 
     # Profile
     get_my_profile,
@@ -40,6 +41,7 @@ from .views import (
     # Feedback
     FeedbackCreateView,
     FeedbackListAdminView,
+
     # Favorites
     FavoriteListCreateView,
     FavoriteDestroyView,
@@ -57,10 +59,11 @@ urlpatterns = [
     path("cuisines/", CuisineListView.as_view(), name="cuisine-list"),
     path("filters/", get_filters, name="filters"),
 
-    # Restaurant Map APIs
+    # ---------------------- RESTAURANT MAP ----------------------
     path("restaurants/map/", RestaurantMapListView.as_view(), name="restaurant_map_list"),
     path("restaurants/map/search/", RestaurantMapSearchView.as_view(), name="restaurant_map_search"),
     path("geocode/", GeocodeRestaurantView.as_view(), name="geocode_restaurant"),
+    path("geocode/all/", GeocodeAllRestaurantsView.as_view(), name="geocode_all_restaurants"),  # <<< THÊM API NÀY
 
     # ---------------------- JOURNEYS ----------------------
     path("journey/restaurants/", JourneyRecommendationsView.as_view(), name="journey_recommendations"),
@@ -88,7 +91,8 @@ urlpatterns = [
     # ---------------------- FEEDBACK ----------------------
     path("feedback/", FeedbackCreateView.as_view(), name="feedback-create"),
     path("feedback-list/", FeedbackListAdminView.as_view(), name="feedback-list"),
-    # Favorites for users
+
+    # ---------------------- FAVORITES ----------------------
     path("favorites/", FavoriteListCreateView.as_view(), name="favorites-list-create"),
     path("favorites/<int:restaurant_id>/", FavoriteDestroyView.as_view(), name="favorites-destroy"),
 ]
