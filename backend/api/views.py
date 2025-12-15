@@ -432,60 +432,6 @@ class OverviewView(APIView):
         })
 
 
-@api_view(["POST"])
-@permission_classes([AllowAny])
-def translate_view(request):
-    """Dịch văn bản bằng Groq API với hậu xử lý tiếng Việt tự nhiên."""
-    text = request.data.get("text", "")
-    source = request.data.get("from", "en")
-    target = request.data.get("to", "vi")
-
-    if not text.strip():
-        return Response({"result": text})
-
-    try:
-        client = Groq(api_key=settings.GROQ_API_KEY)
-        completion = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a professional translator for a web application about food discovery in Da Nang. "
-                        "Translate from English to Vietnamese using natural, modern language suited for a travel/food website. "
-                        "Avoid literal or technical terms like 'nghiệp vụ' or 'vận hành'. "
-                        "Use phrases familiar to Vietnamese users, e.g., 'khám phá ẩm thực', 'gợi ý món ăn', 'trải nghiệm ẩm thực'. "
-                        "Output translation only, no explanation."
-                    ),
-                },
-                {"role": "user", "content": text},
-            ],
-            temperature=0.2,
-        )
-
-        translated = completion.choices[0].message.content.strip()
-        refined = refine_vietnamese(translated)
-        return Response({"result": refined})
-
-    except Exception as e:
-        return Response({"result": text, "error": str(e)})
-
-
-def refine_vietnamese(text: str) -> str:
-    """Làm mềm và chuẩn ngữ pháp tiếng Việt."""
-    replacements = [
-        (r"\b(Bữa sáng|Bữa trưa|Bữa tối)\s*(Gợi ý|Đề xuất)", "Gợi ý \\1"),
-        (r"\b(Gợi ý|Đề xuất)\s*(Bữa sáng|Bữa trưa|Bữa tối)", "Gợi ý \\2"),
-        (r"\b(Nhà hàng)\s*(Yêu thích|Ưa thích)", "\\2 \\1"),
-        (r"\b(Bản đồ)\s*(Mở|Đóng)", "\\2 \\1"),
-        (r"\b(Khuyến nghị)\b", "Gợi ý"),
-        (r"\s{2,}", " "),
-    ]
-    for pattern, repl in replacements:
-        text = re.sub(pattern, repl, text, flags=re.IGNORECASE)
-    return text.strip()
-
-
 class CalculateRouteView(APIView):
     """Tính đường đi giữa hai tọa độ (OpenRouteService/OSRM)."""
     permission_classes = [AllowAny]
