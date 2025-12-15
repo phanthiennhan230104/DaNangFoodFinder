@@ -111,7 +111,6 @@ class CrawledData(models.Model):
         indexes = [
             models.Index(fields=["status"]),
             models.Index(fields=["source", "status"]),
-            models.Index(fields=["source", "url"], name="crawled_source_url_idx"),
         ]
 
     def __str__(self) -> str:
@@ -141,7 +140,6 @@ class Restaurant(models.Model):
             models.Index(fields=["name", "address"], name="restaurant_name_address_idx"),
             models.Index(fields=["average_rating"]),
             models.Index(fields=["quality_score"]),
-            models.Index(fields=["detail_url"], name="restaurant_detail_url_idx"),
         ]
 
     def __str__(self) -> str:
