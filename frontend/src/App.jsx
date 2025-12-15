@@ -7,8 +7,6 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AuthProvider } from "./components/contexts/AuthContext";
-import AutoTranslateProvider from "./components/AutoTranslateProvider.jsx";
-import "./styles/auto-translate.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import Header from "./components/layout/Header";
@@ -74,7 +72,6 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AutoTranslateProvider>
         <AuthProvider>
           <BrowserRouter>
             <Routes>
@@ -272,7 +269,6 @@ function App() {
             <ChatbotWidget />
           </BrowserRouter>
         </AuthProvider>
-      </AutoTranslateProvider>
     </QueryClientProvider>
   );
 }

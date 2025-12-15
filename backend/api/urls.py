@@ -17,10 +17,9 @@ from .views import (
     JourneyRecommendationsView,
     FoodJourneyUpsertView,
 
-    # Overview & Filters & Translate
+    # Overview & Filters
     OverviewView,
     get_filters,
-    translate_view,
 
     # Routes
     CalculateRouteView,
@@ -69,9 +68,8 @@ urlpatterns = [
     path("journey/restaurants/", JourneyRecommendationsView.as_view(), name="journey_recommendations"),
     path("journey/", FoodJourneyUpsertView.as_view(), name="journey_upsert"),
 
-    # ---------------------- OVERVIEW + TRANSLATE ----------------------
+    # ---------------------- OVERVIEW ----------------------
     path("overview/", OverviewView.as_view(), name="overview"),
-    path("translate/", translate_view, name="translate"),
 
     # ---------------------- ROUTES ----------------------
     path("calculate_route/", CalculateRouteView.as_view(), name="calculate_route"),

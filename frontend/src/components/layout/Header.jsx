@@ -4,7 +4,6 @@ import { User, LogOut, Send, ChevronDown } from "lucide-react";
 import "../../styles/layout/Header.css";
 import { ACCESS_TOKEN } from "../../constants";
 import api from "../../api";
-import { LanguageSwitcher } from "../AutoTranslateProvider";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -126,7 +125,6 @@ export default function Header() {
               <span>Hi, {fullName || username}</span>
               <ChevronDown className={`chevron-icon ${open ? "rotate" : ""}`} size={18} />
             </button>
-             <LanguageSwitcher />
 
             <div className={`dropdown-card ${open ? "open" : ""}`}>
               <a href="/profiles" className="dropdown-item">

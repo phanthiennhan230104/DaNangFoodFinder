@@ -99,7 +99,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'danangfoodfinderdb',     
         'USER': 'root',     
-        'PASSWORD': 'nhan2004',
+        'PASSWORD': 'root',
         'HOST': 'localhost',              
         'PORT': '3306',
     }
@@ -116,7 +116,7 @@ AUTH_PASSWORD_VALIDATORS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-     "https://localhost:5173",
+    
 ]
 
 CACHES = {
