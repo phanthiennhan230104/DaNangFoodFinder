@@ -8,6 +8,5 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('api/auth/', include('authentication.urls')),
     path('api/admin/', include('adminpanel.urls')),
-
     path('route/', CalculateRouteView.as_view(), name='route'),
 ]
