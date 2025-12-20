@@ -1,39 +1,85 @@
+import { useState, useEffect } from "react";
 import "../../styles/admin/CrawlDashboard.css";
 import { ACCESS_TOKEN } from "../../constants";
 
 export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLog }) {
+  const [placeType, setPlaceType] = useState("restaurant");
+  const [pageNumber, setPageNumber] = useState("1");
 
+  const placeTypeConfig = {
+    // Foody sources
+    restaurant: {
+      label: "Restaurant",
+      fullLabel: "Foody - Restaurant",
+      source: "Foody",
+      path: "/nha-hang"
+    },
+    junkfood: {
+      label: "Junk Food",
+      fullLabel: "Foody - Junk Food",
+      source: "Foody",
+      path: "/an-vat-via-he"
+    },
+    eating: {
+      label: "Eating",
+      fullLabel: "Foody - Eating",
+      source: "Foody",
+      path: "/quan-an"
+    },
+    drink: {
+      label: "Drink",
+      fullLabel: "Foody - Drink",
+      source: "Foody",
+      path: "/cafe"
+    },
+    // Restaurant Guru source
+    restaurantguru: {
+      label: "Restaurant Guru",
+      fullLabel: "Restaurant Guru - Da Nang",
+      source: "RestaurantGuru",
+      customUrl: "https://restaurantguru.com/Da-Nang"
+    }
+  };
+
+  // Auto generate URL when type or page changes
+  useEffect(() => {
+    const config = placeTypeConfig[placeType];
+    if (config) {
+      if (config.customUrl) {
+        // For Restaurant Guru - pagination is /Da-Nang/2, /Da-Nang/3, etc.
+        if (pageNumber > 1) {
+          setUrl(`${config.customUrl}/${pageNumber}`);
+        } else {
+          setUrl(config.customUrl);
+        }
+      } else {
+        // For Foody
+        const generatedUrl = `https://www.foody.vn/da-nang/food${config.path}?page=${pageNumber}`;
+        setUrl(generatedUrl);
+      }
+    }
+  }, [placeType, pageNumber]);
+
+  // Kiểm tra xem log có phải là về nhà hàng không
+  const isRestaurantLog = (line) => {
+    return /\[RESTAURANT_SUCCESS\]|\[RESTAURANT_FAIL\]/i.test(line);
+  };
+
+  // Xác định loại log
   const getLogType = (line) => {
-    const successRules = [
-      /^\s*\[OK\]/i,
-      /\bSUCCESS\b/i,
-      /completed|done/i,
-      /scraped and saved/i,
-      /updated .* with detail/i,
-      /saved html/i,
-      /✅|✨/,
-    ];
-    const warningRules = [
-      /\bWARNING\b/i,
-      /⚠/u,
-      /\bno .* to crawl\b/i,
-      /\bskip(ped)?\b/i,
-    ];
-    const errorRules = [
-      /\bERROR\b/i,
-      /❌/u,
-      /traceback/i,
-      /exception/i,
-      /unauthorized/i,
-      /modulenotfounderror/i,
-      /timeout|timed out/i,
-      /\bfailed\b/i,
-    ];
-
-    if (successRules.some((r) => r.test(line))) return "success";
-    if (warningRules.some((r) => r.test(line))) return "warning";
-    if (errorRules.some((r) => r.test(line))) return "error";
+    if (/\[RESTAURANT_SUCCESS\]/i.test(line)) return "success";
+    if (/\[RESTAURANT_FAIL\]/i.test(line)) return "error";
     return "info";
+  };
+
+  // Format tên nhà hàng từ log
+  const formatRestaurantLog = (line) => {
+    const successMatch = line.match(/\[RESTAURANT_SUCCESS\]\s*(.+)/i);
+    const failMatch = line.match(/\[RESTAURANT_FAIL\]\s*(.+)/i);
+    
+    if (successMatch) return `✅ ${successMatch[1]}`;
+    if (failMatch) return `❌ ${failMatch[1]}`;
+    return line;
   };
 
   const simulateCrawl = async () => {
@@ -74,8 +120,11 @@ export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLo
         chunk.split(/\r?\n/).forEach((raw) => {
           const line = raw.trim();
           if (!line) return;
+          // Chỉ hiển thị log về nhà hàng
+          if (!isRestaurantLog(line)) return;
           const type = getLogType(line);
-          addLog(line, type);
+          const formattedMessage = formatRestaurantLog(line);
+          addLog(formattedMessage, type);
         });
       }
     } catch (err) {
@@ -87,23 +136,59 @@ export default function CrawlInput({ url, setUrl, isLoading, setIsLoading, addLo
 
   return (
     <div>
-      <div className="crawl-titlebar">Enter a URL to crawl data</div>
-      <div className="crawl-input">
+      <div className="crawl-titlebar">Configure Crawl Settings</div>
+      
+      {/* Place Type Selector */}
+      <div className="crawl-config-section">
+        <label className="crawl-config-label">Place Type:</label>
+        <select
+          value={placeType}
+          onChange={(e) => setPlaceType(e.target.value)}
+          disabled={isLoading}
+          className="crawl-select-input"
+        >
+          {Object.entries(placeTypeConfig).map(([key, config]) => (
+            <option key={key} value={key}>
+              {config.fullLabel}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Page Number Input */}
+      <div className="crawl-config-section">
+        <label className="crawl-config-label">Page Number:</label>
         <input
-          type="text"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Example: https://www.foody.vn/da-nang/places..."
-          className="crawl-input__control"
+          type="number"
+          min="1"
+          value={pageNumber}
+          onChange={(e) => setPageNumber(e.target.value)}
+          placeholder="Enter page number"
+          className="crawl-page-input"
           disabled={isLoading}
         />
-        <button
-          onClick={simulateCrawl}
-          disabled={isLoading}
-          className="crawl-btn crawl-btn--primary"
-        >
-          {isLoading ? "Crawling..." : "Start Crawl"}
-        </button>
+      </div>
+
+      {/* Generated URL Display */}
+      <div className="crawl-config-section">
+        <label className="crawl-config-label">Generated URL:</label>
+        <div className="crawl-input">
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="URL will be generated automatically..."
+            className="crawl-input__control"
+            disabled={isLoading}
+          />
+          <button
+            onClick={simulateCrawl}
+            disabled={isLoading}
+            className="crawl-btn crawl-btn--primary"
+          >
+            {isLoading ? "Crawling..." : "Start Crawl"}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -55,8 +55,13 @@ def auto_geocode_on_address_change(sender, instance: Restaurant, **kwargs):
     except Restaurant.DoesNotExist:
         return
 
-    # Nếu địa chỉ thay đổi → phải geocode lại
+    # Nếu địa chỉ thay đổi và chưa có lat/long mới → phải geocode lại
+    # Nếu đã có lat/long mới (từ JSON-LD) thì không cần reset
     if old.address != instance.address:
-        print(f"[SIGNALS] 🔄 Địa chỉ thay đổi → geocode lại: {instance.name}")
-        instance.latitude = None
-        instance.longitude = None
+        if not instance.latitude or not instance.longitude:
+            print(f"[SIGNALS] 🔄 Địa chỉ thay đổi → geocode lại: {instance.name}")
+            # Chỉ reset nếu chưa có lat/long mới
+            instance.latitude = None
+            instance.longitude = None
+        else:
+            print(f"[SIGNALS] ✓ Địa chỉ thay đổi nhưng đã có lat/long từ nguồn: {instance.name}")

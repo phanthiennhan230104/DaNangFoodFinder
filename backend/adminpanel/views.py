@@ -23,6 +23,8 @@ from django.contrib.auth import authenticate, get_user_model
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from api.models import CrawledSource
+
 User = get_user_model()
 
 PYTHON_EXEC = sys.executable
@@ -54,8 +56,8 @@ def crawl_pipeline(request):
         return Response({"error": "Missing URL"}, status=400)
 
     # ✅ Auto-detect source domain
-    if "tripadvisor.com" in url.lower():
-        source = "TripAdvisor"
+    if "restaurantguru.com" in url.lower():
+        source = "RestaurantGuru"
     elif "foody.vn" in url.lower():
         source = "Foody"
     else:
@@ -63,20 +65,27 @@ def crawl_pipeline(request):
 
     def event_stream():
         yield f"--- Starting crawl_data with URL {url} ---\n"
+        yield f"--- Detected source: {source} ---\n"
         for line in run_command(["crawl_data", url, "--source", source]):
             yield line
 
-        yield "--- Running process_data ---\n"
+        yield f"--- Running process_data for {source} ---\n"
         for line in run_command(["process_data", "--source", source]):
             yield line
 
-        yield "--- Running crawl_detail (limit 12) ---\n"
-        for line in run_command(["crawl_detail", "--limit", "12"]):
+        yield f"--- Running crawl_detail for {source} (limit 20) ---\n"
+        for line in run_command(["crawl_detail", "--limit", "20", "--source", source]):
             yield line
 
-        yield "--- Running process_detail ---\n"
-        for line in run_command(["process_detail"]):
-            yield line
+        # Use appropriate process_detail command based on source
+        if source == "RestaurantGuru":
+            yield "--- Running process_detail_restaurantguru ---\n"
+            for line in run_command(["process_detail_restaurantguru"]):
+                yield line
+        else:
+            yield "--- Running process_detail ---\n"
+            for line in run_command(["process_detail"]):
+                yield line
 
         yield "--- ✅ Pipeline completed! ---\n"
 

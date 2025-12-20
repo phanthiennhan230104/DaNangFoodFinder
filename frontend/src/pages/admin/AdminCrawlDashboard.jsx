@@ -19,9 +19,7 @@ export default function AdminCrawlDashboard() {
 
   const logCounts = {
     success: logs.filter((l) => l.type === "success").length,
-    warning: logs.filter((l) => l.type === "warning").length,
     error: logs.filter((l) => l.type === "error").length,
-    total: logs.length,
   };
   
   return (
