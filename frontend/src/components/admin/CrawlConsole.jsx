@@ -4,8 +4,6 @@ export default function CrawlConsole({ logs, clearLogs }) {
   const typeClass = (t) =>
     t === "success"
       ? "crawl-log--success"
-      : t === "warning"
-      ? "crawl-log--warning"
       : t === "error"
       ? "crawl-log--error"
       : "crawl-log--info";

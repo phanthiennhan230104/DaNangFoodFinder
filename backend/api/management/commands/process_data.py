@@ -1,3 +1,4 @@
+import re
 from bs4 import BeautifulSoup
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -13,6 +14,17 @@ SELECTORS = {
         "rating": "div.point",
         "image": "img",
         "detail_url": "h2 a",
+    },
+    "restaurantguru": {
+        "container": "div.restaurant_row",
+        "name": "h3.item__title",
+        "address": "span.rest_address",
+        "rating": "span.card__rating-star",
+        "votes": "span.rating-stars__text",
+        "image": "img.restaurant-img",
+        "detail_url": "a.title_url",
+        "cuisine": "span.rest-card__type",
+        "price": "span.cost",
     },
 }
 
@@ -31,17 +43,31 @@ def parse_one(item: CrawledData):
 
     for r in restaurants:
         name_el = r.select_one(selectors.get("name"))
-        addr_el = r.select_one(selectors.get("address"))
-        if not name_el or not addr_el:
-            continue
-
-        name = name_el.get_text(strip=True)
-        address = addr_el.get_text(strip=True)
-        if not name or not address:
+        
+        # For RestaurantGuru, address might not be in list page
+        if key == "restaurantguru":
+            if not name_el:
+                continue
+            name = name_el.get_text(strip=True)
+            # Remove numbering like "1. " from name
+            name = re.sub(r'^\d+\.\s*', '', name)
+            address = "Da Nang, Vietnam"  # Default address, will be updated from detail page
+        else:
+            # For Foody and others, require address
+            addr_el = r.select_one(selectors.get("address"))
+            if not name_el or not addr_el:
+                continue
+            name = name_el.get_text(strip=True)
+            address = addr_el.get_text(strip=True)
+        
+        if not name:
             continue
 
         img_el = r.select_one(selectors.get("image"))
-        image = img_el.get("src") if img_el and img_el.has_attr("src") else None
+        # For RestaurantGuru, try data-src first
+        image = None
+        if img_el:
+            image = img_el.get("data-src") or img_el.get("src")
 
         rating = 0.0
         rating_el = r.select_one(selectors.get("rating"))
@@ -56,16 +82,34 @@ def parse_one(item: CrawledData):
         if not href:
             continue
 
+        # Handle relative URLs
         if key == "foody" and href.startswith("/"):
             href = f"https://www.foody.vn{href}"
+        elif key == "restaurantguru" and href.startswith("/"):
+            href = f"https://restaurantguru.com{href}"
 
-        if not (name and address and href):
+        if not (name and href):
             continue
 
-        if Restaurant.objects.filter(
-            Q(name=name, address=address) | Q(detail_url=href)
-        ).exists():
+        # Skip if already exists
+        if Restaurant.objects.filter(detail_url=href).exists():
             continue
+
+        # Extract cuisine and price for RestaurantGuru
+        cuisine = None
+        price_range = None
+        
+        if key == "restaurantguru":
+            cuisine_el = r.select_one(selectors.get("cuisine"))
+            if cuisine_el:
+                cuisine_text = cuisine_el.get_text(strip=True)
+                # Extract first cuisine type
+                cuisine = cuisine_text.split(',')[0].strip()
+            
+            price_el = r.select_one(selectors.get("price"))
+            if price_el:
+                price_range = price_el.get_text(strip=True)
+                price_range = price_el.get_text(strip=True)
 
         results.append(
             Restaurant(
@@ -74,6 +118,8 @@ def parse_one(item: CrawledData):
                 image=image,
                 average_rating=rating,
                 detail_url=href,
+                cuisine_type=cuisine,
+                price_range=price_range,
                 rag_context_text=f"{name}. Address: {address}.",
             )
         )
