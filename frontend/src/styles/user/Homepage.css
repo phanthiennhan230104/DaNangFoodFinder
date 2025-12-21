@@ -208,10 +208,29 @@ body {
 
 .restaurants-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
   align-items: stretch;
   padding-bottom: 1.5rem;
+}
+
+/* Responsive grid - adjust columns based on screen size */
+@media (max-width: 1200px) {
+  .restaurants-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .restaurants-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .restaurants-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .restaurant-card {
@@ -223,6 +242,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-width: 100%;
 }
 
 .restaurant-card:hover {
@@ -339,4 +359,104 @@ body {
   text-overflow: ellipsis;
   overflow: hidden;
   text-align: center;
+}
+
+/* ========================= */
+/* Pagination Styles         */
+/* ========================= */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1rem 0;
+}
+
+.pagination-btn {
+  padding: 0.6rem 1.2rem;
+  border: 2px solid var(--color-accent, #ff6b35);
+  background: transparent;
+  color: var(--color-accent, #ff6b35);
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--color-accent, #ff6b35);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-page-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #333;
+  font-weight: 500;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-page-btn:hover {
+  border-color: var(--color-accent, #ff6b35);
+  color: var(--color-accent, #ff6b35);
+}
+
+.pagination-page-btn.active {
+  background: linear-gradient(135deg, var(--color-accent, #ff6b35), var(--color-accent-dark, #d84315));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.pagination-ellipsis {
+  color: #999;
+  font-weight: 600;
+  padding: 0 0.3rem;
+}
+
+.pagination-summary {
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* Responsive pagination */
+@media (max-width: 576px) {
+  .pagination-container {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .pagination-btn {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
+  
+  .pagination-page-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 0.85rem;
+  }
 }
