@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 from .models import Restaurant, FoodJourney, Profile
 from .models import Favorite
@@ -72,6 +73,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data["email"] = user.email
         data["role"] = user.role.name if user.role else None
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
         return data
 
     @classmethod
