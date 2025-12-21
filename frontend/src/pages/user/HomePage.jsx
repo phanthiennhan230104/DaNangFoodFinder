@@ -11,51 +11,102 @@ import "../../styles/user/HomePage.css";
 function HomePage() {
   const filterRef = useRef(null);
   const [restaurants, setRestaurants] = useState([]);
-  const [filtersData, setFiltersData] = useState({ areas: [], cuisines: [] });
+  const [filtersData, setFiltersData] = useState({ 
+    areas: [], 
+    cuisines_by_country: [], 
+    food_types: [] 
+  });
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ cuisine_type: "", address: "", q: "" });
+  const [filters, setFilters] = useState({ 
+    cuisine_country: "", 
+    food_type: "", 
+    address: "", 
+    q: "" 
+  });
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    pageSize: 8,
+    hasNext: false,
+    hasPrevious: false,
+  });
 
   useEffect(() => {
     api.get("filters/").then((res) => {
-      setFiltersData(res.data || { areas: [], cuisines: [] });
+      setFiltersData(res.data || { 
+        areas: [], 
+        cuisines_by_country: [], 
+        food_types: [] 
+      });
     });
   }, []);
 
-  const getRestaurants = useCallback(() => {
+  const getRestaurants = useCallback((page = 1) => {
     setLoading(true);
     const params = new URLSearchParams();
 
-    if (filters.cuisine_type) params.append("cuisine_type", filters.cuisine_type);
+    // Gửi cả 2 loại cuisine filter
+    if (filters.cuisine_country) params.append("cuisine_type", filters.cuisine_country);
+    if (filters.food_type) params.append("food_type", filters.food_type);
     if (filters.address) params.append("address", filters.address);
     if (filters.q.trim()) params.append("q", filters.q.trim());
+    
+    // Add pagination params
+    params.append("page", page);
+    params.append("page_size", pagination.pageSize);
 
     api
       .get(`restaurants/?${params.toString()}`)
       .then((res) => {
-        const list = Array.isArray(res.data) ? res.data : res.data?.results || [];
-        setRestaurants(list.slice(0, 8));
+        const data = res.data;
+        const list = Array.isArray(data) ? data : data?.results || [];
+        setRestaurants(list);
+        
+        // Update pagination info
+        if (data && !Array.isArray(data)) {
+          setPagination(prev => ({
+            ...prev,
+            currentPage: data.current_page || page,
+            totalPages: data.total_pages || 1,
+            totalCount: data.count || list.length,
+            hasNext: data.has_next || false,
+            hasPrevious: data.has_previous || false,
+          }));
+        }
       })
       .finally(() => setLoading(false));
-  }, [filters]);
+  }, [filters, pagination.pageSize]);
 
   useEffect(() => {
-    getRestaurants();
-  }, [getRestaurants]);
+    // Reset to page 1 when filters change
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    getRestaurants(1);
+  }, [filters]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > pagination.totalPages) return;
+    setPagination(prev => ({ ...prev, currentPage: newPage }));
+    getRestaurants(newPage);
+    // Scroll to filter section for better UX
+    filterRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const handleSelectRestaurant = async (r) => {
     if (!r || !r.id) return;
     try {
-      // api base is already set to '/api/', so don't prefix another 'api/' here
       const res = await api.get(`restaurants/${r.id}/`);
       const full = res.data || r;
       setSelectedRestaurant(full);
     } catch (err) {
-      // fallback to using passed-in object + helpful console message for debugging
       console.warn(`Failed to fetch full restaurant details for id=${r.id}`, err?.response?.status, err?.message);
       setSelectedRestaurant(r);
     }
   };
+
   return (
     <div className="homepage-container">
       <HeroSection onExplore={() => filterRef.current?.scrollIntoView({ behavior: "smooth" })} />
@@ -69,18 +120,75 @@ function HomePage() {
               }
               filters={filters}
               areas={filtersData.areas}
-              cuisines={filtersData.cuisines}
+              cuisinesByCountry={filtersData.cuisines_by_country}
+              foodTypes={filtersData.food_types}
             />
           </div>
 
           {loading ? (
             <LoadingIndicator />
           ) : (
-            <RestaurantGrid
-              title="Restaurant List"
-              restaurants={restaurants}
-              onSelectRestaurant={handleSelectRestaurant}
-            />
+            <>
+              <RestaurantGrid
+                title="Restaurant List"
+                restaurants={restaurants}
+                onSelectRestaurant={handleSelectRestaurant}
+              />
+              
+              {/* Pagination Controls */}
+              {pagination.totalPages > 1 && (
+                <div className="pagination-container">
+                  <button
+                    className="pagination-btn"
+                    onClick={() => handlePageChange(pagination.currentPage - 1)}
+                    disabled={!pagination.hasPrevious}
+                  >
+                    ← Previous
+                  </button>
+                  
+                  <div className="pagination-info">
+                    {/* Page numbers */}
+                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                      .filter(pageNum => {
+                        // Show first, last, and pages near current page
+                        return (
+                          pageNum === 1 ||
+                          pageNum === pagination.totalPages ||
+                          Math.abs(pageNum - pagination.currentPage) <= 2
+                        );
+                      })
+                      .map((pageNum, index, arr) => (
+                        <React.Fragment key={pageNum}>
+                          {index > 0 && arr[index - 1] !== pageNum - 1 && (
+                            <span className="pagination-ellipsis">...</span>
+                          )}
+                          <button
+                            className={`pagination-page-btn ${
+                              pageNum === pagination.currentPage ? "active" : ""
+                            }`}
+                            onClick={() => handlePageChange(pageNum)}
+                          >
+                            {pageNum}
+                          </button>
+                        </React.Fragment>
+                      ))}
+                  </div>
+                  
+                  <button
+                    className="pagination-btn"
+                    onClick={() => handlePageChange(pagination.currentPage + 1)}
+                    disabled={!pagination.hasNext}
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+              
+              {/* Summary info */}
+              <div className="pagination-summary">
+                Showing {restaurants.length} of {pagination.totalCount} restaurants
+              </div>
+            </>
           )}
         </div>
       </main>

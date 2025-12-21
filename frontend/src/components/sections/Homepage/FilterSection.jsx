@@ -3,11 +3,11 @@
 import React from "react";
 import "../../../styles/user/HomePage.css";
 
-function FilterSection({ onFilterChange, filters, areas, cuisines }) {
+function FilterSection({ onFilterChange, filters, areas, cuisinesByCountry, foodTypes }) {
   return (
     <div className="filter-container">
       <div className="filter-groups">
-        {/* Area select */}
+        {/* Area/Location select */}
         <div className="filter-group">
           <label htmlFor="area-select" className="filter-label">
             Area:
@@ -27,21 +27,41 @@ function FilterSection({ onFilterChange, filters, areas, cuisines }) {
           </select>
         </div>
 
-        {/* Cuisine select */}
+        {/* Cuisine by Country select */}
         <div className="filter-group">
-          <label htmlFor="cuisine-select" className="filter-label">
+          <label htmlFor="country-cuisine-select" className="filter-label">
             Cuisine:
           </label>
           <select
-            id="cuisine-select"
+            id="country-cuisine-select"
             className="filter-select"
-            value={filters.cuisine_type}
-            onChange={(e) => onFilterChange("cuisine_type", e.target.value)}
+            value={filters.cuisine_country}
+            onChange={(e) => onFilterChange("cuisine_country", e.target.value)}
           >
             <option value="">-- All cuisines --</option>
-            {cuisines.map((cuisine) => (
+            {cuisinesByCountry.map((cuisine) => (
               <option key={cuisine} value={cuisine}>
                 {cuisine}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Food Type select */}
+        <div className="filter-group">
+          <label htmlFor="food-type-select" className="filter-label">
+            Food Type:
+          </label>
+          <select
+            id="food-type-select"
+            className="filter-select"
+            value={filters.food_type}
+            onChange={(e) => onFilterChange("food_type", e.target.value)}
+          >
+            <option value="">-- All types --</option>
+            {foodTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
               </option>
             ))}
           </select>
