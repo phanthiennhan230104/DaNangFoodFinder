@@ -16,13 +16,12 @@
    POPUP CONTAINER
 ============================= */
 .popup-container-modern {
-  width: 72%;
-  max-width: 980px;
+  width: 86%;
+  max-width: 1200px;
   background: #fff;
   border-radius: 20px;
-  padding: 32px;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
-  position: relative;
+  padding: 42px;
+  box-shadow: 0 28px 68px rgba(0, 0, 0, 0.20);
   animation: fadeIn 0.25s ease;
 }
 
@@ -54,9 +53,10 @@
 ============================= */
 .popup-grid-modern {
   display: grid;
-  grid-template-columns: 38% 1fr;
-  gap: 32px;
-}
+  grid-template-columns: 40% 1fr;
+  gap: 36px;
+  align-items: start;
+} 
 
 /* =============================
    LEFT IMAGE
@@ -67,10 +67,11 @@
 
 .popup-image-modern {
   width: 100%;
-  height: 300px;
-  border-radius: 18px;
+  height: 420px;
+  border-radius: 14px;
   object-fit: cover;
-}
+  box-shadow: 0 18px 38px rgba(0,0,0,0.14);
+} 
 
 /* =============================
    BADGES
@@ -133,17 +134,18 @@
 }
 
 .popup-title-modern {
-  font-size: 30px;
+  font-size: 36px;
   font-weight: 800;
   color: #e75b2b;
   margin-bottom: 6px;
+  letter-spacing: -0.2px;
 }
 
 .popup-address-modern {
   font-size: 15px;
-  color: #777;
-  margin-bottom: 16px;
-}
+  color: #6b6b6b;
+  margin-bottom: 14px;
+} 
 
 .popup-description-modern {
   font-size: 15px;
@@ -156,28 +158,76 @@
    INFO SECTION
 ============================= */
 .popup-info-modern {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 28px;
+  margin-bottom: 18px;
   font-size: 16px;
-}
+  align-items: start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #f3f3f3;
+} 
 
 .info-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .info-row strong {
-  width: 140px;
+  min-width: 110px;
   font-weight: 700;
   color: #333;
+  display: inline-block;
 }
 
 .info-row span {
   flex: 1;
   color: #444;
+}
+
+/* allow some rows to occupy both columns for balance */
+.info-row.full-span {
+  grid-column: 1 / -1;
+  align-items: flex-start;
+}
+
+/* Full hours columns: two vertical columns */
+.full-hours-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 18px;
+}
+
+.fh-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fh-item {
+  background: #f7f7f7;
+  color: #333;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.fh-empty {
+  color: #888;
+}
+
+@media (max-width: 900px) {
+  .full-hours-columns { grid-template-columns: 1fr; }
+  .fh-item {
+    font-size: 14px;
+    padding: 8px 10px;
+  }
 }
 
 /* STATUS BADGES */
@@ -206,17 +256,20 @@
 .popup-actions-modern {
   display: flex;
   gap: 14px;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 6px;
 }
 
 .btn-modern {
-  padding: 12px 32px;
-  border-radius: 28px;
+  padding: 14px 36px;
+  border-radius: 30px;
   border: none;
   cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
-  transition: 0.25s ease;
-}
+  font-size: 16px;
+  font-weight: 700;
+  transition: 0.22s ease;
+} 
 
 .btn-modern.primary {
   background: #007bff;
@@ -241,8 +294,8 @@
 ============================= */
 @media (max-width: 900px) {
   .popup-container-modern {
-    width: 92%;
-    padding: 22px;
+    width: 96%;
+    padding: 20px;
   }
 
   .popup-grid-modern {
@@ -250,11 +303,23 @@
   }
 
   .popup-image-modern {
-    height: 240px;
+    height: 260px;
+  }
+
+  .popup-info-modern {
+    grid-template-columns: 1fr;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 
   .info-row strong {
-    width: 120px;
+    min-width: auto;
+    width: 100%;
+    font-size: 14px;
   }
 }
 
