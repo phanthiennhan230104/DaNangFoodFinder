@@ -86,40 +86,78 @@ class RestaurantListView(generics.ListAPIView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        address = self.request.query_params.get("address")
-        cuisine = self.request.query_params.get("cuisine_type")
+        area = self.request.query_params.get("address")  # Area/landmark filter
+        cuisine = self.request.query_params.get("cuisine_type")  # Cuisine by country
+        food_type = self.request.query_params.get("food_type")   # Food type
         
-        if address:
-            qs = qs.filter(address__icontains=f"Quận {address}")
+        # Filter by area - search using keywords from DANANG_AREAS
+        if area:
+            if area == "Other Areas":
+                # Exclude all restaurants that match any known area
+                exclude_q = Q()
+                for area_name, keywords in DANANG_AREAS.items():
+                    for keyword in keywords:
+                        exclude_q |= Q(address__icontains=keyword)
+                qs = qs.exclude(exclude_q)
+            elif area in DANANG_AREAS:
+                keywords = DANANG_AREAS[area]
+                # Build Q objects to match any of the keywords
+                q_objects = Q()
+                for keyword in keywords:
+                    q_objects |= Q(address__icontains=keyword)
+                qs = qs.filter(q_objects)
+        
+        # Filter by cuisine_type (by country) - using icontains
         if cuisine:
-            qs = qs.filter(cuisine_type=cuisine)
+            qs = qs.filter(cuisine_type__icontains=cuisine)
+        
+        # Filter by food_type - using icontains
+        if food_type:
+            qs = qs.filter(cuisine_type__icontains=food_type)
 
-        limit_param = self.request.query_params.get("limit")
-        page_param = self.request.query_params.get("page")
-        page_size_param = self.request.query_params.get("page_size")
+        return qs
 
-        # If page-based pagination params are present, return qs and let DRF pagination handle slicing
-        if page_param or page_size_param:
-            return qs
-
-        # If limit explicitly requests all items
-        if limit_param is None:
-            # No limit provided and no pagination params -> return all records
-            return qs
-
-        if isinstance(limit_param, str) and limit_param.lower() in ("all", "none"):
-            return qs
-
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # Lấy page và page_size từ query params
+        page = request.query_params.get("page", 1)
+        page_size = request.query_params.get("page_size", 8)
+        
         try:
-            limit = int(limit_param)
-        except Exception:
-            # Fallback to returning all
-            return qs
-
-        if limit <= 0:
-            return qs
-
-        return qs[:limit]
+            page = int(page)
+            page_size = int(page_size)
+        except ValueError:
+            page = 1
+            page_size = 8
+        
+        # Tính toán offset
+        total_count = queryset.count()
+        total_pages = (total_count + page_size - 1) // page_size  # Ceiling division
+        
+        # Đảm bảo page không vượt quá giới hạn
+        if page < 1:
+            page = 1
+        if page > total_pages and total_pages > 0:
+            page = total_pages
+        
+        start = (page - 1) * page_size
+        end = start + page_size
+        
+        # Slice queryset
+        restaurants = queryset[start:end]
+        
+        serializer = self.get_serializer(restaurants, many=True)
+        
+        return Response({
+            "results": serializer.data,
+            "count": total_count,
+            "total_pages": total_pages,
+            "current_page": page,
+            "page_size": page_size,
+            "has_next": page < total_pages,
+            "has_previous": page > 1,
+        })
 
 
 class RestaurantDetailView(generics.RetrieveAPIView):
@@ -193,24 +231,209 @@ class FeedbackListAdminView(APIView):
         serializer = FeedbackSerializer(feedbacks, many=True)
         return Response(serializer.data)
 
+def remove_vietnamese_accents(text):
+    """
+    Convert Vietnamese text to non-accented English-friendly text.
+    Example: "Lê Quang Đạo" -> "Le Quang Dao"
+    Also normalizes to Title Case.
+    """
+    # Vietnamese character mapping
+    vietnamese_map = {
+        'à': 'a', 'á': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
+        'ă': 'a', 'ằ': 'a', 'ắ': 'a', 'ẳ': 'a', 'ẵ': 'a', 'ặ': 'a',
+        'â': 'a', 'ầ': 'a', 'ấ': 'a', 'ẩ': 'a', 'ẫ': 'a', 'ậ': 'a',
+        'đ': 'd',
+        'è': 'e', 'é': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e',
+        'ê': 'e', 'ề': 'e', 'ế': 'e', 'ể': 'e', 'ễ': 'e', 'ệ': 'e',
+        'ì': 'i', 'í': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
+        'ò': 'o', 'ó': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o',
+        'ô': 'o', 'ồ': 'o', 'ố': 'o', 'ổ': 'o', 'ỗ': 'o', 'ộ': 'o',
+        'ơ': 'o', 'ờ': 'o', 'ớ': 'o', 'ở': 'o', 'ỡ': 'o', 'ợ': 'o',
+        'ù': 'u', 'ú': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u',
+        'ư': 'u', 'ừ': 'u', 'ứ': 'u', 'ử': 'u', 'ữ': 'u', 'ự': 'u',
+        'ỳ': 'y', 'ý': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y',
+        'À': 'A', 'Á': 'A', 'Ả': 'A', 'Ã': 'A', 'Ạ': 'A',
+        'Ă': 'A', 'Ằ': 'A', 'Ắ': 'A', 'Ẳ': 'A', 'Ẵ': 'A', 'Ặ': 'A',
+        'Â': 'A', 'Ầ': 'A', 'Ấ': 'A', 'Ẩ': 'A', 'Ẫ': 'A', 'Ậ': 'A',
+        'Đ': 'D',
+        'È': 'E', 'É': 'E', 'Ẻ': 'E', 'Ẽ': 'E', 'Ẹ': 'E',
+        'Ê': 'E', 'Ề': 'E', 'Ế': 'E', 'Ể': 'E', 'Ễ': 'E', 'Ệ': 'E',
+        'Ì': 'I', 'Í': 'I', 'Ỉ': 'I', 'Ĩ': 'I', 'Ị': 'I',
+        'Ò': 'O', 'Ó': 'O', 'Ỏ': 'O', 'Õ': 'O', 'Ọ': 'O',
+        'Ô': 'O', 'Ồ': 'O', 'Ố': 'O', 'Ổ': 'O', 'Ỗ': 'O', 'Ộ': 'O',
+        'Ơ': 'O', 'Ờ': 'O', 'Ớ': 'O', 'Ở': 'O', 'Ỡ': 'O', 'Ợ': 'O',
+        'Ù': 'U', 'Ú': 'U', 'Ủ': 'U', 'Ũ': 'U', 'Ụ': 'U',
+        'Ư': 'U', 'Ừ': 'U', 'Ứ': 'U', 'Ử': 'U', 'Ữ': 'U', 'Ự': 'U',
+        'Ỳ': 'Y', 'Ý': 'Y', 'Ỷ': 'Y', 'Ỹ': 'Y', 'Ỵ': 'Y',
+    }
+    
+    result = []
+    for char in text:
+        if char in vietnamese_map:
+            result.append(vietnamese_map[char])
+        else:
+            result.append(char)
+    
+    # Convert to Title Case (capitalize first letter of each word)
+    return ''.join(result).title()
+
+
+# Define famous areas/landmarks in Da Nang with their associated keywords
+DANANG_AREAS = {
+    "My Khe Beach": [
+        "Võ Nguyên Giáp", "võ nguyên giáp", "Vo Nguyen Giap",
+        "Trường Sa", "Truong Sa", 
+        "Phạm Văn Đồng", "Pham Van Dong",
+        "Hồ Nghinh", "Ho Nghinh",
+        "My Khe", "Mỹ Khê", "My Beach", "Ha My", "biển hà my"
+    ],
+    "An Thuong (Foreigner Street)": [
+        "An Thượng", "An Thuong", "An Thu_ng"
+    ],
+    "Dragon Bridge Area": [
+        "Bạch Đằng", "Bach Dang", "B_ch D_ng",
+        "Trần Hưng Đạo", "Tran Hung Dao",
+        "Chân Cầu", "Dragon"
+    ],
+    "Han River": [
+        "Trần Phú", "Tran Phu",
+        "Như Nguyệt", "Nhu Nguyet", 
+        "Nguyễn Văn Linh", "Nguyen Van Linh"
+    ],
+    "Son Tra District": [
+        "Sơn Trà", "Son Tra", "Son tra"
+    ],
+    "Hai Chau District": [
+        "Hải Châu", "Hai Chau",
+        "Lê Duẩn", "Le Duan",
+        "Trưng Nữ Vương", "Trung Nu Vuong",
+        "Đống Đa", "Dong Da",
+        "Quang Trung",
+        "Hoàng Diệu", "Hoang Dieu",
+        "Phan Đăng Lưu", "Phan Dang Luu",
+        "Nguyễn Tri Phương", "Nguyen Tri Phuong",
+        "Lê Hồng Phong", "Le Hong Phong",
+        "Trần Cao Vân", "Tran Cao Van",
+        "Phan Châu Trinh", "Phan Chau Trinh",
+        "Lý Tự Trọng", "Ly Tu Trong",
+        "Ông Ích Khiêm", "Ong Ich Khiem",
+        "Hùng Vương", "Hung Vuong"
+    ],
+    "Ngu Hanh Son District": [
+        "Ngũ Hành Sơn", "Ngu Hanh Son",
+        "Lê Văn Hiến", "Le Van Hien",
+        "Non Nước", "Non Nuoc"
+    ],
+    "Thanh Khe District": [
+        "Thanh Khê", "Thanh Khe",
+        "Điện Biên Phủ", "Dien Bien Phu",
+        "Hải Phòng", "Hai Phong"
+    ],
+    "Le Quang Dao Street": [
+        "Lê Quang Đạo", "Le Quang Dao"
+    ],
+    "Nguyen Van Thoai Street": [
+        "Nguyễn Văn Thoại", "Nguyen Van Thoai"
+    ],
+    "Chau Thi Vinh Te Street": [
+        "Châu Thị Vĩnh Tế", "Chau Thi Vinh Te"
+    ],
+    "Tran Bach Dang Street": [
+        "Trần Bạch Đằng", "Tran Bach Dang"
+    ],
+    "Dinh Nghe Street": [
+        "Đình Nghệ", "Dinh Nghe", "D. Đình Nghệ"
+    ],
+}
+
+
 @api_view(["GET"])
 def get_filters(request):
     """
-    Get unique list of areas (Districts) and cuisine types.
+    Get unique list of areas (grouped by landmarks) and cuisine types.
+    Areas are famous locations/landmarks in Da Nang.
+    Split cuisines into 2 groups: by country/region and by food type.
     """
-    addresses = Restaurant.objects.values_list("address", flat=True).distinct()
-    areas = set()
-
-    for addr in addresses:
-        if addr:
-            match = re.search(r"Quận\s*([\w\sÀ-ỹ]+)", addr)
-            if match:
-                areas.add(match.group(1).strip())
-
-    cuisines = Restaurant.objects.values_list("cuisine_type", flat=True).distinct()
+    # Check which areas have restaurants
+    addresses = list(Restaurant.objects.values_list("address", flat=True))
+    areas_with_count = []
+    matched_addresses = set()  # Track addresses that matched an area
+    
+    for area_name, keywords in DANANG_AREAS.items():
+        count = 0
+        for idx, addr in enumerate(addresses):
+            if addr:
+                addr_lower = addr.lower()
+                for keyword in keywords:
+                    if keyword.lower() in addr_lower:
+                        count += 1
+                        matched_addresses.add(idx)
+                        break
+        if count > 0:
+            areas_with_count.append((area_name, count))
+    
+    # Count "Other Areas" - restaurants that don't match any known area
+    other_count = 0
+    for idx, addr in enumerate(addresses):
+        if idx not in matched_addresses:
+            other_count += 1
+    
+    if other_count > 0:
+        areas_with_count.append(("Other Areas", other_count))
+    
+    # Sort alphabetically, but keep "Other Areas" at the bottom
+    areas_with_count.sort(key=lambda x: (x[0] == "Other Areas", x[0].lower()))
+    popular_areas = [area for area, count in areas_with_count]
+    
+    # Define country/region based cuisines (ONLY actual countries/regions)
+    country_cuisines = {
+        # Asia
+        "Vietnamese", "Japanese", "Korean", "Chinese", "Thai", "Indian",
+        "Asian", "Taiwanese", "Taiwan", "Indonesian", "Malaysian", "Singaporean",
+        "Filipino", "Cambodian", "Burmese", "Laotian", "Nepali", "Pakistani",
+        "Sri Lankan", "Bangladeshi",
+        # Europe
+        "Italian", "French", "Spanish", "Greek", "British", "German",
+        "Portuguese", "Dutch", "Belgian", "Swiss", "Austrian", "Polish",
+        "Russian", "Ukrainian", "Hungarian", "Czech", "Swedish", "Norwegian",
+        "Danish", "Finnish", "Irish", "Scottish", "European",
+        # Mediterranean & Middle East
+        "Mediterranean", "Turkish", "Lebanese", "Persian", "Israeli",
+        "Moroccan", "Egyptian", "Middle Eastern", "Arabic", "Syrian",
+        "Jordanian", "Iraqi", "Afghan",
+        # Americas
+        "American", "Mexican", "Brazilian", "Peruvian", "Argentine",
+        "Colombian", "Cuban", "Puerto Rican", "Jamaican", "Caribbean",
+        "Canadian", "Cajun", "Tex-Mex", "Latin American",
+        # Africa & Oceania
+        "African", "Ethiopian", "Nigerian", "South African",
+        "Australian", "Hawaiian", "Polynesian",
+        # Western is a region style
+        "Western",
+    }
+    
+    # Get all cuisine_type and split into individual types
+    cuisines_raw = Restaurant.objects.values_list("cuisine_type", flat=True).distinct()
+    
+    by_country = set()  # Country/region based cuisines
+    food_types = set()  # Food types (not country-based)
+    
+    for cuisine_str in cuisines_raw:
+        if cuisine_str:
+            # Split by comma and strip whitespace
+            individual_cuisines = [c.strip() for c in cuisine_str.split(",")]
+            for c in individual_cuisines:
+                if c:
+                    # Check if it belongs to country cuisines
+                    if c in country_cuisines:
+                        by_country.add(c)
+                    else:
+                        food_types.add(c)
+    
     return Response({
-        "areas": sorted(list(areas)),
-        "cuisines": [c for c in cuisines if c],
+        "areas": popular_areas,  # Sorted by restaurant count
+        "cuisines_by_country": sorted(list(by_country)),
+        "food_types": sorted(list(food_types)),
     })
 
 
