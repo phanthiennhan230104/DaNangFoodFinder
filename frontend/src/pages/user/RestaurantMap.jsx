@@ -96,9 +96,15 @@ const calcDistanceKm = (lat1, lon1, lat2, lon2) => {
 };
 
 const formatRating = (rating) => {
-    if (!rating) return "Chưa có";
+    if (!rating) return "No rating";
     const n = Number(rating);
-    return isNaN(n) ? "Chưa có" : n.toFixed(1);
+    return isNaN(n) ? "No rating" : n.toFixed(1);
+};
+
+const formatDistanceLabel = (d) => {
+    if (d == null) return "0";
+    const n = Number(d);
+    return Number.isInteger(n) ? `${n}` : n.toFixed(1);
 };
 
 // ================== COMPONENT CHÍNH ==================
@@ -170,12 +176,12 @@ const RestaurantMap = () => {
             setFiltered(normalized);
         } catch (err) {
             console.error("fetchRestaurants error:", err);
-            const msg = err?.response?.data?.detail || err.message || "Không thể tải danh sách nhà hàng.";
-            setError(`Không thể tải danh sách nhà hàng. ${msg}`);
+            const msg = err?.response?.data?.detail || err.message || "Unable to load restaurants.";
+            setError(`Unable to load restaurants. ${msg}`);
         } finally {
             setLoading(false);
         }
-    };
+    }; 
 
     useEffect(() => {
         fetchRestaurants();
@@ -246,6 +252,14 @@ const RestaurantMap = () => {
         })();
     }, [restaurants]);
 
+
+
+
+
+
+
+
+
     // ===== Tìm kiếm =====
     const handleSearch = async () => {
         if (!search.trim()) {
@@ -262,7 +276,7 @@ const RestaurantMap = () => {
 
             setFiltered(data.map(normalizeRestaurant));
         } catch {
-            setError("Không thể tìm kiếm.");
+            setError("Unable to search.");
         } finally {
             setLoading(false);
         }
@@ -292,7 +306,7 @@ const RestaurantMap = () => {
                 const data = resp.data;
                 setFiltered(data.map(normalizeRestaurant));
             } catch {
-                setError("Không thể tìm kiếm.");
+                setError("Unable to search.");
             } finally {
                 setLoading(false);
             }
@@ -303,7 +317,7 @@ const RestaurantMap = () => {
 
     // ===== Định vị nhà hàng =====
     const geocodeRestaurant = async (r) => {
-        if (!r.address) return alert("Nhà hàng chưa có địa chỉ.");
+        if (!r.address) return alert("Restaurant has no address.");
         setLoading(true);
 
         try {
@@ -315,7 +329,7 @@ const RestaurantMap = () => {
             const data = resp.data;
 
             if (!data.lat || !data.lng) {
-                alert("❌ Không tìm thấy tọa độ nhà hàng.");
+                alert("❌ Could not find restaurant coordinates.");
                 return;
             }
 
@@ -328,7 +342,7 @@ const RestaurantMap = () => {
 
             // Show success message
             if (data.saved) {
-                alert(`✓ Định vị thành công!\n${data.saved_to_db}`);
+                alert(`✓ Located successfully!\n${data.saved_to_db}`);
             }
 
             // 🔥 Focus vào nhà hàng
@@ -336,15 +350,15 @@ const RestaurantMap = () => {
 
         } catch (err) {
             console.error("Geocode error:", err);
-            setError("Không thể định vị nhà hàng.");
+            setError("Unable to locate restaurant.");
         } finally {
             setLoading(false);
         }
-    };
+    }; 
 
     // ===== Tuyến đường =====
     const getRoute = async (r) => {
-        if (!r.lat || !r.lng) return alert("Cần định vị trước!");
+        if (!r.lat || !r.lng) return alert("Please locate the restaurant first!");
 
         setLoading(true);
 
@@ -363,7 +377,7 @@ const RestaurantMap = () => {
                 setMapFocus(null);
 
         } catch {
-            setError("Không thể tính tuyến đường.");
+            setError("Unable to calculate route.");
         } finally {
             setLoading(false);
         }
@@ -378,10 +392,10 @@ const RestaurantMap = () => {
 
     // ===== Focus vị trí người dùng =====
     const focusUserLocation = () => {
-        if (!hasUserLocation) return alert("Không lấy được vị trí.");
+        if (!hasUserLocation) return alert("Unable to get location.");
 
         setMapFocus({ lat: userLocation.lat, lng: userLocation.lng, zoom: 15 });
-    };
+    }; 
 
     // Compute list of restaurants matching the search + distance filter.
     const displayedRestaurants = useMemo(() => {
@@ -444,8 +458,8 @@ const RestaurantMap = () => {
             <div className="restaurants-sidebar">
                 <div className="sidebar-header">
                     <div>
-                        <h3>Explore restaurants</h3>
-                        <p className="sidebar-subtitle">Da Nang • Food around you</p>
+                        <h3>Discover restaurants</h3>
+                        <p className="sidebar-subtitle">Da Nang • Food near you</p>
                     </div>
 
                     <button className="map-control-button" onClick={handleReset}>
@@ -456,16 +470,17 @@ const RestaurantMap = () => {
                 {/* Distance slider (1..30 km) */}
                 <div className="distance-slider">
                     <label>
-                        Distance: <strong>{distanceKm} km</strong>
+                        Distance: <strong>{formatDistanceLabel(distanceKm)} km</strong>
                     </label>
                     <input
                         type="range"
                         min={1}
                         max={30}
+                        step={0.1}
                         value={distanceKm}
                         onChange={(e) => setDistanceKm(Number(e.target.value))}
                     />
-                    <small>Show restaurants within radius {distanceKm} km</small>
+                    <small>Showing restaurants within {formatDistanceLabel(distanceKm)} km</small>
 
                     <div className="ref-toggle">
                         <label>
@@ -486,7 +501,7 @@ const RestaurantMap = () => {
                                 checked={refPointMode === "map"}
                                 onChange={() => setRefPointMode("map")}
                             />
-                            &nbsp; Mapping Center
+                            &nbsp; Map center
                         </label>
                     </div>
                 </div>
@@ -496,7 +511,7 @@ const RestaurantMap = () => {
                     <div className="search-input-group">
                         <input
                             className="search-input"
-                            placeholder="Search by name, address, dish..."
+                            placeholder="Search by name, address, cuisine..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -515,13 +530,13 @@ const RestaurantMap = () => {
                 </div>
 
                 {/* Loading & Error */}
-                {loading && <div className="loading-message">⏳ Processing...</div>}
+                {loading && <div className="loading-message">⏳ Loading...</div>}
                 {error && <div className="error-message">{error}</div>}
 
                 {/* Stats */}
                 <div className="stats-panel">
                     <small>Total: <strong>{restaurants.length}</strong></small>
-                    <small>Displayed: <strong>{displayedRestaurants.length}</strong></small>
+                    <small>Shown: <strong>{displayedRestaurants.length}</strong></small>
                     <small>With coordinates: <strong>{restaurantsWithCoords.length}</strong></small>
                 </div>
 
@@ -551,7 +566,7 @@ const RestaurantMap = () => {
                                     <img
                                         src={
                                             r.image ||
-                                            "https://source.unsplash.com/random/300x200/?vietnam,food"
+                                            "https://source.unsplash.com/random/400x300/?vietnam,food"
                                         }
                                         alt={r.name}
                                         loading="lazy"
@@ -586,7 +601,7 @@ const RestaurantMap = () => {
                                                 className="geocode-single-button"
                                                 onClick={() => geocodeRestaurant(r)}
                                             >
-                                                📍 Location
+                                                📍 Locate
                                             </button>
                                         ) : (
                                             <button
@@ -596,7 +611,7 @@ const RestaurantMap = () => {
                                                 ➤ Directions
                                             </button>
                                         )}
-                                    </div>
+                                    </div> 
                                 </div>
                             </div>
                         );
@@ -611,10 +626,10 @@ const RestaurantMap = () => {
                     <button className="map-control-button" onClick={focusUserLocation}>
                         👤 My location
                     </button>
-                    <div className="distance-legend" title="Vùng hiển thị theo khoảng cách">
+                    <div className="distance-legend" title="Area shown by distance">
                         <div className="swatch" />
                         <div style={{ fontSize: 12 }}>
-                            {refPointMode === "user" ? "Ref: You" : "Ref: Center"} • {distanceKm} km
+                            {refPointMode === "user" ? "Ref: You" : "Ref: Map center"} • {formatDistanceLabel(distanceKm)} km
                         </div>
                     </div>
                 </div>
@@ -651,7 +666,7 @@ const RestaurantMap = () => {
                         <Marker position={userLocation} icon={userIcon}>
                             <Popup>You are here</Popup>
                         </Marker>
-                    )}
+                    )} 
 
                     {/* Distance circle overlay (reference point) */}
                     {refPoint && distanceKm && (
@@ -678,13 +693,27 @@ const RestaurantMap = () => {
                             <Marker key={r.id} position={[r.lat, r.lng]}>
                                 <Popup>
                                     <div className="restaurant-popup">
-                                        <h3>{r.name}</h3>
-                                        <p>📍 {r.address}</p>
+                                        <div className="popup-header">
+                                            <img
+                                                className="popup-image"
+                                                src={
+                                                    r.image ||
+                                                    "https://source.unsplash.com/random/400x300/?vietnam,food"
+                                                }
+                                                alt={r.name}
+                                                loading="lazy"
+                                            />
+                                            <div className="popup-title">
+                                                <h3>{r.name}</h3>
+                                                <div className="popup-rating">⭐ {formatRating(r.average_rating)}</div>
+                                            </div>
+                                        </div>
+
+                                        <p className="popup-address">📍 {r.address}</p>
 
                                         {distance && (
                                             <p>
-                                                🛣️ Distance to you{" "}
-                                                <strong>{distance} km</strong>
+                                                🛣️ {distance} km from you
                                             </p>
                                         )}
 
@@ -708,7 +737,7 @@ const RestaurantMap = () => {
                                 </Popup>
                             </Marker>
                         );
-                    })}
+                    })} 
 
                     {/* Route */}
                     {routeCoords.length > 0 && (
