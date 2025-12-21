@@ -62,7 +62,7 @@ def normalize_danang_address(address: str) -> str:
 # =============================
 
 def geocode_address(address: str, restaurant_name: str = "", save_instance=None):
-    """Geocode 1 địa chỉ bằng OpenStreetMap (Nominatim)."""
+    """Geocode a single address using OpenStreetMap (Nominatim)."""
 
     if not address:
         return None

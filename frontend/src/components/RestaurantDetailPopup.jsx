@@ -32,39 +32,103 @@ export default function RestaurantDetailPopup({ restaurant, onClose }) {
     }
   };
 
-  // ----------- PARSE OPENING HOURS ----------
-  const parseOpeningHours = () => {
-    if (!restaurant.opening_hours) return { open: null, close: null };
-    const parts = restaurant.opening_hours.split("-");
-    if (parts.length !== 2) return { open: null, close: null };
+  // ----------- PARSE OPENING HOURS (TODAY + FULL) ----------
+  const parseOpeningHoursFull = () => {
+    if (!restaurant.opening_hours) return { today: null, full: null };
 
-    return {
-      open: parts[0].trim(),
-      close: parts[1].trim(),
+    // Normalize separators and split into day entries
+    const raw = restaurant.opening_hours.replace(/\s*\|\s*/g, " | ");
+    const entries = raw.split("|").map((s) => s.trim()).filter(Boolean);
+
+    // Attempt to find today's entry
+    const dayMap = {
+      0: ["Su", "Sun", "Sunday"],
+      1: ["Mo", "Mon", "Monday"],
+      2: ["Tu", "Tue", "Tuesday"],
+      3: ["We", "Wed", "Wednesday"],
+      4: ["Th", "Thu", "Thursday"],
+      5: ["Fr", "Fri", "Friday"],
+      6: ["Sa", "Sat", "Saturday"],
     };
+
+    const todayIndex = new Date().getDay();
+    const todayKeys = dayMap[todayIndex];
+
+    let todayEntry = null;
+
+    for (const entry of entries) {
+      const prefix = entry.split(" ")[0];
+      // match short or long day names
+      if (todayKeys.some((k) => prefix.toLowerCase().startsWith(k.toLowerCase()))) {
+        todayEntry = entry;
+        break;
+      }
+    }
+
+    // If not found, try to match a time-range anywhere (fall back)
+    if (!todayEntry && entries.length > 0) {
+      const timeMatch = entries[0].match(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/);
+      if (timeMatch) todayEntry = entries[0];
+    }
+
+    return { today: todayEntry, full: entries.join(" | ") };
   };
 
-  const { open, close } = parseOpeningHours();
+  const { today: todayHours, full: fullHours } = parseOpeningHoursFull();
 
-  // ----------- GET OPEN / CLOSED STATUS ----------
-  const getOpenStatus = () => {
-    if (!open || !close) return null;
+  // Parse full hours into {day, time} pairs for aligned rows
+  const parseFullHoursEntries = (full) => {
+    if (!full) return [];
+    const entries = full.split("|").map(s => s.trim()).filter(Boolean);
 
+    return entries.map((entry) => {
+      // try to split at first time-like token (starts with digit)
+      const m = entry.match(/^([^-\d:]+?)\s*(.*)$/);
+      if (m) {
+        const maybeDay = m[1].trim();
+        const rest = m[2].trim();
+        // If rest starts with time digits, treat as time; otherwise split by the first whitespace
+        if (/^\d/.test(rest)) {
+          return { day: maybeDay || "", time: rest };
+        }
+      }
+
+      // fallback: try to split by first space
+      const parts = entry.split(/\s+(.+)/);
+      if (parts.length === 3) {
+        return { day: parts[0].trim(), time: parts[1].trim() };
+      }
+
+      return { day: entry, time: "" };
+    });
+  };
+
+  // ----------- GET OPEN / CLOSED STATUS FOR TODAY ----------
+  const getOpenStatusToday = () => {
+    if (!todayHours) return null;
+
+    const m = todayHours.match(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/);
+    if (!m) return null;
+
+    const [_, openT, closeT] = m;
     const now = new Date();
     const current = now.getHours() * 60 + now.getMinutes();
 
-    const [oH, oM] = open.split(":").map(Number);
-    const [cH, cM] = close.split(":").map(Number);
+    const [oH, oM] = openT.split(":").map(Number);
+    const [cH, cM] = closeT.split(":").map(Number);
 
     const openMinutes = oH * 60 + oM;
     const closeMinutes = cH * 60 + cM;
 
-    return current >= openMinutes && current < closeMinutes
-      ? "open"
-      : "closed";
+    // If close <= open we assume it crosses midnight
+    if (closeMinutes <= openMinutes) {
+      return current >= openMinutes || current < closeMinutes ? "open" : "closed";
+    }
+
+    return current >= openMinutes && current < closeMinutes ? "open" : "closed";
   };
 
-  const openStatus = getOpenStatus();
+  const openStatus = getOpenStatusToday();
 
   return (
     <AnimatePresence>
@@ -108,7 +172,7 @@ export default function RestaurantDetailPopup({ restaurant, onClose }) {
               {/* Rating left */}
               <div className="popup-badge-left">
                 <div className="rating-modern">
-                  ⭐ {restaurant.average_rating ?? "—"}
+                  ⭐ {restaurant.average_rating ? `${Number(restaurant.average_rating).toFixed(2)}/5` : "—"}
                 </div>
               </div>
 
@@ -131,12 +195,6 @@ export default function RestaurantDetailPopup({ restaurant, onClose }) {
                 {restaurant.cuisine_type} • {restaurant.address}
               </div>
 
-              {restaurant.description && (
-                <p className="popup-description-modern">
-                  {restaurant.description}
-                </p>
-              )}
-
               {/* INFO SECTION */}
               <div className="popup-info-modern">
                 <div className="info-row">
@@ -145,46 +203,118 @@ export default function RestaurantDetailPopup({ restaurant, onClose }) {
                 </div>
 
                 <div className="info-row">
-                  <strong>🏷 Tags:</strong>
-                  <span>
-                    {restaurant.tags?.join(", ") ||
-                      restaurant.cuisine_type ||
-                      "—"}
-                  </span>
+                  <strong>🍽 Cuisine:</strong>
+                  <span>{restaurant.cuisine_type || restaurant.tags?.join(", ") || "—"}</span>
                 </div>
 
                 <div className="info-row">
-                  <strong>⏰ Opening Hours:</strong>
-                  <span>
-                    {open && close ? `${open} - ${close}` : "No information"}
-                  </span>
+                  <strong>⏰ Hours (today):</strong>
+                  <span>{todayHours || "No information"}</span>
                 </div>
 
-                <div className="info-row">
+                <div className="info-row full-span">
+                  <strong>⏳ Full hours:</strong>
+                  <div className="full-hours-columns">
+                    {(() => {
+                      const items = parseFullHoursEntries(fullHours);
+                      if (!items || items.length === 0) return <div className="fh-empty">—</div>;
+
+                      // Convert to objects with raw string and original day for grouping
+                      const list = items.map(i => ({ raw: `${i.day} ${i.time}`.trim(), day: (i.day || '').trim() }));
+
+                      const normalize = (d) => (d || '').toLowerCase();
+
+                      // helper to detect group: 1 => Mon-Thu, 2 => Fri-Sun
+                      const groupOf = (day) => {
+                        const d = normalize(day);
+                        if (!d) return 1;
+                        if (/^mo|^mon|^monday/.test(d)) return 1;
+                        if (/^tu|^tue|^tuesday/.test(d)) return 1;
+                        if (/^we|^wed|^wednesday/.test(d)) return 1;
+                        if (/^th|^thu|^thursday/.test(d)) return 1;
+                        if (/^fr|^fri|^friday/.test(d)) return 2;
+                        if (/^sa|^sat|^saturday/.test(d)) return 2;
+                        if (/^su|^sun|^sunday/.test(d)) return 2;
+                        if (/thu\s*2|th[uứ]\s*2|t2/i.test(day)) return 1;
+                        if (/thu\s*3|th[uứ]\s*3|t3/i.test(day)) return 1;
+                        if (/thu\s*4|th[uứ]\s*4|t4/i.test(day)) return 1;
+                        if (/thu\s*5|th[uứ]\s*5|t5/i.test(day)) return 1;
+                        if (/thu\s*6|th[uứ]\s*6|t6/i.test(day)) return 2;
+                        if (/thu\s*7|th[uứ]\s*7|t7/i.test(day)) return 2;
+                        if (/chu?n\s*nhat|cn/i.test(day)) return 2;
+                        if (/[-–—]/.test(day)) {
+                          if (/(mo|mon|monday|tu|tue|tuesday|we|wed|wednesday|th|thu|thursday)/i.test(day)) return 1;
+                          if (/(fr|fri|friday|sa|sat|saturday|su|sun|sunday|thu\s*6|thu\s*7|ch[uủ]n)/i.test(day)) return 2;
+                        }
+                        return 1;
+                      };
+
+                      const col1 = [];
+                      const col2 = [];
+
+                      list.forEach(it => {
+                        const g = groupOf(it.day);
+                        if (g === 1) col1.push(it.raw);
+                        else col2.push(it.raw);
+                      });
+
+                      // If one column is empty, balance by splitting the other column
+                      if (col1.length === 0 && col2.length > 1) {
+                        const half = Math.ceil(col2.length / 2);
+                        col1.push(...col2.splice(0, half));
+                      } else if (col2.length === 0 && col1.length > 1) {
+                        const half = Math.ceil(col1.length / 2);
+                        col2.push(...col1.splice(half));
+                      }
+
+                      return (
+                        <>
+                          <div className="fh-col">
+                            {col1.map((s, idx) => (
+                              <div className="fh-item" key={`c1-${idx}`}>{s}</div>
+                            ))}
+                          </div>
+                          <div className="fh-col">
+                            {col2.map((s, idx) => (
+                              <div className="fh-item" key={`c2-${idx}`}>{s}</div>
+                            ))}
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                <div className="info-row full-span">
                   <strong>📍 Status:</strong>
                   <span
                     className={`status-badge ${
-                      openStatus === "open"
-                        ? "status-open"
-                        : "status-closed"
+                      openStatus === "open" ? "status-open" : "status-closed"
                     }`}
                   >
-                    {openStatus === "open" ? "🟢 Open" : "🔴 Closed"}
+                    {openStatus === "open" ? "🟢 Open" : openStatus === "closed" ? "🔴 Closed" : "—"}
                   </span>
                 </div>
+
+
+
+
               </div>
 
               {/* BUTTONS */}
               <div className="popup-actions-modern">
-                {restaurant.lat && restaurant.lng && (
-                  <a
+                {(restaurant.latitude || restaurant.lat) && (restaurant.longitude || restaurant.lng) && (
+                  <button
                     className="btn-modern primary"
-                    target="_blank"
-                    rel="noreferrer"
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${restaurant.lat},${restaurant.lng}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const name = restaurant.name || "";
+                      // Navigate to /nearby and pass the restaurant name as a query — do not trigger routing from URL
+                      navigate(`/nearby?query=${encodeURIComponent(name)}`);
+                    }}
                   >
                     ➤ Directions
-                  </a>
+                  </button>
                 )}
 
                 <button className="btn-modern secondary" onClick={onClose}>
