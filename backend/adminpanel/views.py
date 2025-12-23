@@ -2,14 +2,15 @@ import sys
 import subprocess
 from django.conf import settings
 from django.http import StreamingHttpResponse
-from rest_framework.decorators import api_view
+from django.utils import timezone
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
 from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
-from api.models import CustomUser, Feedback, Profile, Role
+from api.models import CustomUser, Feedback, Profile, Role, CrawledSource, CrawledData
 from .serializers import (
     CustomUserSerializer,
     FeedbackSerializer,
@@ -22,8 +23,6 @@ from rest_framework.views import APIView
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from api.models import CrawledSource
 
 User = get_user_model()
 
@@ -86,6 +85,10 @@ def crawl_pipeline(request):
             yield "--- Running process_detail ---\n"
             for line in run_command(["process_detail"]):
                 yield line
+
+        yield "--- Running cleanup_restaurants ---\n"
+        for line in run_command(["cleanup_restaurants"]):
+            yield line
 
         yield "--- ✅ Pipeline completed! ---\n"
 
@@ -266,3 +269,81 @@ class LoginView(APIView):
 class FeedbackUpdateAPIView(generics.UpdateAPIView):
     queryset = Feedback.objects.all()
     serializer_class = FeedbackUpdateSerializer
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def crawl_progress(request):
+    """
+    Get crawl progress for Foody and RestaurantGuru
+    Returns the latest page number crawled for each source
+    """
+    from django.db.models import Max
+    import re
+    
+    progress_data = []
+    
+    # Get all crawled sources
+    sources = CrawledSource.objects.all()
+    
+    for source in sources:
+        # Get all URLs for this source
+        urls = CrawledData.objects.filter(source=source).values_list('url', flat=True)
+        
+        if not urls:
+            continue
+            
+        # Extract page numbers from URLs
+        max_page = 0
+        latest_url = ""
+        listing_url = ""
+        
+        for url in urls:
+            # For Foody: https://www.foody.vn/da-nang/food/nha-hang?page=1
+            if 'foody.vn' in url.lower():
+                match = re.search(r'[?&]page=(\d+)', url)
+                if match:
+                    page_num = int(match.group(1))
+                    if page_num > max_page:
+                        max_page = page_num
+                        latest_url = url
+            
+            # For RestaurantGuru: Check for listing page pattern
+            elif 'restaurantguru.com' in url.lower():
+                # Main listing page pattern: 
+                # - https://restaurantguru.com/Da-Nang (page 1)
+                # - https://restaurantguru.com/Da-Nang/2 (page 2)
+                # - https://restaurantguru.com/Da-Nang/29 (page 29)
+                if '/Da-Nang' in url:
+                    # Check if it's a detail page (has more path segments after Da-Nang/number)
+                    # Detail pages look like: /Da-Nang/Restaurant-Name
+                    # Listing pages look like: /Da-Nang or /Da-Nang/29
+                    
+                    # Extract page number from URL like /Da-Nang/29
+                    page_match = re.search(r'/Da-Nang/(\d+)/?$', url)
+                    if page_match:
+                        page_num = int(page_match.group(1))
+                    elif url.rstrip('/').endswith('/Da-Nang'):
+                        page_num = 1  # No page number means page 1
+                    else:
+                        # This is a detail page, skip it
+                        continue
+                    
+                    if page_num > max_page:
+                        max_page = page_num
+                        latest_url = url
+        
+        # Add to progress data
+        if max_page > 0:
+            progress_data.append({
+                'source': source.name,
+                'max_page': max_page,
+                'latest_url': latest_url if latest_url else 'N/A',
+                'status': 'Active' if max_page > 0 else 'Not started'
+            })
+    
+    return Response({
+        'success': True,
+        'data': progress_data,
+        'timestamp': timezone.now()
+    })
