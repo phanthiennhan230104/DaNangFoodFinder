@@ -208,7 +208,7 @@ export default function RestaurantDetailPopup({ restaurant, onClose }) {
                 </div>
 
                 <div className="info-row">
-                  <strong>⏰ Hours (today):</strong>
+                  <strong>⏰ Today:</strong>
                   <span>{todayHours || "No information"}</span>
                 </div>
 

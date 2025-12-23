@@ -14,12 +14,13 @@ import "leaflet/dist/leaflet.css";
 
 import "../../styles/user/RestaurantMap.css";
 import api from "../../api";
+import { useLocation } from "react-router-dom";
 
 // ====== BOUNDS: Giới hạn map trong thành phố Đà Nẵng ======
 // SW and NE corners (approx). Expanded by ~10km (~0.09° lat, ~0.094° lon) each direction
 const DANANG_BOUNDS = L.latLngBounds([
-    [15.62, 107.906], // southWest (expanded further vertically ~+10km)
-    [16.53, 108.444], // northEast (expanded further vertically ~+10km)
+    [15.62, 107.906],
+    [16.53, 108.444],
 ]);
 
 // Zoom limits to prevent seeing outside bounds when zoomed out
@@ -187,7 +188,6 @@ const RestaurantMap = () => {
         fetchRestaurants();
     }, []);
 
-    // Auto-geocode missing coordinates (run once after restaurants load)
     const geocodeRunRef = useRef(false);
     useEffect(() => {
         if (geocodeRunRef.current) return;
@@ -204,9 +204,7 @@ const RestaurantMap = () => {
         console.log(`🔄 Starting auto-geocoding for ${missing.length} restaurants without coordinates...`);
 
         (async () => {
-            // Geocode ALL missing restaurants, but with reasonable rate limiting
-            // Nominatim allows ~1 request/second per IP, so process in groups of 3 with 1.5s delay
-            const concurrency = 3;
+           const concurrency = 3;
             const delay = (ms) => new Promise((res) => setTimeout(res, ms));
             let successCount = 0;
             let failCount = 0;
@@ -243,7 +241,6 @@ const RestaurantMap = () => {
                     })
                 );
 
-                // Wait between batches to respect API rate limits
                 if (i + concurrency < missing.length) {
                     await delay(1500);
                 }
@@ -289,8 +286,6 @@ const RestaurantMap = () => {
         setRouteCoords([]);
         setError("");
     };
-
-    // Debounce search input: trigger search 350ms after user stops typing
     useEffect(() => {
         const handler = setTimeout(async () => {
             if (!search.trim()) {
@@ -315,6 +310,46 @@ const RestaurantMap = () => {
         return () => clearTimeout(handler);
     }, [search, restaurants]);
 
+    // ===== Support linking from popup / external: if URL contains ?query=NAME, perform search and focus the map on the first/best match =====
+    const location = useLocation();
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const q = params.get("query")?.trim();
+        if (!q) return;
+
+        (async () => {
+            setLoading(true);
+            setError("");
+            try {
+                const resp = await api.get("restaurants/map/search/", { params: { q } });
+                const data = (resp.data || []).map(normalizeRestaurant);
+                setFiltered(data);
+                setSearch(q);
+
+                // Prefer an item whose name includes the query (case-insensitive), otherwise take first result
+                const low = q.toLowerCase();
+                const matched = data.find(r => (r.name || "").toLowerCase().includes(low)) || data[0];
+
+                if (matched) {
+                    if (matched.lat && matched.lng) {
+                        setMapFocus({ lat: matched.lat, lng: matched.lng, zoom: 16 });
+                        setSelectedId(matched.id);
+                    } else {
+                        // try to geocode and then focus
+                        await geocodeRestaurant(matched);
+                        setSelectedId(matched.id);
+                    }
+                }
+            } catch (err) {
+                console.error("Query redirect error:", err);
+                setError("Unable to perform query from link.");
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, [location.search]);
+
     // ===== Định vị nhà hàng =====
     const geocodeRestaurant = async (r) => {
         if (!r.address) return alert("Restaurant has no address.");
@@ -332,20 +367,16 @@ const RestaurantMap = () => {
                 alert("❌ Could not find restaurant coordinates.");
                 return;
             }
-
-            // Update both UI coords and underlying fields so reset/filters behave correctly
             const updated = restaurants.map((item) =>
                 item.id === r.id ? { ...item, lat: data.lat, lng: data.lng, latitude: data.lat, longitude: data.lng } : item
             );
             setRestaurants(updated);
             setFiltered(updated);
 
-            // Show success message
             if (data.saved) {
                 alert(`✓ Located successfully!\n${data.saved_to_db}`);
             }
 
-            // 🔥 Focus vào nhà hàng
             setMapFocus({ lat: data.lat, lng: data.lng, zoom: 16 });
 
         } catch (err) {
@@ -383,12 +414,14 @@ const RestaurantMap = () => {
         }
     };
 
+    
     // ===== Reset =====
     const handleReset = () => {
-        // Reset only the active route and recenter the map — do NOT clear coordinates or re-run geocoding
+
         setRouteCoords([]);
         setMapFocus({ lat: DEFAULT_CENTER.lat, lng: DEFAULT_CENTER.lng, zoom: 13 });
     };
+
 
     // ===== Focus vị trí người dùng =====
     const focusUserLocation = () => {
@@ -397,9 +430,9 @@ const RestaurantMap = () => {
         setMapFocus({ lat: userLocation.lat, lng: userLocation.lng, zoom: 15 });
     }; 
 
-    // Compute list of restaurants matching the search + distance filter.
+
     const displayedRestaurants = useMemo(() => {
-        // reference point for distance: select according to refPointMode
+
         let ref = DEFAULT_CENTER;
         if (refPointMode === "user" && hasUserLocation) {
             ref = userLocation;
@@ -411,7 +444,7 @@ const RestaurantMap = () => {
         }
 
         return filtered.filter((r) => {
-            if (!r.lat || !r.lng) return false; // we only show located restaurants in "nearby" mode
+            if (!r.lat || !r.lng) return false;
 
             if (!distanceKm) return true;
 
@@ -426,7 +459,6 @@ const RestaurantMap = () => {
         });
     }, [filtered, distanceKm, hasUserLocation, userLocation, refPointMode]);
 
-    // Markers should be limited by map bounds as well for performance
     const restaurantsWithCoords = useMemo(() => {
         if (!displayedRestaurants) return [];
 
@@ -441,7 +473,6 @@ const RestaurantMap = () => {
         });
     }, [displayedRestaurants, mapBounds]);
 
-    // reference point for circle drawing (used in map overlay)
     const refPoint = (() => {
         if (refPointMode === "user" && hasUserLocation) return userLocation;
         if (refPointMode === "map" && mapRef.current && typeof mapRef.current.getCenter === "function") {
