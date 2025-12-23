@@ -422,4 +422,31 @@ class Command(BaseCommand):
         if deleted_count:
             print(f"[DELETED] Removed {deleted_count} invalid or incomplete records")
 
+        # Delete restaurants with missing critical information
+        print("\n[CLEANUP] Checking for restaurants with missing critical information...")
+        from django.db.models import Q
+        invalid_restaurants = Restaurant.objects.filter(
+            Q(opening_hours__isnull=True) | Q(opening_hours="") |
+            Q(cuisine_type__isnull=True) | Q(cuisine_type="") |
+            Q(cuisine_type__icontains="Restaurant") |
+            Q(cuisine_type__icontains="no information") |
+            Q(price_range__isnull=True) | Q(price_range="")
+        )
+        
+        cleanup_count = invalid_restaurants.count()
+        if cleanup_count > 0:
+            print(f"[CLEANUP] Found {cleanup_count} restaurants with missing info:")
+            for rest in invalid_restaurants[:10]:  # Show first 10
+                missing = []
+                if not rest.opening_hours:
+                    missing.append("opening_hours")
+                if not rest.cuisine_type or "Restaurant" in rest.cuisine_type or "no information" in rest.cuisine_type.lower():
+                    missing.append("cuisine_type")
+                if not rest.price_range:
+                    missing.append("price_range")
+                print(f"  - {rest.name}: missing {', '.join(missing)}")
+            
+            invalid_restaurants.delete()
+            print(f"[CLEANUP] Deleted {cleanup_count} incomplete restaurants")
+
         print("--- Hoàn tất process_detail_restaurantguru pipeline! ---")
