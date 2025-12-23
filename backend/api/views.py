@@ -346,6 +346,21 @@ DANANG_AREAS = {
     ],
 }
 
+# Food type normalization mapping - consolidate duplicate/similar food types
+FOOD_TYPE_MAPPING = {
+    # BBQ variations - normalize to BBQ
+    "Barbecue": "BBQ",
+    "barbecue": "BBQ",
+    "Grill": "BBQ",
+    
+    # Vegan/Vegetarian - normalize to Vegetarian
+    "Vegan": "Vegetarian",
+    
+    # Plural to singular
+    "Soft foods": "Soft food",
+    "Soups": "Soup",
+}
+
 
 @api_view(["GET"])
 def get_filters(request):
@@ -404,12 +419,14 @@ def get_filters(request):
         # Americas
         "American", "Mexican", "Brazilian", "Peruvian", "Argentine",
         "Colombian", "Cuban", "Puerto Rican", "Jamaican", "Caribbean",
-        "Canadian", "Cajun", "Tex-Mex", "Latin American",
+        "Canadian", "Cajun", "Tex-Mex", "Latin American", "New American",
         # Africa & Oceania
         "African", "Ethiopian", "Nigerian", "South African",
         "Australian", "Hawaiian", "Polynesian",
         # Western is a region style
         "Western",
+        # International/Multi-regional
+        "International",
     }
     
     # Get all cuisine_type and split into individual types
@@ -424,11 +441,14 @@ def get_filters(request):
             individual_cuisines = [c.strip() for c in cuisine_str.split(",")]
             for c in individual_cuisines:
                 if c:
+                    # Normalize the cuisine type using the mapping
+                    normalized = FOOD_TYPE_MAPPING.get(c, c)
+                    
                     # Check if it belongs to country cuisines
-                    if c in country_cuisines:
-                        by_country.add(c)
+                    if normalized in country_cuisines:
+                        by_country.add(normalized)
                     else:
-                        food_types.add(c)
+                        food_types.add(normalized)
     
     return Response({
         "areas": popular_areas,  # Sorted by restaurant count
