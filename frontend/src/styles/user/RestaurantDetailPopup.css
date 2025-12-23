@@ -186,10 +186,36 @@
   color: #444;
 }
 
-/* allow some rows to occupy both columns for balance */
+/* allow some rows to occupy both columns for balance but keep label aligned */
 .info-row.full-span {
   grid-column: 1 / -1;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 0 28px;
+  align-items: start;
+}
+
+/* ensure the strong label and content align correctly */
+.info-row.full-span strong {
+  grid-column: 1;
+  align-self: start;
+}
+
+.info-row.full-span .full-hours-columns {
+  grid-column: 2;
+}
+
+@media (max-width: 900px) {
+  .info-row.full-span {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .info-row.full-span .full-hours-columns {
+    grid-column: auto;
+  }
 }
 
 /* Full hours columns: two vertical columns */
