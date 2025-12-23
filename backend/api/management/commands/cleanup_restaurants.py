@@ -56,17 +56,21 @@ class Command(BaseCommand):
         restaurants = Restaurant.objects.all().prefetch_related('source_stats')
 
         for rest in restaurants:
-            # Kiểm tra thông tin cơ bản
+            # Kiểm tra thông tin cơ bản bắt buộc
+            missing_info = []
+            
             if not rest.opening_hours:
-                to_delete.append((rest, "Missing opening hours", rest.average_rating or 0, 0))
-                continue
+                missing_info.append("opening_hours")
             
             if not rest.price_range:
-                to_delete.append((rest, "Missing price range", rest.average_rating or 0, 0))
-                continue
+                missing_info.append("price_range")
             
-            if not rest.cuisine_type:
-                to_delete.append((rest, "Missing cuisine type", rest.average_rating or 0, 0))
+            if not rest.cuisine_type or "Restaurant" in rest.cuisine_type or "no information" in (rest.cuisine_type or "").lower():
+                missing_info.append(f"cuisine_type ({rest.cuisine_type})")
+            
+            # Nếu thiếu bất kỳ thông tin nào -> xóa luôn
+            if missing_info:
+                to_delete.append((rest, f"Missing: {', '.join(missing_info)}", rest.average_rating or 0, 0))
                 continue
 
             # Lấy stats từ các nguồn

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  crawl_pipeline
+from .views import  crawl_pipeline, crawl_progress
 
 from adminpanel.views import (
     RoleListView, RoleCreateView, RoleDetailView, RoleUpdateView, RoleDeleteView,
@@ -10,6 +10,7 @@ from adminpanel.views import (
 )
 urlpatterns = [
     path("crawl/", crawl_pipeline, name="crawl_pipeline"),
+    path("crawl/progress/", crawl_progress, name="crawl_progress"),
     
     #ADMIN
     # Role
