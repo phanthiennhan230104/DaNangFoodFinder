@@ -259,10 +259,14 @@ body {
 
 /* Favorites page overrides - show slightly smaller cards for a denser layout */
 .favorites-grid .restaurants-grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  /* constrain max card width so single/few items don't stretch full-width */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 320px));
   gap: 1rem;
+  justify-content: start; /* align the grid to the left under the section title */
+  justify-items: start;
 }
 
+/* keep a slightly smaller card image for the favorites grid */
 .favorites-grid .card-image {
   height: 150px; /* smaller visual footprint for favorites grid */
 }
