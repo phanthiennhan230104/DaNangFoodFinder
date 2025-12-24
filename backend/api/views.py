@@ -466,8 +466,22 @@ class CuisineListView(APIView):
         filtered = [c for c in cuisines if c]
         return Response(sorted(filtered))
 
+class CuisineSearchView(APIView):
+    """Tìm kiếm nhà hàng theo cuisine type."""
+    permission_classes = [AllowAny]
 
-
+    def get(self, request):
+        q = request.GET.get("q", "").strip()
+        if not q:
+            return Response([])
+        
+        # Tìm nhà hàng có cuisine_type chứa từ khóa
+        restaurants = Restaurant.objects.filter(
+            cuisine_type__icontains=q
+        )[:15]  # Limit 15 kết quả
+        
+        serializer = RestaurantSerializer(restaurants, many=True, context={"request": request})
+        return Response(serializer.data)
 
 class JourneyRecommendationsView(APIView):
     
@@ -485,7 +499,10 @@ class JourneyRecommendationsView(APIView):
         # --- Lọc danh sách ---
         qs = Restaurant.objects.all()
         if preferences:
-            qs = qs.filter(cuisine_type__in=preferences)
+            q_filter = Q()
+            for pref in preferences:
+                q_filter |= Q(cuisine_type__icontains=pref)
+            qs = qs.filter(q_filter)
         if search:
             qs = qs.filter(Q(name__icontains=search) | Q(address__icontains=search))
 
@@ -493,9 +510,7 @@ class JourneyRecommendationsView(APIView):
         candidates: List[Candidate] = []
         for r in qs:
             price_val = parse_price_range(r.price_range, default_price=0)
-            meal = getattr(r, "meal_type", None) or infer_meal(
-                price_val, 100000, 200000
-            )
+            meal = infer_meal(price_val, budget // 4, budget // 2, cuisine_type=r.cuisine_type, name=r.name)
             candidates.append(
                 Candidate(
                     id=r.id,
@@ -510,41 +525,119 @@ class JourneyRecommendationsView(APIView):
 
         # --- Chiến lược AI ---
         if strategy == "ai":
-            client = Groq(api_key=settings.GROQ_API_KEY)
+            # 1) Check API key
+            api_key = getattr(settings, "GROQ_API_KEY", None)
+            if not api_key:
+                return Response(
+                    {"detail": "GROQ_API_KEY is missing. Please set it in .env / settings."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            # 2) Check candidates
+            if not candidates:
+                return Response({
+                    "strategy": "ai",
+                    "budget": budget,
+                    "preferences": preferences,
+                    "best_plan": None,
+                    "error": "No candidates available after filtering (budget/preferences/search)."
+                }, status=status.HTTP_200_OK)
+
+            client = Groq(api_key=api_key)
+
+            # Giới hạn số candidates để tránh prompt quá dài
+            candidates_sorted = sorted(candidates, key=lambda x: x.rating, reverse=True)[:80]
+
+            # Map nhanh id -> Candidate
+            cand_map = {c.id: c for c in candidates_sorted}
             candidates_text = "\n".join(
-                f"- id={c.id}, {c.name} ({c.cuisine_type}, {c.price} VND, rating {c.rating}, meal={c.meal_type})"
-                for c in candidates
+                f"- id={c.id}, name={c.name}, cuisine={c.cuisine_type}, price={c.price}VND, rating={c.rating}"
+                for c in candidates_sorted
             )
             prompt = f"""
-                User budget: {budget} VND
-                Preferences: {", ".join(preferences) or "None"}
-                Candidate restaurants:
+                Bạn là AI gợi ý quán ăn ở Đà Nẵng.
+                Chỉ trả về JSON THUẦN (không markdown, không giải thích).
+
+                Ngân sách tổng: {budget} VND
+                Sở thích ẩm thực: {", ".join(preferences) or "Không có"}
+
+                Danh sách quán (chỉ chọn trong danh sách này):
                 {candidates_text}
 
-                Suggest exactly 3 restaurants (breakfast, lunch, dinner)
-                Ensure total price <= budget.
-                Return JSON only.
-            """
+                Yêu cầu chọn đúng 3 quán:
+                - breakfast: món nhẹ buổi sáng (cà phê, bánh, bún/phở nhẹ, ăn nhanh)
+                - lunch: món ăn chính bữa trưa (cơm, mỳ/bún no, suất trưa, quán bình dân)
+                - dinner: ưu tiên nhậu/ăn vặt buổi tối (hải sản, lẩu, nướng, bia, đồ nhắm, ăn vặt)
+                - Tổng giá 3 quán <= {budget} VND
+
+                Format JSON bắt buộc:
+                {{
+                "breakfast": {{"id": 1, "reason": "..."}},
+                "lunch":     {{"id": 2, "reason": "..."}},
+                "dinner":    {{"id": 3, "reason": "..."}}
+                }}
+                """.strip()
 
             resp = client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
+                temperature=0.2,
+                max_tokens=300,
             )
-            content = resp.choices[0].message["content"]
+            
+            content = (getattr(resp.choices[0].message, "content", "") or "").strip()
+
+            # Parse JSON an toàn
+            plan_raw = None
 
             try:
-                plan = json.loads(content)
+                plan_raw = json.loads(content)
             except Exception:
-                plan = {"raw": content}
+                # fallback: trích JSON object đầu tiên trong text
+                m = re.search(r"\{.*\}", content, re.DOTALL)
+                if m:
+                    try:
+                        plan_raw = json.loads(m.group(0))
+                    except Exception:
+                        plan_raw = None
+
+            if not isinstance(plan_raw, dict):
+                return Response({
+                    "strategy": "ai",
+                    "budget": budget,
+                    "preferences": preferences,
+                    "best_plan": {"raw": content},
+                    "error": "AI did not return valid JSON",
+                }, status=status.HTTP_200_OK)
+
+            def to_full(item):
+                if not isinstance(item, dict) or "id" not in item:
+                    return None
+                cid = item.get("id")
+                c = cand_map.get(cid)
+                if not c:
+                    return None
+                return {
+                    "id": c.id,
+                    "name": c.name,
+                    "cuisine_type": c.cuisine_type,
+                    "price_range": c.price_range,
+                    "price": c.price,
+                    "average_rating": c.rating,
+                    "meal_type": c.meal_type,
+                    "reason": item.get("reason", ""),
+                }
 
             return Response({
                 "strategy": "ai",
                 "budget": budget,
                 "preferences": preferences,
-                "best_plan": plan,
-            })
-
+                "best_plan": {
+                    "breakfast": to_full(plan_raw.get("breakfast")),
+                    "lunch": to_full(plan_raw.get("lunch")),
+                    "dinner": to_full(plan_raw.get("dinner")),
+                },
+            }, status=status.HTTP_200_OK)
         # --- Chiến lược simple ---
         top_k = int(request.GET.get("top_k", 6))
         breakfast_cut = int(request.GET.get("breakfast_cut", 100000))

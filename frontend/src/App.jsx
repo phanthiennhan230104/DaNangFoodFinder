@@ -115,7 +115,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="profile"
+                        path="profiles"
                         element={
                           <ProtectedRoute allowedRoles={["2"]}>
                             <Profile />

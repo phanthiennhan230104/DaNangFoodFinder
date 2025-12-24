@@ -143,8 +143,10 @@ export default function Feedback() {
         </div>
 
         {/* Buttons */}
-        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-            <Link className="btn-save" to={"/feedback-resolved"} style={{height:"44.6px", marginTop:"32px"}} >Feedback Resolved</Link>
+        <div className="feedback-button-container">
+            <Link className="btn-feedback-resolved" to="/feedback-resolved">
+              Feedback Resolved
+            </Link>
           <div className="profile-buttons">
             <button
               className="btn-back"
