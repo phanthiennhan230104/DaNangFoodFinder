@@ -466,15 +466,28 @@ class CuisineListView(APIView):
         filtered = [c for c in cuisines if c]
         return Response(sorted(filtered))
 
+class CuisineSearchView(APIView):
+    """Tìm kiếm nhà hàng theo cuisine type."""
+    permission_classes = [AllowAny]
 
-
+    def get(self, request):
+        q = request.GET.get("q", "").strip()
+        if not q:
+            return Response([])
+        
+        # Tìm nhà hàng có cuisine_type chứa từ khóa
+        restaurants = Restaurant.objects.filter(
+            cuisine_type__icontains=q
+        )[:15]  # Limit 15 kết quả
+        
+        serializer = RestaurantSerializer(restaurants, many=True, context={"request": request})
+        return Response(serializer.data)
 
 class JourneyRecommendationsView(APIView):
     
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        strategy = request.GET.get("strategy", "simple")
         budget = int(request.GET.get("budget", 300000))
         preferences_raw = request.GET.get("preferences", "")
         preferences: List[str] = [
@@ -485,7 +498,10 @@ class JourneyRecommendationsView(APIView):
         # --- Lọc danh sách ---
         qs = Restaurant.objects.all()
         if preferences:
-            qs = qs.filter(cuisine_type__in=preferences)
+            q_filter = Q()
+            for pref in preferences:
+                q_filter |= Q(cuisine_type__icontains=pref)
+            qs = qs.filter(q_filter)
         if search:
             qs = qs.filter(Q(name__icontains=search) | Q(address__icontains=search))
 
@@ -493,9 +509,7 @@ class JourneyRecommendationsView(APIView):
         candidates: List[Candidate] = []
         for r in qs:
             price_val = parse_price_range(r.price_range, default_price=0)
-            meal = getattr(r, "meal_type", None) or infer_meal(
-                price_val, 100000, 200000
-            )
+            meal = infer_meal(price_val, budget // 4, budget // 2, cuisine_type=r.cuisine_type, name=r.name)
             candidates.append(
                 Candidate(
                     id=r.id,
@@ -505,45 +519,9 @@ class JourneyRecommendationsView(APIView):
                     rating=float(r.average_rating or 0.0),
                     meal_type=meal,
                     price=price_val,
+                    address=r.address,
                 )
             )
-
-        # --- Chiến lược AI ---
-        if strategy == "ai":
-            client = Groq(api_key=settings.GROQ_API_KEY)
-            candidates_text = "\n".join(
-                f"- id={c.id}, {c.name} ({c.cuisine_type}, {c.price} VND, rating {c.rating}, meal={c.meal_type})"
-                for c in candidates
-            )
-            prompt = f"""
-                User budget: {budget} VND
-                Preferences: {", ".join(preferences) or "None"}
-                Candidate restaurants:
-                {candidates_text}
-
-                Suggest exactly 3 restaurants (breakfast, lunch, dinner)
-                Ensure total price <= budget.
-                Return JSON only.
-            """
-
-            resp = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-            )
-            content = resp.choices[0].message["content"]
-
-            try:
-                plan = json.loads(content)
-            except Exception:
-                plan = {"raw": content}
-
-            return Response({
-                "strategy": "ai",
-                "budget": budget,
-                "preferences": preferences,
-                "best_plan": plan,
-            })
 
         # --- Chiến lược simple ---
         top_k = int(request.GET.get("top_k", 6))
@@ -600,6 +578,7 @@ class JourneyRecommendationsView(APIView):
             return {
                 "id": c.id,
                 "name": c.name,
+                "address": c.address,
                 "cuisine_type": c.cuisine_type,
                 "price_range": c.price_range,
                 "price": c.price,
@@ -630,7 +609,9 @@ class FoodJourneyUpsertView(APIView):
     def get(self, request):
         date = request.GET.get("date")
         if not date:
-            return Response({"detail": "Missing 'date'."}, status=400)
+            # Trả về tất cả journeys của user, sắp xếp theo ngày mới nhất
+            journeys = FoodJourney.objects.filter(user=request.user).order_by('-date')
+            return Response(FoodJourneySerializer(journeys, many=True).data)
         obj = FoodJourney.objects.filter(user=request.user, date=date).first()
         if not obj:
             return Response(None, status=200)
@@ -651,6 +632,18 @@ class FoodJourneyUpsertView(APIView):
             obj = serializer.save()
             return Response(FoodJourneySerializer(obj).data, status=200 if instance else 201)
         return Response(serializer.errors, status=400)
+
+    def delete(self, request):
+        journey_id = request.GET.get("id")
+        if not journey_id:
+            return Response({"detail": "Missing 'id'."}, status=400)
+        
+        try:
+            journey = FoodJourney.objects.get(id=journey_id, user=request.user)
+            journey.delete()
+            return Response({"detail": "Journey deleted successfully."}, status=200)
+        except FoodJourney.DoesNotExist:
+            return Response({"detail": "Journey not found."}, status=404)
     
 class OverviewView(APIView):
     """Thống kê hệ thống (user, restaurant, feedback)."""

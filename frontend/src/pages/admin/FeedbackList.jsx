@@ -73,7 +73,7 @@ export default function FeedbackManagement() {
             marginBottom: "10px",
           }}
         >
-          📝 Feedback Management
+          Feedback Management
         </h1>
         <p style={{ textAlign: "center", color: "#555", marginBottom: "30px" }}>
           List of user feedbacks that haven’t been resolved yet.

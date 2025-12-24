@@ -26,12 +26,14 @@ export default function Profile() {
         console.log("✅ Profile loaded:", res.data);
 
         setFormData({
-          fullname: res.data.fullname || "",
+          fullname: res.data.fullName || "",
           dob: res.data.dob || "",
           gender: res.data.gender || "",
-          phone_number: res.data.phone_number || "",
+          phone_number: res.data.phone || "",
           address: res.data.address || "",
         });
+
+
       } catch (err) {
         console.error("❌ Failed to load profile:", err);
         setError("Failed to load profile.");
@@ -47,40 +49,27 @@ export default function Profile() {
 
   // SAVE PROFILE
   const handleSave = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log("📤 Sending:", formData);
+  try {
+    await api.post("/profile/", {
+      fullName: formData.fullname,   // ✅ đúng serializer
+      dob: formData.dob,
+      gender: formData.gender,
+      phone: formData.phone_number, // ✅ đúng serializer
+      address: formData.address,
+    });
 
-      if (!formData.fullname.trim())
-        return alert("Full name is required");
-      if (!formData.dob)
-        return alert("Date of Birth is required");
-      if (!formData.gender)
-        return alert("Gender is required");
+    // sync header
+    localStorage.setItem("FULLNAME", formData.fullname);
+    window.dispatchEvent(new Event("profileUpdated"));
 
-      const response = await api.post("/profile/", formData);
-      console.log("✅ Saved:", response.data);
+    alert("Profile saved successfully!");
+    navigate("/home");
+  } catch (error) {
+    alert("Save failed");
+  }
+};
 
-      alert("Profile saved successfully!");
-      navigate("/home");
 
-    } catch (error) {
-      console.error("❌ Error saving profile:", error);
-      
-      let msg = "Save failed.\n";
-      if (error.response?.data) {
-        Object.entries(error.response.data).forEach(([k, v]) => {
-          msg += `• ${k}: ${v}\n`;
-        });
-      }
-      alert(msg);
-      setError(msg);
-
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="profile-container">
@@ -120,7 +109,7 @@ export default function Profile() {
         <div className="profile-field">
           <label className="profile-label">Gender</label>
           <select
-            className="profile-input"
+className="profile-input"
             value={formData.gender}
             onChange={(e) => handleInputChange("gender", e.target.value)}
           >

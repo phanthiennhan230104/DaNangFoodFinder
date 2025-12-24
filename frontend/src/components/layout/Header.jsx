@@ -13,8 +13,22 @@ export default function Header() {
   const menuRef = useRef(null);
 
   const toggleMenu = () => setOpen(!open);
+  const cachedFullName = localStorage.getItem("FULLNAME");
+useEffect(() => {
+  const handleProfileUpdated = () => {
+    const name = localStorage.getItem("FULLNAME") || "";
+    setFullName(name);
+  };
+
+  window.addEventListener("profileUpdated", handleProfileUpdated);
+
+  return () => {
+    window.removeEventListener("profileUpdated", handleProfileUpdated);
+  };
+}, []);
 
   useEffect(() => {
+    
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpen(false);
@@ -27,7 +41,10 @@ export default function Header() {
   const isLoggedIn = !!localStorage.getItem(ACCESS_TOKEN);
   const roleId = localStorage.getItem("ROLE_ID");
   const username = localStorage.getItem("USERNAME") || "User";
-  const [fullName, setFullName] = useState("");
+  const [fullName, setFullName] = useState(
+    localStorage.getItem("FULLNAME") || ""
+  );
+
 
   const handleLogout = async () => {
     try {
@@ -46,10 +63,16 @@ export default function Header() {
   useEffect(() => {
     if (isLoggedIn) {
       api
-        .get("/profiles/me/")
+        .get("/profile/")
         .then((res) => {
-          if (res.status === 200 && res.data?.fullName) {
-            setFullName(res.data.fullName);
+          if (res.status === 200) {
+            const name = res.data.fullName || res.data.fullname || "";
+            setFullName(name);
+
+            // 🔄 SYNC LOCALSTORAGE
+            if (name) {
+              localStorage.setItem("FULLNAME", name);
+            }
           }
         })
         .catch(() => {
@@ -57,6 +80,7 @@ export default function Header() {
         });
     }
   }, [isLoggedIn]);
+
 
   if (!isLoggedIn && location.pathname === "/") {
     return (
@@ -73,7 +97,7 @@ export default function Header() {
           <div className="auth-buttons">
             <a href="/login" className="btn btn-secondary">Login</a>
             <a href="/register" className="btn btn-primary">Sign Up</a>
-          </div>
+</div>
         </nav>
       </header>
     );
@@ -122,7 +146,7 @@ export default function Header() {
 
           <div className="auth-buttons" ref={menuRef}>
             <button className="btn btn-secondary dropdown-toggle" onClick={toggleMenu}>
-              <span>Hi, {fullName || username}</span>
+              <span>Hi, {fullName || cachedFullName || username}</span>
               <ChevronDown className={`chevron-icon ${open ? "rotate" : ""}`} size={18} />
             </button>
 

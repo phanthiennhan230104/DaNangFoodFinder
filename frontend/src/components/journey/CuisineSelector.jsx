@@ -1,14 +1,27 @@
-import React from "react";
-import { Utensils } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 import { motion } from "framer-motion";
+import api from "../../api";
 
-const cuisines = ["Vietnam", "Korean", "Italian", "Japanese", "Central Cuisine"];
+const CuisineSelector = ({ 
+  cuisineSearch, 
+  setCuisineSearch, 
+  suggestions, 
+  setSuggestions, 
+  onCuisineSelect 
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
 
-const CuisineSelector = ({ preferences, setPreferences }) => {
-  const toggleCuisine = (cuisine) => {
-    if (preferences.includes(cuisine))
-      setPreferences(preferences.filter((c) => c !== cuisine));
-    else setPreferences([...preferences, cuisine]);
+  // Disable API search - just clear suggestions
+  useEffect(() => {
+    setSuggestions([]);
+  }, [cuisineSearch, setSuggestions]);
+
+  const handleSelectRestaurant = (restaurant) => {
+    // When user clicks a restaurant, select its cuisine type
+    onCuisineSelect(restaurant.cuisine_type);
+    setCuisineSearch(""); // Clear search
+    setSuggestions([]);
   };
 
   return (
@@ -16,27 +29,22 @@ const CuisineSelector = ({ preferences, setPreferences }) => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      className="cuisine-search-container"
     >
-      <div className="control-label">
-        <Utensils className="inline w-4 h-4 mr-1" />
-        Select Cuisine
+      <label className="control-label">
+        <Search className="inline w-4 h-4 mr-1" />
+        Search Cuisine
+      </label>
+      <div style={{ position: 'relative' }} className="cuisine-search-wrapper">
+        <input
+          type="text"
+          placeholder="Enter cuisine type to filter..."
+          value={cuisineSearch}
+          onChange={(e) => setCuisineSearch(e.target.value)}
+          className="cuisine-search-input"
+        />
       </div>
-      <div className="cuisine-tags">
-        {cuisines.map((cuisine) => (
-          <motion.button
-            key={cuisine}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-            className={`cuisine-tag ${
-              preferences.includes(cuisine) ? "selected" : ""
-            }`}
-            onClick={() => toggleCuisine(cuisine)}
-          >
-            🍲 {cuisine}
-          </motion.button>
-        ))}
-      </div>
+
     </motion.div>
   );
 };

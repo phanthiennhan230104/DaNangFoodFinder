@@ -32,6 +32,7 @@ import AccountManagement from "./pages/admin/AccountManagement";
 import AddAccount from "./pages/admin/AddAccount";
 import AddRole from "./pages/admin/AddRole";
 import ChatbotWidget from "./components/ChatbotWidget";
+import JourneyWidget from "./components/JourneyWidget";
 import Feedback from "./pages/user/Feedback.jsx";
 import FeedbackList from "./pages/admin/FeedbackList.jsx";
 import FeedbackResolved from "./pages/user/FeedbackResolved.jsx";
@@ -115,7 +116,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="profile"
+                        path="profiles"
                         element={
                           <ProtectedRoute allowedRoles={["2"]}>
                             <Profile />
@@ -267,6 +268,8 @@ function App() {
 
             {/* Chatbot floating và visible trên mọi trang */}
             <ChatbotWidget />
+            {/* Journey Widget - chỉ hiển thị ở trang /journey */}
+            <JourneyWidget />
           </BrowserRouter>
         </AuthProvider>
     </QueryClientProvider>
