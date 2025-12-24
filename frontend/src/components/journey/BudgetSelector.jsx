@@ -19,7 +19,7 @@ const BudgetSelector = ({ budget, setBudget }) => {
         <input
           type="text"
           className="budget-input"
-          placeholder="Nhập số tiền..."
+          placeholder="Enter budget..."
           value={budget ? budget.toLocaleString() : ""}
           onChange={(e) => {
             const rawValue = e.target.value.replace(/,/g, "").replace(/\./g, "");

@@ -21,7 +21,9 @@ const RestaurantCard = ({ restaurant, onAddToJourney, isInJourney, canAdd = true
     .filter(([key]) => key !== restaurant.meal_type)
     .reduce((sum, [, r]) => sum + (r?.price || 0), 0);
 
-  const wouldExceedBudget = budget && otherMealsTotal + restaurant.price > budget;
+  // Only show "Exceeds budget" if adding this restaurant would ACTUALLY exceed (not equal to) the budget
+  const totalWithThisRestaurant = otherMealsTotal + (restaurant.price || 0);
+  const wouldExceedBudget = budget && totalWithThisRestaurant > budget;
 
   return (
     <motion.div
@@ -38,10 +40,9 @@ const RestaurantCard = ({ restaurant, onAddToJourney, isInJourney, canAdd = true
         <div className="meal-badge">{getMealIcon(restaurant.meal_type)} {restaurant.meal_type}</div>
       </div>
       <div className="restaurant-details">
-        <MapPin className="inline w-3 h-3 mr-1" />
-        {restaurant.address}
-        <br />
-        🍽 {restaurant.cuisine_type} • 💵 {restaurant.price_range}
+        <div>{restaurant.address}</div>
+        <div>🍽 {restaurant.cuisine_type}</div>
+        <div>💵 {restaurant.price_range}</div>
       </div>
       <div className="restaurant-meta">
         <span className="rating">

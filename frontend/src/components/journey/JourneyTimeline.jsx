@@ -109,48 +109,6 @@ const JourneyTimeline = ({ journey, onRemoveFromJourney, totalBudget, budget = 3
         </motion.div>
       )}
 
-      <div className="time-slots">
-        {slots.map(({ key, label, icon }) => (
-          <motion.div
-            key={key}
-            className="time-slot"
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="time-label">
-              {icon}
-              {label}
-            </div>
-            {journey[key] ? (
-              <>
-                <div className="restaurant-name">🏠 {journey[key].name}</div>
-                <div className="restaurant-details">
-                  🍽 {journey[key].cuisine_type} • 💵 {journey[key].price_range}
-                </div>
-                <div className="meal-price">
-                  Est: {journey[key].price ? journey[key].price.toLocaleString() : "N/A"} VND
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
-                  onClick={() => onRemoveFromJourney(key)}
-                  className="btn btn-secondary"
-                  style={{ marginTop: "0.5rem" }}
-                >
-                  ❌ Remove
-                </motion.button>
-              </>
-            ) : (
-              <>
-                <div className="slot-status">No restaurant selected</div>
-                <div className="browse-suggestion">Browse recommendations above</div>
-              </>
-            )}
-          </motion.div>
-        ))}
-      </div>
-
       {saveMessage && (
         <motion.div
           className="save-message"

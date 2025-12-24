@@ -12,6 +12,7 @@ class Candidate:
     rating: float | None
     meal_type: str | None  # có thể None, sẽ suy ra sau
     price: int  # numeric (đồng)
+    address: str | None = None
 
 def parse_price_range(price_range: str | None, default_price: int = 0) -> int:
     if not price_range:
