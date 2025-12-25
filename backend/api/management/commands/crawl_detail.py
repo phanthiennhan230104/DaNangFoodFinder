@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from asgiref.sync import sync_to_async
 from api.models import Restaurant, CrawledSource, CrawledData
 
-
+# Function to fetch detail pages using DrissionPage
 def fetch_details_drission(restaurants: list, source_name: str):
     """
     Fetch multiple detail pages using DrissionPage with SINGLE browser session.
@@ -16,12 +16,12 @@ def fetch_details_drission(restaurants: list, source_name: str):
     results = []
     print(f"[INFO] Using DrissionPage to crawl {len(restaurants)} detail pages...")
     
-    page = ChromiumPage()
+    page = ChromiumPage() #Single browser session
     
     try:
         for i, rest in enumerate(restaurants):
             if i > 0:
-                delay = random.uniform(3, 6)
+                delay = random.uniform(3, 6) # Random delay between requests
                 print(f"[INFO] Waiting {delay:.1f}s between requests...")
                 time.sleep(delay)
             
@@ -50,7 +50,8 @@ def fetch_details_drission(restaurants: list, source_name: str):
                     if "Suspicious" in title or "captcha" in title.lower():
                         print(f"[FAILED] Still blocked after retry")
                         continue
-                
+
+                #Check valid HTML DrissionPage
                 if html and len(html) > 5000 and "<html" in html.lower():
                     print(f"[OK] Fetched {len(html)} chars")
                     results.append({"rest": rest, "html": html})
@@ -85,18 +86,20 @@ class Command(BaseCommand):
             name=source_name
         )
 
+        #Tìm nhà hàng thiếu thông tin
         if source_name.lower() == "foody":
             restaurants = await sync_to_async(list)(
                 Restaurant.objects.filter(
                     detail_url__icontains="foody.vn",
-                    price_range__isnull=True,
+                    price_range__isnull=True, ## Missing price_range
                 )[:limit]
             )
+        
         elif source_name.lower() == "restaurantguru":
             restaurants = await sync_to_async(list)(
                 Restaurant.objects.filter(
                     detail_url__icontains="restaurantguru.com",
-                    opening_hours__isnull=True,
+                    opening_hours__isnull=True, ## Missing opening_hours
                 )[:limit]
             )
         else:
@@ -107,6 +110,7 @@ class Command(BaseCommand):
             print(f"No restaurants found for crawling {source_name} details.")
             return
 
+        #Call function to fetch details
         if source_name.lower() == "restaurantguru":
             loop = asyncio.get_event_loop()
             valid_results = await loop.run_in_executor(
@@ -114,7 +118,7 @@ class Command(BaseCommand):
             )
         else:
             from playwright.async_api import async_playwright
-            
+            #Fetch detail pages with Playwright
             async def fetch_detail(context, rest):
                 try:
                     page = await context.new_page()
@@ -128,7 +132,7 @@ class Command(BaseCommand):
                     return None
             
             async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
+                browser = await p.chromium.launch(headless=True) #Headless Chronium
                 context = await browser.new_context(
                     viewport={"width": 1280, "height": 800},
                     locale="en-US",
@@ -161,8 +165,9 @@ class Command(BaseCommand):
                 deleted_count += 1
                 continue
 
+            #Check delete existing CrawledData
             await sync_to_async(CrawledData.objects.filter(url=rest.detail_url).delete)()
-
+            #Create new CrawledData
             await sync_to_async(CrawledData.objects.create)(
                 source=source,
                 url=rest.detail_url,

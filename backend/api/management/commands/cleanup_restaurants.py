@@ -5,8 +5,8 @@ from api.models import Restaurant, RestaurantSourceStats
 
 MIN_RATING_FOODY = 8.5
 MIN_RATING_FOODY_NORMALIZED = 4.25
-MIN_RATING_RG = 4.5
-MIN_REVIEW_COUNT = 30
+MIN_RATING_RG = 4.5 
+MIN_REVIEW_COUNT = 30 
 
 
 class Command(BaseCommand):
@@ -16,7 +16,7 @@ class Command(BaseCommand):
             action='store_true',
         )
         parser.add_argument(
-            '--source',
+            '--source', # Filter by source name
             type=str,
             choices=['foody', 'restaurantguru', 'all'],
             default='all',
@@ -41,7 +41,8 @@ class Command(BaseCommand):
         kept = []
 
         restaurants = Restaurant.objects.all().prefetch_related('source_stats')
-
+        
+        #Vòng lặp qua từng nhà hàng để kiểm tra
         for rest in restaurants:
             missing_info = []
             
@@ -57,7 +58,8 @@ class Command(BaseCommand):
             if missing_info:
                 to_delete.append((rest, f"Missing: {', '.join(missing_info)}", rest.average_rating or 0, 0))
                 continue
-
+            
+            #Kiểm tra đánh giá từ các nguồn trong bảng RestaurantSourceStats
             stats = rest.source_stats.all()
             
             if not stats.exists():
@@ -66,7 +68,8 @@ class Command(BaseCommand):
                 else:
                     to_delete.append((rest, "No source stats", rest.average_rating or 0, 0))
                 continue
-
+            
+            #Check Qualification from source stats
             is_qualified = False
             best_rating = 0
             best_reviews = 0
@@ -77,24 +80,29 @@ class Command(BaseCommand):
                 rating = stat.avg_rating or 0
                 reviews = stat.review_count or 0
 
+                #Kiểm tra đánh giá tốt nhất
                 if rating > best_rating:
                     best_rating = rating
                     best_reviews = reviews
 
+                # Lọc theo nguồn nếu có chỉ định
                 if source_filter != 'all' and source_filter not in source_name:
                     continue
-
+                
+                #Kiểm tra Foody
                 if 'foody' in source_name:
 
                     original_rating = rating * 2
                     if original_rating >= MIN_RATING_FOODY and reviews >= MIN_REVIEW_COUNT:
                         is_qualified = True
                         break
+                #Kiểm tra RestaurantGuru
                 elif 'restaurantguru' in source_name:
                     if rating >= MIN_RATING_RG and reviews >= MIN_REVIEW_COUNT:
                         is_qualified = True
                         break
 
+            #Phân loại nhà hàng (Delete hoặc Keep)
             if is_qualified:
                 kept.append((rest, source_name, best_rating, best_reviews))
             else:

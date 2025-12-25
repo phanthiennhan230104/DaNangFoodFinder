@@ -16,7 +16,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
 ]
-
+# Random User-Agent selection to Avoid Block
 def get_random_user_agent():
     return random.choice(USER_AGENTS)
 
@@ -29,7 +29,7 @@ HEADERS = {
     "Upgrade-Insecure-Requests": "1",
 }
 
-
+# aiohttp for static page (Foody)
 async def fetch_html(session, url: str):
     """Simple aiohttp fetch for static pages (Foody)"""
     try:
@@ -42,7 +42,7 @@ async def fetch_html(session, url: str):
         print(f"[Error aiohttp] {url}: {e}")
         return None
 
-
+#DrissionPage for JavaScript-rendered pages (anti-bot bypass) 1 url
 def fetch_html_drission(url: str):
     """DrissionPage fetch for JavaScript-rendered pages - bypasses anti-bot effectively"""
     try:
@@ -54,25 +54,27 @@ def fetch_html_drission(url: str):
         page = ChromiumPage()
         
         try:
-            delay = random.uniform(1, 3)
+            delay = random.uniform(1, 3) #random delay
             print(f"[INFO] Waiting {delay:.1f}s before request...")
             time.sleep(delay)
             
             page.get(url)
             time.sleep(2)
 
-            page.scroll.to_bottom()
+            page.scroll.to_bottom() #Scroll to bottom simulate user
             time.sleep(1)
-            page.scroll.to_top()
+            page.scroll.to_top() #Scroll to top simulate user
             time.sleep(0.5)
             
             html = page.html
             title = page.title
 
+            #Check if blocked by bot detection
             if "Suspicious" in title or "captcha" in title.lower() or "blocked" in title.lower():
                 print(f"[BLOCKED] {url} - Bot detected: {title}")
                 return None
             
+            #Check valid HTML DrissionPage
             if not html or len(html) < 10000:
                 print(f"[Warning] Page too small: {url} ({len(html)} chars)")
                 return None
@@ -87,7 +89,7 @@ def fetch_html_drission(url: str):
         print(f"[Error DrissionPage] {url}: {e}")
         return None
 
-
+#DrissionPage for JavaScript-rendered pages (anti-bot bypass) multiple URLs
 def fetch_multiple_drission(urls: list):
     """Fetch multiple URLs using SINGLE browser session - better for avoiding detection"""
     from DrissionPage import ChromiumPage
@@ -156,6 +158,7 @@ async def fetch_html_playwright(url: str):
     return await loop.run_in_executor(None, fetch_html_drission, url)
 
 
+#Parse Arguments 
 class Command(BaseCommand):
     help = "Crawl list page (Foody hoặc custom HTML) và lưu vào CrawledData"
 
@@ -171,6 +174,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         asyncio.run(self._handle_async(options))
 
+    #Auto detect source name (Foody / RestaurantGuru / CustomSource)
     async def _handle_async(self, options):
         urls = options["urls"]
         source_name = options.get("source")
@@ -186,6 +190,7 @@ class Command(BaseCommand):
         else:
             source_name = source_name.strip()
 
+        #Check existing CrawledSource
         existing_sources = await sync_to_async(list)(CrawledSource.objects.all())
         matched = next(
             (s for s in existing_sources if s.name.lower() == source_name.lower()),
@@ -193,15 +198,15 @@ class Command(BaseCommand):
         )
 
         if matched:
-            source = matched
+            source = matched # Use existing source
         else:
             source = await sync_to_async(CrawledSource.objects.create)(
                 name=source_name,
-                base_url=urls[0],
+                base_url=urls[0], # Create new source
             )
 
         results = []
-
+        #Fetch for restaurantguru with DrissionPage
         if source_name.lower() == "restaurantguru":
             print(f"[INFO] Using DrissionPage for RestaurantGuru (anti-bot bypass)")
             results = await sync_to_async(fetch_multiple_drission)(urls)
@@ -215,7 +220,7 @@ class Command(BaseCommand):
             CrawledData.objects.filter(source=source).values_list("url", flat=True)
         )
         new_data = [r for r in results if r["url"] not in existing_urls]
-
+        # Save into CrawledData
         objs = [
             CrawledData(
                 source=source,
@@ -230,11 +235,12 @@ class Command(BaseCommand):
         if objs:
             await sync_to_async(CrawledData.objects.bulk_create)(objs)
 
+        # Summary statistics to show in FE
         # Calculate statistics
         total_urls = len(urls)
-        failed_fetch = total_urls - len(results)
-        skipped_dupes = len(results) - len(new_data)
-        total_saved = len(objs)
+        failed_fetch = total_urls - len(results) #URL failed to fetch
+        skipped_dupes = len(results) - len(new_data) #URL existing in DB
+        total_saved = len(objs) #URL saved to DB
 
         # Log results
         print(f"\n{'='*50}")
