@@ -46,7 +46,6 @@ export default function Profile() {
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
-
   // SAVE PROFILE
   const handleSave = async () => {
   try {
