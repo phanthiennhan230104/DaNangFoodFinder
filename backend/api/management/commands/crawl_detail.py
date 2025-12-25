@@ -20,7 +20,6 @@ def fetch_details_drission(restaurants: list, source_name: str):
     
     try:
         for i, rest in enumerate(restaurants):
-            # Delay between requests (3-6 seconds)
             if i > 0:
                 delay = random.uniform(3, 6)
                 print(f"[INFO] Waiting {delay:.1f}s between requests...")
@@ -31,8 +30,7 @@ def fetch_details_drission(restaurants: list, source_name: str):
             try:
                 page.get(rest.detail_url)
                 time.sleep(2)
-                
-                # Scroll to load content
+ 
                 page.scroll.to_bottom()
                 time.sleep(1)
                 page.scroll.to_top()
@@ -40,8 +38,7 @@ def fetch_details_drission(restaurants: list, source_name: str):
                 
                 html = page.html
                 title = page.title
-                
-                # Check if blocked
+
                 if "Suspicious" in title or "captcha" in title.lower():
                     print(f"[BLOCKED] {rest.name} - Waiting 20s and retrying...")
                     time.sleep(20)
@@ -72,7 +69,6 @@ def fetch_details_drission(restaurants: list, source_name: str):
 
 
 class Command(BaseCommand):
-    help = "Crawl detail page cho restaurant (Foody hoặc RestaurantGuru), lưu vào CrawledData.linked_restaurant"
 
     def add_arguments(self, parser):
         parser.add_argument("--limit", type=int, default=10)
@@ -89,7 +85,6 @@ class Command(BaseCommand):
             name=source_name
         )
 
-        # Filter based on source
         if source_name.lower() == "foody":
             restaurants = await sync_to_async(list)(
                 Restaurant.objects.filter(
@@ -112,14 +107,12 @@ class Command(BaseCommand):
             print(f"No restaurants found for crawling {source_name} details.")
             return
 
-        # Use DrissionPage for RestaurantGuru (better anti-bot)
         if source_name.lower() == "restaurantguru":
             loop = asyncio.get_event_loop()
             valid_results = await loop.run_in_executor(
                 None, fetch_details_drission, restaurants, source_name
             )
         else:
-            # Use Playwright for Foody (less strict anti-bot)
             from playwright.async_api import async_playwright
             
             async def fetch_detail(context, rest):
@@ -185,4 +178,4 @@ class Command(BaseCommand):
         if deleted_count:
             print(f"[DELETED] Removed {deleted_count} invalid or incomplete entries")
 
-        print("--- Hoàn tất crawl_detail pipeline! ---")
+        print("--- Done crawl_detail pipeline! ---")

@@ -299,7 +299,6 @@ def crawl_progress(request):
         listing_url = ""
         
         for url in urls:
-            # For Foody: https://www.foody.vn/da-nang/food/nha-hang?page=1
             if 'foody.vn' in url.lower():
                 match = re.search(r'[?&]page=(\d+)', url)
                 if match:
@@ -310,23 +309,13 @@ def crawl_progress(request):
             
             # For RestaurantGuru: Check for listing page pattern
             elif 'restaurantguru.com' in url.lower():
-                # Main listing page pattern: 
-                # - https://restaurantguru.com/Da-Nang (page 1)
-                # - https://restaurantguru.com/Da-Nang/2 (page 2)
-                # - https://restaurantguru.com/Da-Nang/29 (page 29)
                 if '/Da-Nang' in url:
-                    # Check if it's a detail page (has more path segments after Da-Nang/number)
-                    # Detail pages look like: /Da-Nang/Restaurant-Name
-                    # Listing pages look like: /Da-Nang or /Da-Nang/29
-                    
-                    # Extract page number from URL like /Da-Nang/29
                     page_match = re.search(r'/Da-Nang/(\d+)/?$', url)
                     if page_match:
                         page_num = int(page_match.group(1))
                     elif url.rstrip('/').endswith('/Da-Nang'):
-                        page_num = 1  # No page number means page 1
+                        page_num = 1
                     else:
-                        # This is a detail page, skip it
                         continue
                     
                     if page_num > max_page:
