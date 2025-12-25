@@ -30,7 +30,6 @@ export default function Favorites() {
 
   return (
     <div className="container">
-      <h1 style={{ marginTop: 14, marginBottom: 12 }}>Your Favorites</h1>
       {loading ? (
         <LoadingIndicator />
       ) : (

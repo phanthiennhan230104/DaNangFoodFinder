@@ -2,9 +2,7 @@ import requests
 import re
 from django.conf import settings
 
-# =============================
 # CHUẨN HÓA ĐỊA CHỈ ĐÀ NẴNG
-# =============================
 
 def normalize_danang_address(address: str) -> str:
     """Chuẩn hóa địa chỉ Đà Nẵng để tăng tỷ lệ tìm tọa độ thành công."""
@@ -57,9 +55,9 @@ def normalize_danang_address(address: str) -> str:
     return addr_final
 
 
-# =============================
+
 # API GEOCODING
-# =============================
+
 
 def geocode_address(address: str, restaurant_name: str = "", save_instance=None):
     """Geocode a single address using OpenStreetMap (Nominatim)."""
@@ -127,9 +125,6 @@ def geocode_address(address: str, restaurant_name: str = "", save_instance=None)
         "Accept-Language": "vi"
     }
 
-    # Bounding box for Đà Nẵng (lon/lat) to bias/restrict Nominatim results
-    # Format for viewbox: left,top,right,bottom (lon_max/lat order)
-    # We'll use a slightly generous bbox around central Đà Nẵng
     min_lat = 15.95
     max_lat = 16.20
     min_lon = 108.10
@@ -151,8 +146,6 @@ def geocode_address(address: str, restaurant_name: str = "", save_instance=None)
             if lat is None or lng is None:
                 return
 
-            # If a Restaurant instance (or any model instance with id/PK) was given,
-            # update it safely using queryset.update to avoid race conditions.
             if hasattr(save_instance, "id") and save_instance.id:
                 Restaurant.objects.filter(id=save_instance.id).update(latitude=lat, longitude=lng)
             else:
