@@ -8,9 +8,6 @@ from api.models import CrawledData, Restaurant, RestaurantSourceStats
 import json
 from typing import Optional, Tuple, Dict, Any
 
-FEATURED_MIN_RATING = 4.0
-FEATURED_MIN_REVIEWS = 50
-
 MIN_RATING_RG = 4.5
 MIN_REVIEW_COUNT = 30
 
@@ -26,7 +23,7 @@ def _safe_text(x) -> Optional[str]:
     except Exception:
         return str(x).strip() or None
 
-
+#tạo kết qua json-ld ban đầu
 def extract_rg_from_jsonld(soup: BeautifulSoup) -> Dict[str, Any]:
     """
     Extract restaurant data from JSON-LD structured data.
@@ -44,38 +41,44 @@ def extract_rg_from_jsonld(soup: BeautifulSoup) -> Dict[str, Any]:
         "longitude": None,
     }
     
+    #Tìm JSON-LD scripts
     scripts = soup.find_all("script", attrs={"type": "application/ld+json"})
     if not scripts:
         return result
 
+    #Tìm Restaurant object
     def pick_restaurant_obj(obj):
         if not isinstance(obj, dict):
             return None
+        #Kiểm tra @type có phải Restaurant không
         t = obj.get("@type")
         if t == "Restaurant" or (isinstance(t, list) and any(x == "Restaurant" for x in t)):
             return obj
+        #Check @graph array
         if "@graph" in obj and isinstance(obj["@graph"], list):
             for it in obj["@graph"]:
-                r = pick_restaurant_obj(it)
+                r = pick_restaurant_obj(it) #Tìm đệ quy
                 if r:
                     return r
         return None
 
+    #Lặp qua tất cả JSON-LD scripts
     for sc in scripts:
         raw = (sc.string or "").strip()
         if not raw:
             continue
         try:
-            data = json.loads(raw)
+            data = json.loads(raw) #Phân tích cú pháp JSON
         except Exception:
             continue
 
         candidates = data if isinstance(data, list) else [data]
         for c in candidates:
-            robj = pick_restaurant_obj(c)
+            robj = pick_restaurant_obj(c) #Tìm object nhà hàng
             if not robj:
                 continue
-
+            
+            #Trích ra địa chỉ
             addr = robj.get("address")
             if isinstance(addr, dict):
                 parts = [
@@ -88,6 +91,7 @@ def extract_rg_from_jsonld(soup: BeautifulSoup) -> Dict[str, Any]:
             elif isinstance(addr, str):
                 result["address"] = addr.strip() or None
 
+            #Trích ra giờ mở cửa
             oh = robj.get("openingHours") or robj.get("openingHoursSpecification")
             if isinstance(oh, list):
                 if oh and isinstance(oh[0], str):
@@ -110,15 +114,18 @@ def extract_rg_from_jsonld(soup: BeautifulSoup) -> Dict[str, Any]:
             elif isinstance(oh, str):
                 result["opening_hours"] = oh.strip() or None
 
+            #Trích ra loại hình ẩm thực
             scui = robj.get("servesCuisine")
             if isinstance(scui, list):
                 result["cuisine_type"] = ", ".join([x.strip() for x in scui if isinstance(x, str) and x.strip()]) or None
             elif isinstance(scui, str):
                 result["cuisine_type"] = scui.strip() or None
 
+            #Trích ra khoảng giá
             pr = robj.get("priceRange")
             result["price_range"] = pr.strip() if isinstance(pr, str) and pr.strip() else None
 
+            #Trích ra đánh giá và đếm lượt đánh giá
             agg = robj.get("aggregateRating")
             if isinstance(agg, dict):
                 try:
@@ -130,7 +137,7 @@ def extract_rg_from_jsonld(soup: BeautifulSoup) -> Dict[str, Any]:
                     result["rating_count"] = int(str(rc).replace(",", "")) if rc is not None else None
                 except Exception:
                     pass
-
+            #Trích ra tọa độ địa lý
             geo = robj.get("geo")
             if isinstance(geo, dict):
                 try:
@@ -152,10 +159,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         items = CrawledData.objects.filter(
-            status=CrawledData.StatusChoices.PENDING,
-            linked_restaurant__isnull=False,
-            source__name="RestaurantGuru",
-        ).select_related("linked_restaurant")
+            status=CrawledData.StatusChoices.PENDING, #Lấy những cái chưa xử lý
+            linked_restaurant__isnull=False, #Chỉ lấy những cái có liên kết nhà hàng
+            source__name="RestaurantGuru",  #Chỉ lấy nguồn RestaurantGuru
+        ).select_related("linked_restaurant")   #Join với bảng Restaurant để truy cập nhanh
 
         if not items.exists():
             print("No pending RestaurantGuru detail data found.")
@@ -168,6 +175,7 @@ class Command(BaseCommand):
             for item in items:
                 rest: Restaurant = item.linked_restaurant
 
+                #Kiểm tra thiếu thông tin thì xoá
                 if not rest or not (rest.name and rest.detail_url):
                     rest_name = rest.name if rest else "Unknown"
                     print(f"[RESTAURANT_FAIL] {rest_name} (Reason: Missing basic information)")
@@ -179,7 +187,7 @@ class Command(BaseCommand):
 
                 soup = BeautifulSoup(item.raw_html or "", "lxml")
 
-                # Extract data from JSON-LD (primary source)
+                # Trích xuất dữ liệu từ JSON-LD
                 jsonld_data = extract_rg_from_jsonld(soup)
                 
                 # Get values from JSON-LD

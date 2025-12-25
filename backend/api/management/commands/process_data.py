@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from api.models import CrawledData, Restaurant
 from django.db.models import Q
 
+#Parse HTML by BeautifulSoup + lxml (Fast XML) (nhanh hơn html.parser)
 SELECTORS = {
     "foody": {
         "container": "div.row-item",
@@ -28,7 +29,7 @@ SELECTORS = {
     },
 }
 
-
+# Parse one CrawledData item
 def parse_one(item: CrawledData):
     key = item.source.name.lower()
     selectors = SELECTORS.get(key)
@@ -37,20 +38,25 @@ def parse_one(item: CrawledData):
         item.save(update_fields=["status"])
         return []
 
+    #Parse with BeautifulSoup + Selectors
     soup = BeautifulSoup(item.raw_html or "", "lxml")
     restaurants = soup.select(selectors["container"])
     results = []
 
+    #Loop qua từng restaurant
     for r in restaurants:
         name_el = r.select_one(selectors.get("name"))
 
+        #RestaurantGuru - không có tên thì bỏ qua
         if key == "restaurantguru":
             if not name_el:
                 continue
             name = name_el.get_text(strip=True)
 
-            name = re.sub(r'^\d+\.\s*', '', name)
-            address = "Da Nang, Vietnam"
+            name = re.sub(r'^\d+\.\s*', '', name) #Xoá số thứ tự ở đầu tên
+            address = "Da Nang, Vietnam" #Default address
+        
+        #Foody - đầy đủ name và address
         else:
             addr_el = r.select_one(selectors.get("address"))
             if not name_el or not addr_el:
@@ -60,20 +66,23 @@ def parse_one(item: CrawledData):
         
         if not name:
             continue
-
+        
+        #Extract image URL
         img_el = r.select_one(selectors.get("image"))
         image = None
         if img_el:
             image = img_el.get("data-src") or img_el.get("src")
 
+        #Extract rating
         rating = 0.0
         rating_el = r.select_one(selectors.get("rating"))
         if rating_el:
             try:
-                rating = float(rating_el.get_text(strip=True).split()[0])
+                rating = float(rating_el.get_text(strip=True).split()[0]) #Convert to float rating
             except Exception:
                 rating = 0.0
 
+        #Extract detail URL
         href_el = r.select_one(selectors.get("detail_url"))
         href = href_el.get("href") if href_el and href_el.has_attr("href") else None
         if not href:
@@ -86,7 +95,8 @@ def parse_one(item: CrawledData):
 
         if not (name and href):
             continue
-
+        
+        #Check duplicate by detail_url (Skip if exists)
         if Restaurant.objects.filter(detail_url=href).exists():
             continue
 
@@ -98,8 +108,9 @@ def parse_one(item: CrawledData):
             if cuisine_el:
                 cuisine_text = cuisine_el.get_text(strip=True)
 
-                cuisine = cuisine_text.split(',')[0].strip()
+                cuisine = cuisine_text.split(',')[0].strip() #Lấy loại ẩm thực đầu tiên
             
+            #Extract price range
             price_el = r.select_one(selectors.get("price"))
             if price_el:
                 price_range = price_el.get_text(strip=True)
@@ -117,7 +128,7 @@ def parse_one(item: CrawledData):
                 rag_context_text=f"{name}. Address: {address}.",
             )
         )
-
+    #Update status to PROCESSED
     item.status = CrawledData.StatusChoices.PROCESSED
     item.save(update_fields=["status"])
     return results
@@ -134,19 +145,21 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         source_name = options.get("source")
         qs = CrawledData.objects.filter(
+            #Chỉ lấy những cái chưa xử lý
             status=CrawledData.StatusChoices.PENDING
-        ).select_related("source")
+        ).select_related("source") #join CrawledSource table
 
         if source_name:
             qs = qs.filter(source__name__iexact=source_name)
 
-        qs = qs[:300]
+        qs = qs[:300] #Limit to 300 items per run
 
         all_restaurants = []
+        # Parse with ThreadPoolExecutor for concurrency
         with ThreadPoolExecutor(max_workers=8) as executor:
             for result in executor.map(parse_one, qs):
                 all_restaurants.extend(result)
-
+        # Create ignore conflicts
         with transaction.atomic():
             Restaurant.objects.bulk_create(all_restaurants, ignore_conflicts=True)
 
