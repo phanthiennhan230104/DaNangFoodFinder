@@ -8,22 +8,31 @@ from datetime import timedelta
 
 User = get_user_model()
 
-
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
 
     class Meta:
         model = User
         fields = ["email", "password"]
+    
+    def validate_email(self, value):
+        print(f"🔍 Validating email: {value}")
+        if User.objects.filter(email=value).exists():
+            print(f"❌ Email already exists: {value}")
+            raise serializers.ValidationError("Email already exists")
+        print(f"✅ Email is available: {value}")
+        return value
+    
     def create(self, validated_data):
+        print(f"🔵 Creating user with email: {validated_data['email']}")
         user = User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"]
         )
         user.is_active = False
         user.save()
+        print(f"✅ User saved: {user.email}, is_active: {user.is_active}")
         return user
-
 
 class MyTokenObtainPairSerializer(serializers.Serializer):
     email = serializers.EmailField()

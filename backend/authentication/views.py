@@ -49,20 +49,75 @@ def verify_reset_token(email, token):
 
 
 # ====================== REGISTER ======================
+# views.py
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
-        user = serializer.save()
-        otp = generate_otp()
-        save_otp(user.email, otp)
-        send_mail("Account Verification", f"Your OTP code is: {otp}", None, [user.email])
-        return user
+        print("🔵 Starting perform_create")
+        try:
+            user = serializer.save()
+            print(f"✅ User created: {user.email}, is_active: {user.is_active}")
+            
+            otp = generate_otp()
+            print(f"🔑 Generated OTP: {otp}")
+            
+            save_otp(user.email, otp)
+            print(f"💾 OTP saved to cache for: {user.email}")
+            
+            result = send_mail(
+                "Account Verification",
+                f"Your OTP code is: {otp}",
+                None,
+                [user.email],
+                fail_silently=False
+            )
+            print(f"📧 Email send result: {result}")
+            
+            if result == 0:
+                print("❌ Email was not sent (result = 0)")
+            else:
+                print(f"✅ Email sent successfully to {user.email}")
+            
+            return user
+            
+        except Exception as e:
+            print(f"❌ Error in perform_create: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
     def create(self, request, *args, **kwargs):
-        super().create(request, *args, **kwargs)
-        return Response({"message": "User registered successfully. OTP sent to email."}, status=201)
+        print("=" * 60)
+        print("🔵 Starting create method")
+        print(f"📥 Request data: {request.data}")
+        
+        try:
+            # Validate serializer first
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            print("✅ Serializer validation passed")
+            
+            # Perform create
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            
+            print("✅ Registration completed successfully")
+            print("=" * 60)
+            
+            return Response(
+                {"message": "User registered successfully. OTP sent to email."}, 
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
+            
+        except Exception as e:
+            print(f"❌ Create failed: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
+            print("=" * 60)
+            raise
 
 
 # ====================== VERIFY OTP ======================
