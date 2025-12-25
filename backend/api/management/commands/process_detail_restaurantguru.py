@@ -52,10 +52,8 @@ def extract_rg_from_jsonld(soup: BeautifulSoup) -> Dict[str, Any]:
         if not isinstance(obj, dict):
             return None
         t = obj.get("@type")
-        # @type can be "Restaurant" or ["Thing","Restaurant",...]
         if t == "Restaurant" or (isinstance(t, list) and any(x == "Restaurant" for x in t)):
             return obj
-        # Some pages wrap in {"@graph":[...]}
         if "@graph" in obj and isinstance(obj["@graph"], list):
             for it in obj["@graph"]:
                 r = pick_restaurant_obj(it)
@@ -72,14 +70,12 @@ def extract_rg_from_jsonld(soup: BeautifulSoup) -> Dict[str, Any]:
         except Exception:
             continue
 
-        # data may be dict or list
         candidates = data if isinstance(data, list) else [data]
         for c in candidates:
             robj = pick_restaurant_obj(c)
             if not robj:
                 continue
 
-            # Address
             addr = robj.get("address")
             if isinstance(addr, dict):
                 parts = [
@@ -92,11 +88,9 @@ def extract_rg_from_jsonld(soup: BeautifulSoup) -> Dict[str, Any]:
             elif isinstance(addr, str):
                 result["address"] = addr.strip() or None
 
-            # Opening hours
             oh = robj.get("openingHours") or robj.get("openingHoursSpecification")
             if isinstance(oh, list):
                 if oh and isinstance(oh[0], str):
-                    # Format: ["Mo 10:00-23:00", "Tu 10:00-23:00", ...]
                     result["opening_hours"] = " | ".join([x.strip() for x in oh if isinstance(x, str) and x.strip()]) or None
                 elif oh and isinstance(oh[0], dict):
                     chunks = []
@@ -116,18 +110,15 @@ def extract_rg_from_jsonld(soup: BeautifulSoup) -> Dict[str, Any]:
             elif isinstance(oh, str):
                 result["opening_hours"] = oh.strip() or None
 
-            # Cuisine - get all types
             scui = robj.get("servesCuisine")
             if isinstance(scui, list):
                 result["cuisine_type"] = ", ".join([x.strip() for x in scui if isinstance(x, str) and x.strip()]) or None
             elif isinstance(scui, str):
                 result["cuisine_type"] = scui.strip() or None
 
-            # Price range
             pr = robj.get("priceRange")
             result["price_range"] = pr.strip() if isinstance(pr, str) and pr.strip() else None
 
-            # Rating + votes
             agg = robj.get("aggregateRating")
             if isinstance(agg, dict):
                 try:
@@ -140,7 +131,6 @@ def extract_rg_from_jsonld(soup: BeautifulSoup) -> Dict[str, Any]:
                 except Exception:
                     pass
 
-            # Geo coordinates (latitude, longitude)
             geo = robj.get("geo")
             if isinstance(geo, dict):
                 try:
@@ -449,4 +439,4 @@ class Command(BaseCommand):
             invalid_restaurants.delete()
             print(f"[CLEANUP] Deleted {cleanup_count} incomplete restaurants")
 
-        print("--- Hoàn tất process_detail_restaurantguru pipeline! ---")
+        print("--- Done process_detail_restaurantguru pipeline! ---")

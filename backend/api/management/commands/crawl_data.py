@@ -6,7 +6,6 @@ from asgiref.sync import sync_to_async
 from django.core.management.base import BaseCommand
 from api.models import CrawledSource, CrawledData
 
-# List of User-Agents to rotate
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
@@ -51,20 +50,17 @@ def fetch_html_drission(url: str):
         import time
         
         print(f"[INFO] Using DrissionPage (anti-bot bypass)...")
-        
-        # Create browser - DrissionPage uses real Chrome profile
+ 
         page = ChromiumPage()
         
         try:
-            # Small random delay (1-3 seconds) - DrissionPage doesn't need long delays
             delay = random.uniform(1, 3)
             print(f"[INFO] Waiting {delay:.1f}s before request...")
             time.sleep(delay)
             
             page.get(url)
-            time.sleep(2)  # Wait for page to load
-            
-            # Quick scroll to trigger lazy loading
+            time.sleep(2)
+
             page.scroll.to_bottom()
             time.sleep(1)
             page.scroll.to_top()
@@ -72,8 +68,7 @@ def fetch_html_drission(url: str):
             
             html = page.html
             title = page.title
-            
-            # Check if blocked
+
             if "Suspicious" in title or "captcha" in title.lower() or "blocked" in title.lower():
                 print(f"[BLOCKED] {url} - Bot detected: {title}")
                 return None
@@ -105,7 +100,6 @@ def fetch_multiple_drission(urls: list):
     
     try:
         for i, url in enumerate(urls):
-            # Longer delay between pages (5-10 seconds) to avoid detection
             if i > 0:
                 delay = random.uniform(5, 10)
                 print(f"[INFO] Waiting {delay:.1f}s between requests...")
@@ -116,8 +110,7 @@ def fetch_multiple_drission(urls: list):
             try:
                 page.get(url)
                 time.sleep(2)
-                
-                # Scroll like a human
+
                 page.scroll.to_bottom()
                 time.sleep(random.uniform(0.5, 1.5))
                 page.scroll.to_top()
@@ -128,7 +121,6 @@ def fetch_multiple_drission(urls: list):
                 
                 if "Suspicious" in title or "captcha" in title.lower():
                     print(f"[BLOCKED] {url} - Bot detected!")
-                    # If blocked, wait longer and retry once
                     print("[INFO] Waiting 30s before retry...")
                     time.sleep(30)
                     page.get(url)
@@ -159,7 +151,6 @@ def fetch_multiple_drission(urls: list):
 
 async def fetch_html_playwright(url: str):
     """Fallback: Playwright fetch for JavaScript-rendered pages"""
-    # Use DrissionPage instead - much better at bypassing anti-bot
     import asyncio
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, fetch_html_drission, url)
@@ -210,14 +201,11 @@ class Command(BaseCommand):
             )
 
         results = []
-        
-        # Use DrissionPage for RestaurantGuru (better anti-bot), aiohttp for others
+
         if source_name.lower() == "restaurantguru":
             print(f"[INFO] Using DrissionPage for RestaurantGuru (anti-bot bypass)")
-            # Use single browser session for multiple URLs
             results = await sync_to_async(fetch_multiple_drission)(urls)
         else:
-            # Use aiohttp for Foody and other static pages
             async with aiohttp.ClientSession() as session:
                 tasks = [fetch_html(session, u) for u in urls]
                 responses = await asyncio.gather(*tasks)
