@@ -12,6 +12,7 @@ class Candidate:
     rating: float | None
     meal_type: str | None  # có thể None, sẽ suy ra sau
     price: int  # numeric (đồng)
+    address: str | None = None
 
 def parse_price_range(price_range: str | None, default_price: int = 0) -> int:
     if not price_range:
@@ -31,8 +32,58 @@ def parse_price_range(price_range: str | None, default_price: int = 0) -> int:
         return default_price
     return sum(nums) // len(nums)
 
-def infer_meal(price: int, cut_breakfast: int, cut_dinner: int) -> str:
-    # Linh hoạt theo threshold truyền vào
+def infer_meal(price: int, cut_breakfast: int, cut_dinner: int, cuisine_type: str | None = None, name: str | None = None) -> str:
+    """Phân loại meal type theo cuisine_type và name chính xác.
+    
+    - Breakfast: cà phê, bánh, bún, phở, ăn nhanh (KHÔNG: ăn vặt, bar)
+    - Lunch: cơm, mỳ, bún, suất, bình dân
+    - Dinner: hải sản, lẩu, nướng, bia, ăn vặt, nhậu, bar, karaoke
+    """
+    if not cuisine_type and not name:
+        # Fallback to price
+        if price <= cut_breakfast:
+            return "breakfast"
+        if price >= cut_dinner:
+            return "dinner"
+        return "lunch"
+    
+    # Combine cuisine_type and name for checking
+    text_lower = ""
+    if cuisine_type:
+        text_lower += cuisine_type.lower() + " "
+    if name:
+        text_lower += name.lower()
+    
+    # Exclude breakfast nếu có ăn vặt hoặc bar
+    exclude_breakfast = ["ăn vặt", "bar", "pub", "karaoke", "nhậu"]
+    for kw in exclude_breakfast:
+        if kw in text_lower:
+            # Nếu có exclude keyword, không phải breakfast
+            # Check dinner/lunch instead
+            break
+    else:
+        # Breakfast keywords (nếu không có exclude keyword)
+        breakfast_keywords = ["cà phê", "coffee", "café", "bánh", "bread", "pastry", 
+                             "bún", "phở", "ăn nhanh", "fast food", "breakfast"]
+        for kw in breakfast_keywords:
+            if kw in text_lower:
+                return "breakfast"
+    
+    # Dinner keywords
+    dinner_keywords = ["hải sản", "seafood", "lẩu", "hotpot", "nướng", "grilled", "bbq",
+                      "bia", "beer", "ăn vặt", "snack", "street food", "nhậu", 
+                      "bar", "pub", "karaoke", "restaurant & bar", "tôm", "cua", "mực"]
+    for kw in dinner_keywords:
+        if kw in text_lower:
+            return "dinner"
+    
+    # Lunch keywords
+    lunch_keywords = ["cơm", "rice", "mỳ", "mì", "noodle", "noodles", "suất", "meal", "bình dân"]
+    for kw in lunch_keywords:
+        if kw in text_lower:
+            return "lunch"
+    
+    # Fallback to price
     if price <= cut_breakfast:
         return "breakfast"
     if price >= cut_dinner:

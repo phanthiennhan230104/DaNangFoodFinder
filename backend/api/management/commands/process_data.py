@@ -43,17 +43,15 @@ def parse_one(item: CrawledData):
 
     for r in restaurants:
         name_el = r.select_one(selectors.get("name"))
-        
-        # For RestaurantGuru, address might not be in list page
+
         if key == "restaurantguru":
             if not name_el:
                 continue
             name = name_el.get_text(strip=True)
-            # Remove numbering like "1. " from name
+
             name = re.sub(r'^\d+\.\s*', '', name)
-            address = "Da Nang, Vietnam"  # Default address, will be updated from detail page
+            address = "Da Nang, Vietnam"
         else:
-            # For Foody and others, require address
             addr_el = r.select_one(selectors.get("address"))
             if not name_el or not addr_el:
                 continue
@@ -64,7 +62,6 @@ def parse_one(item: CrawledData):
             continue
 
         img_el = r.select_one(selectors.get("image"))
-        # For RestaurantGuru, try data-src first
         image = None
         if img_el:
             image = img_el.get("data-src") or img_el.get("src")
@@ -82,7 +79,6 @@ def parse_one(item: CrawledData):
         if not href:
             continue
 
-        # Handle relative URLs
         if key == "foody" and href.startswith("/"):
             href = f"https://www.foody.vn{href}"
         elif key == "restaurantguru" and href.startswith("/"):
@@ -91,11 +87,9 @@ def parse_one(item: CrawledData):
         if not (name and href):
             continue
 
-        # Skip if already exists
         if Restaurant.objects.filter(detail_url=href).exists():
             continue
 
-        # Extract cuisine and price for RestaurantGuru
         cuisine = None
         price_range = None
         
@@ -103,7 +97,7 @@ def parse_one(item: CrawledData):
             cuisine_el = r.select_one(selectors.get("cuisine"))
             if cuisine_el:
                 cuisine_text = cuisine_el.get_text(strip=True)
-                # Extract first cuisine type
+
                 cuisine = cuisine_text.split(',')[0].strip()
             
             price_el = r.select_one(selectors.get("price"))
@@ -130,7 +124,7 @@ def parse_one(item: CrawledData):
 
 
 class Command(BaseCommand):
-    help = "Parse CrawledData (list page) thành Restaurant (Foody)"
+    help = "Parse CrawledData (list page) into Restaurant (Foody)"
 
     def add_arguments(self, parser):
         parser.add_argument(

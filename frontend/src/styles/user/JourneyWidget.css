@@ -1,0 +1,672 @@
+/* Journey Widget Container */
+.journey-widget-container {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 9998;
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Floating Bubble Button */
+.journey-widget-bubble {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.journey-widget-bubble:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+}
+
+/* Popup Container */
+.journey-widget-popup {
+  width: 420px;
+  height: 580px;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-bottom: 10px;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.journey-widget-header {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.journey-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.journey-close-btn {
+  cursor: pointer;
+  font-size: 18px;
+  transition: transform 0.2s;
+}
+
+.journey-close-btn:hover {
+  transform: scale(1.2);
+}
+
+/* Content */
+.journey-widget-content {
+  flex: 1;
+  padding: 12px;
+  background-color: #f9fafb;
+  overflow-y: auto;
+}
+
+/* Loading */
+.journey-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #10b981;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty State */
+.journey-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9ca3af;
+  text-align: center;
+  gap: 12px;
+}
+
+.journey-empty p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.journey-empty span {
+  font-size: 14px;
+}
+
+/* Journey List */
+.journey-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Journey Item */
+.journey-item {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.journey-item.past {
+  border-left: 4px solid #ef4444;
+  background: linear-gradient(to right, #fef2f2, #fff);
+}
+
+.journey-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  border-color: #10b981;
+}
+
+.journey-item.past:hover {
+  border-left-color: #ef4444;
+}
+
+/* Past Badge */
+.past-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ef4444;
+  color: #fff;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.journey-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #10b981;
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.journey-date {
+  color: #1f2937;
+}
+
+.journey-item-meals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mini-meal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.mini-meal-label {
+  color: #6b7280;
+  min-width: 40px;
+}
+
+.mini-meal-name {
+  color: #374151;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+.journey-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Delete Button */
+.delete-btn {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 12px;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: #ef4444;
+  color: #fff;
+}
+
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Journey Detail */
+.journey-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.journey-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.journey-detail-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.journey-detail-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2937;
+  font-size: 15px;
+}
+
+/* Past Flag */
+.past-flag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #ef4444;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Delete Button Detail */
+.delete-btn-detail {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+
+.delete-btn-detail:hover:not(:disabled) {
+  background: #ef4444;
+  color: #fff;
+}
+
+.delete-btn-detail:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.back-btn {
+  background: #e5e7eb;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+
+.back-btn:hover {
+  background: #d1d5db;
+}
+
+.journey-meals {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Meal Card */
+.journey-meal-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.journey-meal-card:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.journey-meal-card.empty {
+  opacity: 0.6;
+}
+
+.meal-icon {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.meal-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meal-type {
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 600;
+}
+
+.meal-name {
+  margin: 0;
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.meal-empty {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 13px;
+}
+
+.meal-cuisine {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.meal-details {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.meal-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+.meal-price {
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 600;
+  background: #fee2e2;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.meal-address {
+  margin: 6px 0 0 0;
+  font-size: 11px;
+  color: #6b7280;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  line-height: 1.4;
+}
+
+/* Footer */
+.journey-widget-footer {
+  padding: 12px;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: center;
+}
+
+.refresh-btn {
+  background: #10b981;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #059669;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .journey-widget-popup {
+    width: calc(100vw - 40px);
+    height: calc(100vh - 120px);
+    max-height: 500px;
+  }
+
+  .journey-widget-container {
+    left: 10px;
+    bottom: 10px;
+  }
+
+  .journey-widget-bubble {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* Notification */
+.journey-notification {
+  position: absolute;
+  bottom: 70px;
+  left: 12px;
+  right: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideInNotification 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.journey-notification.success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.journey-notification.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+@keyframes slideInNotification {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Confirm Delete Modal */
+.journey-confirm-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  z-index: 10;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.journey-confirm-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: scaleIn 0.2s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.confirm-icon {
+  width: 56px;
+  height: 56px;
+  background: #fee2e2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  color: #ef4444;
+  font-size: 22px;
+}
+
+.journey-confirm-modal h4 {
+  margin: 0 0 8px;
+  color: #1f2937;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.journey-confirm-modal p {
+  margin: 0 0 20px;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-cancel {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirm-cancel:hover {
+  background: #f3f4f6;
+}
+
+.confirm-delete {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirm-delete:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.confirm-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

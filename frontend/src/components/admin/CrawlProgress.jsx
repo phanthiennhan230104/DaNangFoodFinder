@@ -22,7 +22,7 @@ export default function CrawlProgress() {
       }
     } catch (err) {
       console.error("Failed to fetch crawl progress:", err);
-      setError("Không thể tải tiến trình cào dữ liệu");
+      setError("Cannot load crawl progress!");
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ export default function CrawlProgress() {
 
   const formatTime = (date) => {
     if (!date) return "";
-    return date.toLocaleTimeString("vi-VN", {
+    return date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",

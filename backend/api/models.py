@@ -146,28 +146,6 @@ class Restaurant(models.Model):
     def __str__(self) -> str:
         return self.name
 
-class RestaurantReview(models.Model):
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="reviews")
-    source = models.ForeignKey(CrawledSource, on_delete=models.CASCADE, related_name="reviews")
-    source_review_id = models.CharField(max_length=255, blank=True, null=True)
-    rating = models.DecimalField(max_digits=2, decimal_places=1, null=True, blank=True)
-    comment = models.TextField(blank=True, null=True)
-    review_language = models.CharField(max_length=10, default="vi")
-    review_time = models.DateTimeField(null=True, blank=True)
-    reviewer_name = models.CharField(max_length=255, blank=True, null=True)
-    sentiment_score = models.FloatField(default=0.0)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = "RestaurantReviews"
-        indexes = [
-            models.Index(fields=["restaurant", "source"]),
-            models.Index(fields=["review_time"]),
-        ]
-
-    def __str__(self) -> str:
-        return f"{self.restaurant.name} - {self.source.name}"
-
 class RestaurantSourceStats(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="source_stats")
     source = models.ForeignKey(CrawledSource, on_delete=models.CASCADE, related_name="restaurant_stats")

@@ -5,7 +5,7 @@ import axios from "axios";
 const ChatbotWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { from: "bot", text: "Xin chào! Tôi có thể giúp bạn tìm món ăn và quán ăn." },
+    { from: "bot", text: "Xin chào! Tôi có thể giúp bạn tìm món ăn và quán ăn.\nHello! I can help you find food and restaurants." },
   ]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
@@ -28,19 +28,22 @@ const ChatbotWidget = () => {
     setIsLoading(true);
 
     try {
+      // Detect browser language to send explicit lang hint
+      const navLang = (navigator.language || navigator.userLanguage || 'vi').toLowerCase();
+      const lang = navLang.startsWith('en') ? 'en' : 'vi';
+
+      const payload = { query: trimmed, lang };
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept-Language': lang,
+      };
+
       const response = await (async () => {
         try {
-          return await axios.post(
-            RAG_API_URL,
-            { query: trimmed },
-            { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
-          );
+          return await axios.post(RAG_API_URL, payload, { headers, timeout: 15000 });
         } catch (err) {
-          return await axios.post(
-            FALLBACK_SEARCH_URL,
-            { query: trimmed },
-            { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
-          );
+          return await axios.post(FALLBACK_SEARCH_URL, payload, { headers, timeout: 15000 });
         }
       })();
 
@@ -106,20 +109,20 @@ const ChatbotWidget = () => {
         cursor: "pointer",
         transition: "all 0.2s",
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
-        e.currentTarget.style.transform = "translateY(-2px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-        e.currentTarget.style.transform = "translateY(0)";
-      }}
-      onClick={() => setSelectedRestaurant(restaurant)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = "0 4px 8px rgba(0,0,0,0.15)";
+          e.currentTarget.style.transform = "translateY(-2px)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+          e.currentTarget.style.transform = "translateY(0)";
+        }}
+        onClick={() => setSelectedRestaurant(restaurant)}
       >
         <div style={{ display: "flex", gap: "12px" }}>
-          {restaurant.image ? (
-            <img 
-              src={restaurant.image} 
+          {restaurant.image && restaurant.image.trim() !== '' ? (
+            <img
+              src={restaurant.image}
               alt={restaurant.name}
               style={{
                 width: "80px",
@@ -128,37 +131,41 @@ const ChatbotWidget = () => {
                 objectFit: "cover"
               }}
               onError={(e) => {
+                // If image fails to load, replace with placeholder
                 e.target.style.display = 'none';
+                const placeholder = e.target.nextElementSibling;
+                if (placeholder) placeholder.style.display = 'flex';
               }}
             />
-          ) : (
-            <div style={{
-              width: "80px",
-              height: "80px",
-              borderRadius: "8px",
-              backgroundColor: "#f3f4f6",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
-              <FaUtensils size={24} color="#9ca3af" />
-            </div>
-          )}
-          
+          ) : null}
+          <div style={{
+            width: "80px",
+            height: "80px",
+            borderRadius: "8px",
+            backgroundColor: "#fff3e0",
+            display: restaurant.image && restaurant.image.trim() !== '' ? "none" : "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "2px solid #ffb74d"
+          }}>
+            <FaUtensils size={28} color="#ff7a18" />
+          </div>
+
+
           <div style={{ flex: 1 }}>
-            <h4 style={{ 
-              margin: "0 0 4px 0", 
-              color: "#1f2937", 
-              fontSize: "15px", 
+            <h4 style={{
+              margin: "0 0 4px 0",
+              color: "#1f2937",
+              fontSize: "15px",
               fontWeight: "600",
               lineHeight: "1.3"
             }}>
               {restaurant.name}
             </h4>
-            
-            <p style={{ 
-              margin: "2px 0", 
-              color: "#6b7280", 
+
+            <p style={{
+              margin: "2px 0",
+              color: "#6b7280",
               fontSize: "12px",
               display: "flex",
               alignItems: "center",
@@ -167,11 +174,11 @@ const ChatbotWidget = () => {
               <FaUtensils size={10} />
               {restaurant.cuisine_type}
             </p>
-            
-            <div style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              gap: "8px", 
+
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
               marginTop: "4px",
               flexWrap: "wrap"
             }}>
@@ -181,10 +188,10 @@ const ChatbotWidget = () => {
                   {restaurant.rating ? restaurant.rating.toFixed(1) : "N/A"}
                 </span>
               </div>
-              
-              <span style={{ 
-                fontSize: "12px", 
-                color: "#ef4444", 
+
+              <span style={{
+                fontSize: "12px",
+                color: "#ef4444",
                 fontWeight: "600",
                 backgroundColor: "#fee2e2",
                 padding: "2px 8px",
@@ -195,11 +202,11 @@ const ChatbotWidget = () => {
             </div>
           </div>
         </div>
-        
+
         {restaurant.address && (
-          <p style={{ 
-            margin: "8px 0 0 0", 
-            fontSize: "11px", 
+          <p style={{
+            margin: "8px 0 0 0",
+            fontSize: "11px",
             color: "#6b7280",
             borderTop: "1px solid #e5e7eb",
             paddingTop: "8px",
@@ -212,11 +219,11 @@ const ChatbotWidget = () => {
             <span>{restaurant.address}</span>
           </p>
         )}
-        
+
         {restaurant.phone && (
-          <p style={{ 
-            margin: "4px 0 0 0", 
-            fontSize: "11px", 
+          <p style={{
+            margin: "4px 0 0 0",
+            fontSize: "11px",
             color: "#6b7280",
             display: "flex",
             alignItems: "center",
@@ -226,20 +233,8 @@ const ChatbotWidget = () => {
             {restaurant.phone}
           </p>
         )}
-        
-        {restaurant.description && restaurant.description.length > 0 && (
-          <p style={{
-            margin: "6px 0 0 0",
-            fontSize: "11px",
-            color: "#6b7280",
-            fontStyle: "italic",
-            lineHeight: "1.4"
-          }}>
-            {restaurant.description.length > 100 
-              ? restaurant.description.substring(0, 100) + "..." 
-              : restaurant.description}
-          </p>
-        )}
+
+
       </div>
     );
   };
@@ -276,7 +271,7 @@ const ChatbotWidget = () => {
           {restaurant.phone && <p style={{ color: '#6b7280' }}><FaPhone /> {restaurant.phone}</p>}
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <a href={`/nearby?query=${encodeURIComponent(restaurant.name)}`} style={{ textDecoration: 'none' }}>
-              <button style={{ padding: '8px 12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Xem trên bản đồ</button>
+              <button style={{ padding: '8px 12px', background: '#ff6633', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Xem trên bản đồ</button>
             </a>
             <button style={{ padding: '8px 12px', background: '#e5e7eb', color: '#111827', border: 'none', borderRadius: 6, cursor: 'pointer' }} onClick={onClose}>Đóng</button>
           </div>
@@ -295,12 +290,12 @@ const ChatbotWidget = () => {
         fontFamily: "Poppins, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
-      
+
       {isOpen && (
         <div
           style={{
-            width: "380px",
-            height: "600px",
+            width: "450px",
+            height: "650px",
             backgroundColor: "#fff",
             borderRadius: "16px",
             boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
@@ -310,10 +305,10 @@ const ChatbotWidget = () => {
             marginBottom: "10px",
           }}
         >
-          
+
           <div
             style={{
-              background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+              background: "linear-gradient(135deg, #ff7a18 0%, #ff5e3a 100%)",
               color: "#fff",
               padding: "16px",
               display: "flex",
@@ -326,18 +321,16 @@ const ChatbotWidget = () => {
                 <FaUtensils size={18} />
                 DNFF Assistant
               </div>
-              <div style={{ fontSize: "11px", opacity: 0.9, marginTop: "2px" }}>
-                🍜 Tìm món ăn & quán ăn Đà Nẵng
-              </div>
+
             </div>
-            <FaTimes 
-              onClick={() => setIsOpen(false)} 
+            <FaTimes
+              onClick={() => setIsOpen(false)}
               style={{ cursor: "pointer", fontSize: "18px" }}
-              title="Đóng"
+              title="Close"
             />
           </div>
 
-          
+
           <div
             style={{
               flex: 1,
@@ -357,7 +350,7 @@ const ChatbotWidget = () => {
                 <div
                   style={{
                     display: "inline-block",
-                    backgroundColor: msg.from === "user" ? "#2563eb" : "#fff",
+                    backgroundColor: msg.from === "user" ? "#ff6633" : "#f3f4f6",
                     color: msg.from === "user" ? "#fff" : "#1f2937",
                     padding: "10px 14px",
                     borderRadius: msg.from === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
@@ -384,8 +377,8 @@ const ChatbotWidget = () => {
             {selectedRestaurant && (
               <RestaurantModal restaurant={selectedRestaurant} onClose={() => setSelectedRestaurant(null)} />
             )}
-            
-            
+
+
             {isLoading && (
               <div style={{ textAlign: "left", margin: "10px 0" }}>
                 <div style={{
@@ -396,30 +389,30 @@ const ChatbotWidget = () => {
                   boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <div className="loading-dots" style={{ 
-                      display: "flex", 
-                      gap: "4px" 
+                    <div className="loading-dots" style={{
+                      display: "flex",
+                      gap: "4px"
                     }}>
-                      <span style={{ 
-                        width: "8px", 
-                        height: "8px", 
-                        backgroundColor: "#2563eb", 
+                      <span style={{
+                        width: "8px",
+                        height: "8px",
+                        backgroundColor: "#ff6633",
                         borderRadius: "50%",
                         animation: "bounce 1.4s infinite ease-in-out both",
                         animationDelay: "-0.32s"
                       }}></span>
-                      <span style={{ 
-                        width: "8px", 
-                        height: "8px", 
-                        backgroundColor: "#2563eb", 
+                      <span style={{
+                        width: "8px",
+                        height: "8px",
+                        backgroundColor: "#ff6633",
                         borderRadius: "50%",
                         animation: "bounce 1.4s infinite ease-in-out both",
                         animationDelay: "-0.16s"
                       }}></span>
-                      <span style={{ 
-                        width: "8px", 
-                        height: "8px", 
-                        backgroundColor: "#2563eb", 
+                      <span style={{
+                        width: "8px",
+                        height: "8px",
+                        backgroundColor: "#ff6633",
                         borderRadius: "50%",
                         animation: "bounce 1.4s infinite ease-in-out both"
                       }}></span>
@@ -429,7 +422,7 @@ const ChatbotWidget = () => {
                 </div>
               </div>
             )}
-            
+
             <div ref={messagesEndRef} />
           </div>
 
@@ -467,10 +460,9 @@ const ChatbotWidget = () => {
               )}
             </button>
 
-            
+
             <input
               type="text"
-              placeholder="VD: phở bò, quán Hàn Quốc..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -486,12 +478,12 @@ const ChatbotWidget = () => {
               }}
             />
 
-            
+
             <button
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
               style={{
-                backgroundColor: isLoading || !input.trim() ? "#9ca3af" : "#2563eb",
+                backgroundColor: isLoading || !input.trim() ? "#9ca3af" : "#ff6633",
                 color: "#fff",
                 border: "none",
                 borderRadius: "10px",
@@ -502,25 +494,25 @@ const ChatbotWidget = () => {
                 transition: "all 0.2s"
               }}
             >
-              Gửi
+              Send
             </button>
           </div>
         </div>
       )}
 
-      
+
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
           style={{
-            background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
+            background: "linear-gradient(135deg, #ff7a18 0%, #ff5e3a 100%)",
             color: "#fff",
             border: "none",
             borderRadius: "50%",
             width: "64px",
             height: "64px",
             cursor: "pointer",
-            boxShadow: "0 6px 20px rgba(37, 99, 235, 0.4)",
+            boxShadow: "0 6px 20px rgba(255, 122, 24, 0.4)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -528,18 +520,18 @@ const ChatbotWidget = () => {
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "scale(1.1)";
-            e.currentTarget.style.boxShadow = "0 8px 25px rgba(37, 99, 235, 0.5)";
+            e.currentTarget.style.boxShadow = "0 8px 25px rgba(255, 122, 24, 0.5)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 6px 20px rgba(37, 99, 235, 0.4)";
+            e.currentTarget.style.boxShadow = "0 6px 20px rgba(255, 122, 24, 0.4)";
           }}
         >
           <FaComments size={28} />
         </button>
       )}
-      
-      
+
+
       <style>{`
         @keyframes bounce {
           0%, 80%, 100% { 

@@ -6,25 +6,19 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from api.models import CrawledData, Restaurant, RestaurantSourceStats, CrawledSource
 
-# Day mapping for opening hours format (same as RestaurantGuru)
 DAY_NAMES = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
-# Constants for quality calculation
-FEATURED_MIN_RATING = 4.0  # Minimum normalized rating (scale 5) to be featured
-FEATURED_MIN_REVIEWS = 50  # Minimum review count to be featured
+FEATURED_MIN_RATING = 4.0
+FEATURED_MIN_REVIEWS = 50
 
-# === FILTER CRITERIA FOR HIGH QUALITY RESTAURANTS ===
-# Foody uses scale 10, so 8.5/10 = 4.25/5
-MIN_RATING_FOODY = 8.0  # Minimum rating on Foody (scale 10)
-MIN_REVIEW_COUNT = 50   # Minimum review count to be saved
 
-# === FEATURED CRITERIA (stricter) ===
-# Foody: rating >= 8.5/10 and reviews >= 50
-FEATURED_MIN_RATING_FOODY = 8.0  # Scale 10
+MIN_RATING_FOODY = 8.0
+MIN_REVIEW_COUNT = 50
+
+FEATURED_MIN_RATING_FOODY = 8.0
 FEATURED_MIN_REVIEWS_FOODY = 50
 
 class Command(BaseCommand):
-    help = "Parse Foody detail HTML từ CrawledData.linked_restaurant và update Restaurant"
 
     def handle(self, *args, **options):
         items = CrawledData.objects.filter(
@@ -88,8 +82,7 @@ class Command(BaseCommand):
                 opening_hours = None
                 time_ranges = data.get("TimeRanges", [])
                 opening_time = data.get("OpeningTime", [])
-                
-                # Method 1: Use TimeRanges if available (has StartTime24h/EndTime24h)
+
                 if time_ranges:
                     try:
                         tr = time_ranges[0]
@@ -105,7 +98,6 @@ class Command(BaseCommand):
                 # Method 2: Fallback to OpeningTime if TimeRanges not available
                 if not opening_hours and opening_time:
                     try:
-                        # Foody usually stores only 1 entry, apply to all days
                         ot = opening_time[0]
                         time_open = f"{ot['TimeOpen']['Hours']:02d}:{ot['TimeOpen']['Minutes']:02d}"
                         time_close = f"{ot['TimeClose']['Hours']:02d}:{ot['TimeClose']['Minutes']:02d}"
@@ -115,11 +107,9 @@ class Command(BaseCommand):
                     except Exception:
                         opening_hours = None
 
-                # Extract cuisine type
                 cuisines = data.get("Cuisines", [])
                 cuisine_type = None
                 if cuisines:
-                    # Get all cuisines, not just first one (same as RestaurantGuru)
                     cuisine_names = []
                     for c in cuisines:
                         name = c.get("NameEn") or c.get("Name")
@@ -134,19 +124,15 @@ class Command(BaseCommand):
                 # Extract rating - Foody uses scale 10, need to normalize to scale 5
                 raw_rating = data.get("AvgRating") or data.get("Rating")
                 review_count = data.get("TotalReview") or data.get("ReviewCount") or 0
-                
-                # Normalize rating from scale 10 to scale 5
+
                 normalized_rating = None
                 if raw_rating:
                     try:
                         raw_rating = float(raw_rating)
-                        # Foody rating is 0-10, convert to 0-5
                         normalized_rating = raw_rating / 2.0
                     except (ValueError, TypeError):
                         normalized_rating = None
 
-                # Calculate quality score using normalized rating (scale 5)
-                # Formula: normalized_rating * log10(review_count + 1)
                 quality_score = 0.0
                 if normalized_rating and review_count:
                     try:
@@ -154,8 +140,6 @@ class Command(BaseCommand):
                     except (ValueError, TypeError):
                         pass
 
-                # Determine if featured - must have both high rating AND many reviews
-                # Foody: use original scale 10 rating for comparison
                 is_featured = (
                     raw_rating is not None and 
                     raw_rating >= FEATURED_MIN_RATING_FOODY and 
@@ -185,7 +169,6 @@ class Command(BaseCommand):
                     continue
 
                 # === FILTER: Only keep high quality restaurants ===
-                # Foody rating must be >= 8.5 (scale 10) and review count >= 50
                 if not raw_rating or raw_rating < MIN_RATING_FOODY:
                     print(f"[RESTAURANT_FAIL] {rest.name} (Reason: Rating {raw_rating}/10 below standard {MIN_RATING_FOODY})")
                     rest.delete()
@@ -200,7 +183,6 @@ class Command(BaseCommand):
                     deleted_count += 1
                     continue
 
-                # Update RAG context (same format as RestaurantGuru)
                 rag_parts = [rest.name]
                 if rest.address:
                     rag_parts.append(f"Address: {rest.address}")
@@ -214,7 +196,6 @@ class Command(BaseCommand):
                     rag_parts.append(f"Rating: {normalized_rating:.1f}/5")
                 rag_context_text = ". ".join(rag_parts) + "."
 
-                # Update restaurant
                 rest.price_range = price_range
                 rest.opening_hours = opening_hours
                 rest.cuisine_type = cuisine_type
@@ -236,7 +217,7 @@ class Command(BaseCommand):
                     source=foody_source,
                     defaults={
                         "source_url": rest.detail_url,
-                        "avg_rating": normalized_rating or 0,  # Store normalized rating (scale 5)
+                        "avg_rating": normalized_rating or 0,
                         "review_count": review_count or 0,
                     }
                 )
@@ -277,4 +258,4 @@ class Command(BaseCommand):
             invalid_restaurants.delete()
             print(f"[CLEANUP] Deleted {cleanup_count} incomplete restaurants")
 
-        print("--- Hoàn tất process_detail pipeline! ---")
+        print("--- Done process_detail pipeline! ---")

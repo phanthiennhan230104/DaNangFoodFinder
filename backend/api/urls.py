@@ -10,6 +10,7 @@ from .views import (
     RestaurantListView,
     RestaurantDetailView,
     CuisineListView,
+    CuisineSearchView,
     RestaurantMapListView,
     RestaurantMapSearchView,
 
@@ -56,6 +57,7 @@ urlpatterns = [
     path("restaurants/", RestaurantListView.as_view(), name="restaurant-list"),
     path("restaurants/<int:pk>/", RestaurantDetailView.as_view(), name="restaurant-detail"),
     path("cuisines/", CuisineListView.as_view(), name="cuisine-list"),
+    path("cuisines/search/", CuisineSearchView.as_view(), name="cuisine-search"),
     path("filters/", get_filters, name="filters"),
 
     # ---------------------- RESTAURANT MAP ----------------------
