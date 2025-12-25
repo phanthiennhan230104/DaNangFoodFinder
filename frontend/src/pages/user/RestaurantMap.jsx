@@ -108,7 +108,6 @@ const formatDistanceLabel = (d) => {
     return Number.isInteger(n) ? `${n}` : n.toFixed(1);
 };
 
-// ================== COMPONENT CHÍNH ==================
 const RestaurantMap = () => {
     const [restaurants, setRestaurants] = useState([]);
     const [filtered, setFiltered] = useState([]);
@@ -119,9 +118,9 @@ const RestaurantMap = () => {
     const [loading, setLoading] = useState(false);
     const [routeCoords, setRouteCoords] = useState([]);
     const [error, setError] = useState("");
-    const [mapFocus, setMapFocus] = useState(null);  // ⭐ For camera flyTo
-
+    const [mapFocus, setMapFocus] = useState(null);
     const mapRef = useRef(null);
+    const sidebarRef = useRef(null);
     const [mapBounds, setMapBounds] = useState(null);
     // Distance filter (km) for nearby restaurants slider (1..30 km)
     const [distanceKm, setDistanceKm] = useState(5);
@@ -136,6 +135,46 @@ const RestaurantMap = () => {
         });
         return null;
     };
+
+    // Ensure Leaflet map redraws when the layout changes (sidebar width/height or window resize)
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        // Debounced invalidation
+        let timeout = null;
+        const doInvalidate = () => {
+            if (!map) return;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                try {
+                    map.invalidateSize();
+                } catch {
+                    // ignore
+                }
+            }, 100);
+        };
+
+        // Resize observer for the sidebar (fires when its width/height changes)
+        let ro = null;
+        if (window.ResizeObserver && sidebarRef.current) {
+            ro = new ResizeObserver(doInvalidate);
+            try { ro.observe(sidebarRef.current); } catch { /* ignore */ }
+        }
+
+        // Window resize fallback
+        const onResize = () => doInvalidate();
+        window.addEventListener("resize", onResize);
+
+        // One-time invalidate after mount to ensure map tiles fill container
+        doInvalidate();
+
+        return () => {
+            clearTimeout(timeout);
+            window.removeEventListener("resize", onResize);
+            if (ro) ro.disconnect();
+        };
+    }, [mapRef.current]);
 
     // ===== Lấy vị trí người dùng =====
     useEffect(() => {
@@ -486,7 +525,7 @@ const RestaurantMap = () => {
         <div className="map-page">
 
             {/* SIDEBAR */}
-            <div className="restaurants-sidebar">
+            <div className="restaurants-sidebar" ref={sidebarRef}>
                 <div className="sidebar-header">
                     <div>
                         <h3>Discover restaurants</h3>
