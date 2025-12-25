@@ -5,6 +5,7 @@ import api from "../../api.js";
 import "../../styles/auth/Login&ForgotPasswordForm.css";
 import LoadingIndicator from "../LoadingIndicator.jsx";
 
+
 export default function RegisterForm() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
