@@ -6,12 +6,12 @@ import "../styles/user/JourneyWidget.css";
 
 const JourneyWidget = () => {
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
-  const [journeys, setJourneys] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedJourney, setSelectedJourney] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null); // Journey to confirm delete
+  const [isOpen, setIsOpen] = useState(false); // Widget mở hay đóng
+  const [journeys, setJourneys] = useState([]); // Danh sách journeys
+  const [isLoading, setIsLoading] = useState(false); // Trạng thái tải dữ liệu
+  const [selectedJourney, setSelectedJourney] = useState(null); // Journey được chọn để xem chi tiết
+  const [deletingId, setDeletingId] = useState(null); // ID của journey đang xóa
+  const [confirmDelete, setConfirmDelete] = useState(null); // Journey để xác nhận xóa
   const [notification, setNotification] = useState(null); // { type: 'success' | 'error', message: string }
 
   // Chỉ hiển thị widget khi ở trang /journey
@@ -22,10 +22,11 @@ const JourneyWidget = () => {
       fetchJourneys();
     }
   }, [isOpen, isJourneyPage]);
-
+  // Lấy danh sách journeys từ API 
   const fetchJourneys = async () => {
     setIsLoading(true);
     try {
+      // Gọi API để lấy danh sách journeys (không có query params)
       const response = await api.get("journey/");
       setJourneys(response.data || []);
     } catch (error) {
@@ -43,6 +44,7 @@ const JourneyWidget = () => {
   const isPastJourney = (dateString) => {
     const journeyDate = new Date(dateString);
     const today = new Date();
+    // Đặt giờ về 0 để so sánh chỉ ngày tháng
     today.setHours(0, 0, 0, 0);
     journeyDate.setHours(0, 0, 0, 0);
     return journeyDate < today;
@@ -65,6 +67,7 @@ const JourneyWidget = () => {
 
     setDeletingId(confirmDelete);
     try {
+      // Gọi API để xóa journey
       await api.delete(`journey/?id=${confirmDelete}`);
       setJourneys(journeys.filter(j => j.id !== confirmDelete));
       if (selectedJourney?.id === confirmDelete) {
@@ -83,7 +86,7 @@ const JourneyWidget = () => {
   const cancelDelete = () => {
     setConfirmDelete(null);
   };
-
+  // Định dạng ngày tháng
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {

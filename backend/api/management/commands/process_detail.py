@@ -8,12 +8,12 @@ from api.models import CrawledData, Restaurant, RestaurantSourceStats, CrawledSo
 
 DAY_NAMES = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
-FEATURED_MIN_RATING = 4.0
-FEATURED_MIN_REVIEWS = 50
+#FEATURED_MIN_RATING = 4.0
+#FEATURED_MIN_REVIEWS = 50
 
 
 MIN_RATING_FOODY = 8.0
-MIN_REVIEW_COUNT = 50
+MIN_REVIEW_COUNT = 30
 
 FEATURED_MIN_RATING_FOODY = 8.0
 FEATURED_MIN_REVIEWS_FOODY = 50

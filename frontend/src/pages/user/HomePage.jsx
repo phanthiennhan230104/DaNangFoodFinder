@@ -9,14 +9,19 @@ import Footer from "../../components/layout/Footer";
 import "../../styles/user/HomePage.css";
 
 function HomePage() {
+  // Scroll to filter section
   const filterRef = useRef(null);
+
   const [restaurants, setRestaurants] = useState([]);
+
+  //Get list of filters to show in dropdowns
   const [filtersData, setFiltersData] = useState({ 
-    areas: [], 
-    cuisines_by_country: [], 
-    food_types: [] 
+    areas: [], //place mapping in backend
+    cuisines_by_country: [], // cuisine country mapping in backend
+    food_types: [] // food type mapping in backend
   });
   const [loading, setLoading] = useState(true);
+  // Current filter values
   const [filters, setFilters] = useState({ 
     cuisine_country: "", 
     food_type: "", 
@@ -34,7 +39,7 @@ function HomePage() {
     hasNext: false,
     hasPrevious: false,
   });
-
+  //gọi API lấy filter data
   useEffect(() => {
     api.get("filters/").then((res) => {
       setFiltersData(res.data || { 
@@ -44,7 +49,7 @@ function HomePage() {
       });
     });
   }, []);
-
+  //gọi API lấy danh sách nhà hàng
   const getRestaurants = useCallback((page = 1) => {
     setLoading(true);
     const params = new URLSearchParams();
