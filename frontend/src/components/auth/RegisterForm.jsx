@@ -26,12 +26,15 @@ export default function RegisterForm() {
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    const { email, password, confirmPassword } = formData;
+
+    const email = formData.email.trim().toLowerCase();
+    const { password, confirmPassword } = formData;
 
     if (password.length < 6) {
       setMessage("Password must be at least 6 characters");
       return;
     }
+
     if (password !== confirmPassword) {
       setMessage("Passwords do not match!");
       return;
@@ -39,16 +42,21 @@ export default function RegisterForm() {
 
     setLoading(true);
     setMessage("");
+
     try {
+      // ✅ CHỈ REGISTER – KHÔNG VERIFY Ở ĐÂY
       await api.post("auth/register/", { email, password });
+
+      // ✅ đồng bộ email đã chuẩn hoá
+      setFormData(prev => ({ ...prev, email }));
+
       setMessage("OTP sent! Check your email.");
       setStep(2);
     } catch (err) {
-      console.error(err);
       setMessage(
+        err.response?.data?.detail ||
         err.response?.data?.email?.[0] ||
-          err.response?.data?.detail ||
-          "Error registering"
+        "Register failed"
       );
     } finally {
       setLoading(false);

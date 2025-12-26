@@ -11,6 +11,7 @@ import random, uuid, time
 import requests
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import ValidationError
 
 from .serializers import (
     RegisterSerializer,
@@ -55,69 +56,31 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
-        print("🔵 Starting perform_create")
-        try:
-            user = serializer.save()
-            print(f"✅ User created: {user.email}, is_active: {user.is_active}")
-            
-            otp = generate_otp()
-            print(f"🔑 Generated OTP: {otp}")
-            
-            save_otp(user.email, otp)
-            print(f"💾 OTP saved to cache for: {user.email}")
-            
-            result = send_mail(
-                "Account Verification",
-                f"Your OTP code is: {otp}",
-                None,
-                [user.email],
-                fail_silently=False
-            )
-            print(f"📧 Email send result: {result}")
-            
-            if result == 0:
-                print("❌ Email was not sent (result = 0)")
-            else:
-                print(f"✅ Email sent successfully to {user.email}")
-            
-            return user
-            
-        except Exception as e:
-            print(f"❌ Error in perform_create: {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
-            raise
+        email = serializer.validated_data["email"]
+
+        # ✅ XÓA OTP CŨ (CỰC KỲ QUAN TRỌNG)
+        cache.delete(f"otp_{email}")
+
+        user = serializer.save()
+
+        otp = generate_otp()
+        save_otp(email, otp)
+
+        send_mail(
+            "Account Verification",
+            f"Your OTP code is: {otp}",
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False
+        )
+
 
     def create(self, request, *args, **kwargs):
-        print("=" * 60)
-        print("🔵 Starting create method")
-        print(f"📥 Request data: {request.data}")
-        
-        try:
-            # Validate serializer first
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            print("✅ Serializer validation passed")
-            
-            # Perform create
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            
-            print("✅ Registration completed successfully")
-            print("=" * 60)
-            
-            return Response(
-                {"message": "User registered successfully. OTP sent to email."}, 
-                status=status.HTTP_201_CREATED,
-                headers=headers
-            )
-            
-        except Exception as e:
-            print(f"❌ Create failed: {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
-            print("=" * 60)
-            raise
+        super().create(request, *args, **kwargs)
+        return Response(
+            {"message": "OTP sent to email. Please verify your account."},
+            status=status.HTTP_201_CREATED
+        )
 
 
 # ====================== VERIFY OTP ======================
@@ -131,20 +94,49 @@ class VerifyOTPView(APIView):
         if not email or not otp:
             return Response({"error": "Email and OTP are required."}, status=400)
 
+        # Verify OTP
         ok, msg = verify_otp(email, otp)
         if not ok:
             return Response({"error": msg}, status=400)
 
-        try:
+        # Lấy registration data từ cache
+        reg_data = cache.get(f"reg_{email}")
+        if not reg_data:
+            return Response({
+                "error": "Registration data expired. Please register again."
+            }, status=400)
+
+        # Kiểm tra xem user đã tồn tại chưa
+        if User.objects.filter(email=email).exists():
+            # Nếu đã tồn tại, chỉ activate
             user = User.objects.get(email=email)
+            if user.is_active:
+                return Response({"error": "Account already verified"}, status=400)
             user.is_active = True
             user.is_email_verified = True
             user.save()
-        except User.DoesNotExist:
-            return Response({"error": "User not found."}, status=404)
+        else:
+            # TẠO USER MỚI - chỉ khi OTP đúng
+            from api.models import Role
+            role, _ = Role.objects.get_or_create(
+                name="User", defaults={"description": "Normal user"}
+            )
+            user = User.objects.create_user(
+                email=reg_data["email"],
+                password=reg_data["password"],
+                role=role
+            )
+            user.is_active = True
+            user.is_email_verified = True
+            user.save()
+            print(f"✅ User created successfully: {email}")
 
+        # Xóa cache
         cache.delete(f"otp_{email}")
+        cache.delete(f"reg_{email}")
+        
         return Response({"message": "OTP verified. Account activated successfully."}, status=200)
+
 
 
 # ====================== LOGIN ======================
@@ -187,7 +179,14 @@ class ForgotPasswordView(APIView):
 
         otp = generate_otp()
         save_otp(email, otp)
-        send_mail("Password Reset", f"Your OTP code is: {otp}", None, [email])
+        send_mail(
+            "Password Reset",
+            f"Your OTP code is: {otp}",
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False
+        )
+
         return Response({"message": "OTP sent to email."}, status=200)
 
 
@@ -297,7 +296,7 @@ class GoogleLoginView(APIView):
             user.is_email_verified = True
             user.save()
             
-            user.last_login = time.timezone.now()
+            user.last_login = timezone.now()
             user.save(update_fields=["last_login"])
 
 

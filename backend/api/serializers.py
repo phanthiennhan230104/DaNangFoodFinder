@@ -35,17 +35,83 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ["email", "password"]
 
+    def validate_email(self, value):
+        from django.core.validators import validate_email
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        
+        # 1. Standard format check
+        try:
+            validate_email(value)
+        except DjangoValidationError:
+            raise serializers.ValidationError("Invalid email format.")
+            
+        # 2. Common Typo Check
+        parts = value.split('@')
+        if len(parts) != 2:
+             raise serializers.ValidationError("Invalid email format.")
+        domain = parts[1].lower()
+        
+        typo_domains = [
+            "gmail.co", "gmil.com", "gmal.com", "gmaill.com", "gmai.com", "gnail.com", "gail.com",
+            "gamil.com", "mail.com"
+        ]
+        
+        if domain.startswith("gmail.") and domain != "gmail.com":
+             raise serializers.ValidationError("Invalid email address. Did you mean @gmail.com?")
+             
+        if domain in typo_domains:
+             suggestion = domain.replace('gamil', 'gmail').replace('gmai', 'gmail').replace('gnail', 'gmail').replace('gail', 'gmail')
+             if not suggestion.endswith('.com'):
+                 suggestion = suggestion.replace('.co', '.com').replace('.om', '.com')
+             raise serializers.ValidationError(f"Invalid email domain. Did you mean '{suggestion}'?")
+             
+        return value
+
+
+
     def create(self, validated_data):
-        from .models import Role
-        role, _ = Role.objects.get_or_create(
-            name="User", defaults={"description": "Normal user"}
-        )
-        user = User.objects.create_user(
-            email=validated_data["email"],
-            password=validated_data["password"],
-            role=role,
-        )
-        return user
+        from django.core.mail import send_mail
+        from django.conf import settings
+        from django.core.cache import cache
+        import random
+        import time
+        
+        email = validated_data["email"]
+        password = validated_data["password"]
+        
+
+        cache.set(f"reg_{email}", {
+            "email": email,
+            "password": password,
+            "created_at": time.time()
+        }, 900)  
+        
+        otp = str(random.randint(100000, 999999))
+        cache.delete(f"otp_{email}")  
+        cache.set(f"otp_{email}", {"otp": otp, "created_at": time.time()}, 300)  # 5 phút
+        
+        print(f"✅ Registration data cached for: {email}")
+        print(f"✅ OTP generated: {otp} for {email}")
+        
+        # Gửi OTP qua email
+        try:
+            print(f"📧 Sending OTP to: {email}")
+            send_mail(
+                "Account Verification",
+                f"Your OTP code is: {otp}",
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False
+            )
+            print(f"✅ Email sent successfully to {email}")
+        except Exception as e:
+            print(f"❌ Email failed: {str(e)}")
+            cache.delete(f"reg_{email}")
+            cache.delete(f"otp_{email}")
+            raise serializers.ValidationError({"email": "Cannot send OTP to this email. Please check if it is a real and active email address."})
+        
+        # Trả về dummy user object (không save vào DB)
+        return User(email=email)
     
 
         
