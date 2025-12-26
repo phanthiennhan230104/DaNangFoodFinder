@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send } from "lucide-react";
 import api from "../../api";
-import "../../styles/user/Profile.css"; // Giữ nguyên style, dùng lại cho form Feedback
+import "../../styles/user/Feedback.css"; // Style riêng biệt hoàn toàn
 
 export default function Feedback() {
   const navigate = useNavigate();
@@ -61,9 +61,9 @@ export default function Feedback() {
   const handleBack = () => navigate(-1);
 
   return (
-    <div className="profile-container">
-      <div className="profile-card">
-        <div className="profile-header">
+    <div className="feedback-container">
+      <div className="feedback-card">
+        <div className="feedback-header">
           <h1>Send Feedback</h1>
           <p>We’d love to hear your feedback or report issues you found.</p>
         </div>
@@ -90,10 +90,10 @@ export default function Feedback() {
         )}
 
         {/* Feedback Type */}
-        <div className="profile-field">
-          <label className="profile-label">Feedback Type</label>
+        <div className="feedback-field">
+          <label className="feedback-label">Feedback Type</label>
           <select
-            className="profile-input"
+            className="feedback-input"
             value={formData.feedback_type}
             onChange={(e) => handleInputChange("feedback_type", e.target.value)}
             required
@@ -106,10 +106,10 @@ export default function Feedback() {
         </div>
 
         {/* Subject */}
-        <div className="profile-field">
-          <label className="profile-label">Subject</label>
+        <div className="feedback-field">
+          <label className="feedback-label">Subject</label>
           <input
-            className="profile-input"
+            className="feedback-input"
             type="text"
             placeholder="Enter subject..."
             value={formData.subject}
@@ -118,10 +118,10 @@ export default function Feedback() {
         </div>
 
         {/* Message */}
-        <div className="profile-field">
-          <label className="profile-label">Message</label>
+        <div className="feedback-field">
+          <label className="feedback-label">Message</label>
           <textarea
-            className="profile-input"
+            className="feedback-input"
             rows={5}
             placeholder="Describe your feedback or issue..."
             value={formData.message}
@@ -131,10 +131,10 @@ export default function Feedback() {
         </div>
 
         {/* Contact Email */}
-        <div className="profile-field">
-          <label className="profile-label">Contact Email</label>
+        <div className="feedback-field">
+          <label className="feedback-label">Contact Email</label>
           <input
-            className="profile-input"
+            className="feedback-input"
             type="email"
             placeholder="Enter email (optional)..."
             value={formData.contact_email}
@@ -143,13 +143,13 @@ export default function Feedback() {
         </div>
 
         {/* Buttons */}
-        <div className="feedback-button-container">
-            <Link className="btn-feedback-resolved" to="/feedback-resolved">
-              Feedback Resolved
-            </Link>
-          <div className="profile-buttons">
+        <div className="feedback-button-wrapper">
+          <Link className="btn-feedback-resolved" to="/feedback-resolved">
+            Feedback Resolved
+          </Link>
+          <div className="feedback-action-buttons">
             <button
-              className="btn-back"
+              className="btn-feedback-back"
               onClick={handleBack}
               disabled={loading}
             >
@@ -157,7 +157,7 @@ export default function Feedback() {
               Back
             </button>
             <button
-              className="btn-save"
+              className="btn-feedback-submit"
               onClick={handleSubmit}
               disabled={loading}
             >

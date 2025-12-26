@@ -129,100 +129,64 @@ select.profile-input {
 
 .profile-buttons {
   display: flex;
-  justify-content: space-between;
   gap: 1rem;
+  width: 100%;
 }
 
-.btn-back {
-  display: inline-flex;
+/* Common base style for equality */
+.btn-profile-back,
+.btn-profile-save {
+  display: flex !important;
+  flex: 1;
+  /* Match width: 50/50 */
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  border: 2px solid #E0E0E0;
-  background: #FFF;
-  color: #555;
-  padding: 0.85rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-}
-
-.btn-back:hover {
-  background: #F5F5F5;
-  border-color: #D4691A;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.btn-save {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #00C9A7 0%, #00BFA6 100%);
-  color: #FFF;
-  border: none;
-  padding: 0.85rem 1.75rem;
+  height: 50px;
+  /* Exact height match */
+  padding: 0;
   border-radius: 12px;
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 201, 167, 0.3);
   text-decoration: none;
+  border: none;
+  outline: none;
+  min-width: 0;
+  /* Allow text truncate or wrap if needed without breaking flex */
 }
 
-.btn-save:hover {
+/* Individual Styles */
+.btn-profile-back {
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  color: #FFF;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.btn-profile-back:hover {
+  background: linear-gradient(135deg, #F57C00 0%, #E65100 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+}
+
+.btn-profile-save {
+  background: linear-gradient(135deg, #00C9A7 0%, #00BFA6 100%);
+  color: #FFF;
+  box-shadow: 0 4px 15px rgba(0, 201, 167, 0.3);
+}
+
+.btn-profile-save:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 201, 167, 0.4);
   background: linear-gradient(135deg, #00BFA6 0%, #00A896 100%);
 }
 
-.btn-save:disabled,
-.btn-back:disabled {
+.btn-profile-save:disabled,
+.btn-profile-back:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
-}
-
-.feedback-button-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 2.5rem;
-  padding-top: 2rem;
-  border-top: 2px solid #F5F5F5;
-}
-
-.btn-feedback-resolved {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  background: linear-gradient(135deg, #5E9EFF 0%, #4A90E2 100%);
-  color: #FFF;
-  border: none;
-  padding: 0.85rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.25);
-  text-decoration: none;
-  font-family: 'Poppins', sans-serif;
-}
-
-.btn-feedback-resolved:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(74, 144, 226, 0.35);
-  background: linear-gradient(135deg, #4A90E2 0%, #3B7DC7 100%);
-}
-
-.btn-feedback-resolved:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(255, 184, 77, 0.25);
 }
 
 .error-box {
@@ -255,19 +219,13 @@ select.profile-input {
     margin-bottom: 1.5rem;
   }
 
-  .feedback-button-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .profile-buttons {
     flex-direction: column-reverse;
     gap: 0.75rem;
   }
 
-  .btn-back,
-  .btn-save,
-  .btn-feedback-resolved {
+  .btn-profile-back,
+  .btn-profile-save {
     width: 100%;
     justify-content: center;
   }

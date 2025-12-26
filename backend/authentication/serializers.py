@@ -14,24 +14,39 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "password"]
-    
-    def validate_email(self, value):
-        print(f"🔍 Validating email: {value}")
-        if User.objects.filter(email=value).exists():
-            print(f"❌ Email already exists: {value}")
+
+    def validate_email(self, email):
+        email = email.strip().lower()
+
+        # ✅ CHỈ CHO GMAIL
+        if not email.endswith("@gmail.com"):
+            raise serializers.ValidationError("Only gmail.com is allowed")
+
+        # ❌ CHẶN DOMAIN SAI
+        invalid_domains = [
+            "@gmai.com", "@gmial.com", "@gnail.com",
+            "@gmail.con", "@gmail.co"
+        ]
+        for d in invalid_domains:
+            if email.endswith(d):
+                raise serializers.ValidationError(
+                    "Invalid email domain. Did you mean gmail.com?"
+                )
+
+        if User.objects.filter(email=email, is_active=True).exists():
             raise serializers.ValidationError("Email already exists")
-        print(f"✅ Email is available: {value}")
-        return value
-    
+
+
+        return email
+
     def create(self, validated_data):
-        print(f"🔵 Creating user with email: {validated_data['email']}")
         user = User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"]
         )
         user.is_active = False
+        user.is_email_verified = False
         user.save()
-        print(f"✅ User saved: {user.email}, is_active: {user.is_active}")
         return user
 
 class MyTokenObtainPairSerializer(serializers.Serializer):
@@ -74,7 +89,6 @@ class MyTokenObtainPairSerializer(serializers.Serializer):
             'email': user.email,
             'user_id': user.user_id
         }
-
 
 class ResetPasswordSerializer(serializers.Serializer):
     password1 = serializers.CharField(write_only=True, required=True)
