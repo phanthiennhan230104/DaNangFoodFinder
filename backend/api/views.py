@@ -470,6 +470,7 @@ class CuisineSearchView(APIView):
     """Tìm kiếm nhà hàng theo cuisine type."""
     permission_classes = [AllowAny]
 
+    #GET /api/filters
     def get(self, request):
         q = request.GET.get("q", "").strip()
         if not q:
@@ -488,27 +489,33 @@ class JourneyRecommendationsView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        budget = int(request.GET.get("budget", 300000))
-        preferences_raw = request.GET.get("preferences", "")
+        # Receive parameters from FE
+        budget = int(request.GET.get("budget", 300000)) # Default 300k VND
+        preferences_raw = request.GET.get("preferences", "") #Cuisine type "abc, xyz"
         preferences: List[str] = [
-            p.strip() for p in preferences_raw.split(",") if p.strip()
+            p.strip() for p in preferences_raw.split(",") if p.strip() #["abc", "xyz"]
         ]
-        search = request.GET.get("search", "")
+        search = request.GET.get("search", "") # Key word search in name/address
 
-        # --- Lọc danh sách ---
+        # Query restaurants
         qs = Restaurant.objects.all()
+
+        # Sort by cuisine preferences
         if preferences:
             q_filter = Q()
             for pref in preferences:
                 q_filter |= Q(cuisine_type__icontains=pref)
             qs = qs.filter(q_filter)
+        
+        #Sort by search keyword
         if search:
             qs = qs.filter(Q(name__icontains=search) | Q(address__icontains=search))
 
-        # --- Tạo danh sách ứng viên ---
+        # Create candidates
         candidates: List[Candidate] = []
-        for r in qs:
-            price_val = parse_price_range(r.price_range, default_price=0)
+        for r in qs: ## Loop qua từng nhà hàng trong queryset
+            price_val = parse_price_range(r.price_range, default_price=0) # Price=Price_range/2
+            #Max_breakfast=budget/4, max_dinner=budget/2
             meal = infer_meal(price_val, budget // 4, budget // 2, cuisine_type=r.cuisine_type, name=r.name)
             candidates.append(
                 Candidate(
@@ -523,13 +530,14 @@ class JourneyRecommendationsView(APIView):
                 )
             )
 
-        # --- Chiến lược simple ---
+        # Strategy
+        #Limit recommended candidates per meal type
         top_k = int(request.GET.get("top_k", 6))
-        breakfast_cut = int(request.GET.get("breakfast_cut", 100000))
-        dinner_cut = int(request.GET.get("dinner_cut", 200000))
+
+        # Allow going over budget ratio
         over_allow_ratio = float(request.GET.get("over_allow_ratio", 0.1))
 
-        # --- Chia ngân sách ---
+        # Calc meal budgets
         try:
             r1, r2, r3 = [float(x) for x in request.GET.get("split_ratio", "0.3,0.4,0.3").split(",")]
         except Exception:
@@ -542,17 +550,20 @@ class JourneyRecommendationsView(APIView):
             "dinner": int(budget * r3),
         }
 
-        # --- Trọng số ---
+        # Weights for scoring
         try:
             w_cuisine, w_price, w_rating = [float(x) for x in request.GET.get("weights", "0.5,0.3,0.2").split(",")]
         except Exception:
             w_cuisine, w_price, w_rating = 0.5, 0.3, 0.2
 
-        # --- Nhóm ứng viên ---
+        # Group candidates by meal type and score them
+        ## Tạo empty list cho từng bữa
         grouped = {"breakfast": [], "lunch": [], "dinner": []}
+        ##Loop qua candidates để tính điểm và thêm vào nhóm tương ứng
         for c in candidates:
             if c.meal_type not in grouped:
                 continue
+            ## score_candidate from journey_recommender
             s = score_candidate(
                 c,
                 desired_cuisines=preferences,
@@ -564,14 +575,16 @@ class JourneyRecommendationsView(APIView):
             )
             grouped[c.meal_type].append((c, s))
 
+        #Lặp sắp xêp theo điẻm và lấy top-k
         for k in grouped.keys():
             grouped[k].sort(key=lambda x: x[1], reverse=True)
             grouped[k] = grouped[k][:top_k]
 
+        # Pick best triplet within budget, pick lấy từ journey_recommender
         b, l, d = pick_best_triplet(
             grouped, total_budget=budget, over_allow_ratio=over_allow_ratio
         )
-
+        #Convert to JSON response
         def serialize_candidate(c: Candidate | None):
             if not c:
                 return None
@@ -586,6 +599,7 @@ class JourneyRecommendationsView(APIView):
                 "meal_type": c.meal_type,
             }
 
+        # Return response
         return Response({
             "strategy": "simple",
             "budget": budget,
