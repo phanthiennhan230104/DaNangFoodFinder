@@ -309,8 +309,10 @@ export default function RestaurantDetailPopup({ restaurant, onClose }) {
                     onClick={(e) => {
                       e.stopPropagation();
                       const name = restaurant.name || "";
-                      // Navigate to /nearby and pass the restaurant name as a query — do not trigger routing from URL
-                      navigate(`/nearby?query=${encodeURIComponent(name)}`);
+                      const lat = restaurant.lat ?? restaurant.latitude;
+                      const lng = restaurant.lng ?? restaurant.longitude;
+                      // Navigate to /nearby and pass the restaurant name + destination coords so map can expand distance and focus
+                      navigate(`/nearby?query=${encodeURIComponent(name)}&destLat=${encodeURIComponent(lat)}&destLng=${encodeURIComponent(lng)}`);
                     }}
                   >
                     ➤ Directions
