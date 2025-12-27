@@ -32,6 +32,7 @@ def parse_price_range(price_range: str | None, default_price: int = 0) -> int:
         return default_price
     return sum(nums) // len(nums)
 
+#cut price là ngưỡng phân loại meal type theo giá
 def infer_meal(price: int, cut_breakfast: int, cut_dinner: int, cuisine_type: str | None = None, name: str | None = None) -> str:
     """Phân loại meal type theo cuisine_type và name chính xác.
     
@@ -39,6 +40,8 @@ def infer_meal(price: int, cut_breakfast: int, cut_dinner: int, cuisine_type: st
     - Lunch: cơm, mỳ, bún, suất, bình dân
     - Dinner: hải sản, lẩu, nướng, bia, ăn vặt, nhậu, bar, karaoke
     """
+
+    # Nếu không có cuisine_type và name, fallback tính hoàn toàn theo giá
     if not cuisine_type and not name:
         # Fallback to price
         if price <= cut_breakfast:
@@ -100,6 +103,7 @@ def score_candidate(
     w_rating: float,
 ) -> float:
     # cuisine score, 1.0 nếu đúng loại, 0.0 nếu không
+    # kiểm tra cuisine_type có trong desired_cuisines không
     cuisine_ok = 1.0 if (c.cuisine_type and c.cuisine_type in desired_cuisines) else 0.0
     # price fit score Giá càng gần meal_budget điểm càng cao
     if meal_budget <= 0:
