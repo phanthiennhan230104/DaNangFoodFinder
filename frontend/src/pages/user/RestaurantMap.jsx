@@ -122,6 +122,7 @@ const RestaurantMap = () => {
     const mapRef = useRef(null);
     const sidebarRef = useRef(null);
     const [mapBounds, setMapBounds] = useState(null);
+    const [incomingDest, setIncomingDest] = useState(null);
     // Distance filter (km) for nearby restaurants slider (1..30 km)
     const [distanceKm, setDistanceKm] = useState(5);
     // Reference point mode: 'user' = use geolocation, 'map' = use current map center
@@ -355,20 +356,25 @@ const RestaurantMap = () => {
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const q = params.get("query")?.trim();
-        if (!q) return;
+        const destLat = params.get("destLat");
+        const destLng = params.get("destLng");
+        if (!q && !(destLat && destLng)) return;
 
         (async () => {
             setLoading(true);
             setError("");
             try {
-                const resp = await api.get("restaurants/map/search/", { params: { q } });
-                const data = (resp.data || []).map(normalizeRestaurant);
-                setFiltered(data);
-                setSearch(q);
+                let data = [];
+                if (q) {
+                    const resp = await api.get("restaurants/map/search/", { params: { q } });
+                    data = (resp.data || []).map(normalizeRestaurant);
+                    setFiltered(data);
+                    setSearch(q);
+                }
 
                 // Prefer an item whose name includes the query (case-insensitive), otherwise take first result
-                const low = q.toLowerCase();
-                const matched = data.find(r => (r.name || "").toLowerCase().includes(low)) || data[0];
+                const low = q?.toLowerCase();
+                const matched = (data && data.length > 0) ? (low ? (data.find(r => (r.name || "").toLowerCase().includes(low)) || data[0]) : data[0]) : null;
 
                 if (matched) {
                     if (matched.lat && matched.lng) {
@@ -380,6 +386,17 @@ const RestaurantMap = () => {
                         setSelectedId(matched.id);
                     }
                 }
+
+                if (destLat && destLng) {
+                    const d = { lat: Number(destLat), lng: Number(destLng) };
+                    setIncomingDest(d);
+                    // If no matched found, focus dest directly
+                    if (!matched) {
+                        setMapFocus({ lat: d.lat, lng: d.lng, zoom: 16 });
+                    }
+                } else {
+                    setIncomingDest(null);
+                }
             } catch (err) {
                 console.error("Query redirect error:", err);
                 setError("Unable to perform query from link.");
@@ -388,6 +405,37 @@ const RestaurantMap = () => {
             }
         })();
     }, [location.search]);
+
+    // When arriving with a destination (destLat/destLng in URL), expand distance filter and focus map
+    useEffect(() => {
+        if (!incomingDest) return;
+
+        // choose reference point according to current mode
+        let ref = DEFAULT_CENTER;
+        if (refPointMode === "user" && hasUserLocation) {
+            ref = userLocation;
+        } else if (refPointMode === "map" && mapRef.current && typeof mapRef.current.getCenter === "function") {
+            const c = mapRef.current.getCenter();
+            ref = { lat: c.lat, lng: c.lng };
+        } else if (hasUserLocation) {
+            ref = userLocation;
+        }
+
+        try {
+            const distStr = calcDistanceKm(ref.lat, ref.lng, incomingDest.lat, incomingDest.lng);
+            const dist = parseFloat(distStr);
+            if (!isNaN(dist) && dist > Number(distanceKm)) {
+                const newDist = Math.min(30, Math.ceil(dist) + 1);
+                setDistanceKm(newDist);
+            }
+        } catch {
+            // ignore
+        }
+
+        // Focus map on destination so it comes into view
+        setMapFocus({ lat: incomingDest.lat, lng: incomingDest.lng, zoom: 15 });
+    }, [incomingDest, hasUserLocation, userLocation, refPointMode]);
+
 
     // ===== Định vị nhà hàng =====
     const geocodeRestaurant = async (r) => {
