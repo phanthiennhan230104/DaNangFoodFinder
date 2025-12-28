@@ -243,7 +243,6 @@ class ResetPasswordView(APIView):
 
         return Response({"message": "Password reset successfully."}, status=200)
 
-
 class GoogleLoginView(APIView):
     permission_classes = [AllowAny]
 
