@@ -46,7 +46,6 @@ export default function RegisterForm() {
     try {
       // ✅ CHỈ REGISTER – KHÔNG VERIFY Ở ĐÂY
       await api.post("auth/register/", { email, password });
-
       // ✅ đồng bộ email đã chuẩn hoá
       setFormData(prev => ({ ...prev, email }));
 

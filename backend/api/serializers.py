@@ -67,8 +67,6 @@ class RegisterSerializer(serializers.ModelSerializer):
              
         return value
 
-
-
     def create(self, validated_data):
         from django.core.mail import send_mail
         from django.conf import settings
